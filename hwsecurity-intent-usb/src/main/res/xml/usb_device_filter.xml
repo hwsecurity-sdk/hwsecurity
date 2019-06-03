@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <usb-device class="11" />
+    <usb-device vendor-id="6790" product-id="29987" />
+    <usb-device class="3" /> <!-- HID -->
+</resources>

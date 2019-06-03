@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="de.cotech.hw.fido">
+
+    <application>
+        <!--<activity-->
+            <!--android:name="de.cotech.hw.fido.ui.FidoU2fActivity"-->
+            <!--android:theme="@style/HwSecurity.Dialog.Translucent" />-->
+    </application>
+</manifest>

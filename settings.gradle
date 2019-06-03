@@ -1,0 +1,4 @@
+include ':hwsecurity'
+include ':hwsecurity-intent-usb'
+include ':hwsecurity-intent-nfc'
+include ':hwsecurity-fido'
