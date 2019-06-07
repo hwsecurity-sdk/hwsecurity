@@ -31,24 +31,47 @@ import timber.log.Timber;
 import java.io.IOException;
 
 /**
- * An interface for a callback when a security key is discovered.
+ * A callback interface when a security key is discovered.
  *
+ * This interface is parametrized with a type of SecurityKey, and is typically passed to
+ * {@link SecurityKeyManager#registerCallback} with a matching {@link SecurityKeyConnectionMode}.
+ *
+ * @see SecurityKeyConnectionMode
  * @see SecurityKeyManager#registerCallback
  */
 public interface SecurityKeyCallback<T extends SecurityKey> {
     /**
-     * Called when a newly connected security key is discovered.
-     *
-     * @see SecurityKeyManager#registerCallback
+     * Called when a security key is discovered.
      */
     @UiThread
     void onSecurityKeyDiscovered(@NonNull T securityKey);
 
+    /**
+     * Called when a security key was discovered, but failed to connect.
+     *
+     * This can typically happen when the connected Security Key does not contain the expected
+     * applet, or the hardware is faulty. It is not generally advised to handle this error in a
+     * user-facing way.
+     */
     @UiThread
     default void onSecurityKeyDiscoveryFailed(@NonNull IOException exception) {
         Timber.e(exception, "Failed to connect to SecurityKey");
     }
 
+    /**
+     * Called when a persistently connected Security Key was disconnected.
+     *
+     * <p>
+     * This callback is only called on Security Keys for which {@link SecurityKey#isPersistentlyConnected()}
+     * returns true. This typically applies to USB devices, but can be applied to NFC devices as well if
+     * NFC tag monitoring has been enabled via {@link SecurityKeyManagerConfig.Builder#setEnableNfcTagMonitoring}.
+     * Those Security Keys are also listed under {@link SecurityKeyManager#getConnectedPersistentSecurityKeys()}.
+     *
+     * <p>
+     * Note that this callback will only be sent to the same registered callback that received the
+     * {@link #onSecurityKeyDiscovered(SecurityKey)} callback, and will not be postponed for late
+     * delivery if the callback isn't active.
+     */
     @UiThread
     default void onSecurityKeyDisconnected(@NonNull T securityKey) { }
 }

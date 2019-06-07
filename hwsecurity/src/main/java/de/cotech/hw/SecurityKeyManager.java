@@ -71,43 +71,37 @@ import timber.log.Timber.DebugTree;
  * This is usually done in {@link Application#onCreate}.
  * <p>
  * Once initialized, this class will dispatch newly connected security keys to all currently registered listeners.
- * Listeners can be registered with {@link #registerCallbackForever}. Listeners are called in reverse order
- * of registration (last registered is called first), and have an opportunity to stop further propagation of the
- * callback.
+ * Listeners can be registered with {@link #registerCallback}.
  * <p>
  * <pre>{@code
  * public void onCreate() {
  *     super.onCreate();
  *     SecurityKeyManager securityKeyManager = SecurityKeyManager.getInstance();
  *     securityKeyManager.init(this);
- *     securityKeyManager.registerCallback(new SecurityKeyManagerCallback() {
- *         public void onSecurityKeyDiscovered(SecurityKeyInteractor keyInteractor) {
- *             Toast.makeText(this, "Security key connected!", Toast.LENGTH_SHORT).show();
- *             return true;
- *         }
- *     });
  * }
  * }</pre>
  * <p>
- * To receive callbacks in an Activity, register for a callback while the Activity is in its resumed state:
+ * A callback is registered together with a {@link SecurityKeyConnectionMode}, which establishes a
+ * connection to a particular type of Security Token, such as FIDO, PIV, or OpenPGP.  Implementations
+ * for different SecurityKeyConnectionModes are shipped as modules, such as :de.cotech:hwsecurity-fido:,
+ * :de.cotech:hwsecurity-piv:, and :de.cotech:hwsecurity-openpgp:. Apps will typically use only a
+ * single type of Security Key.
+ * <p>
+ * To receive callbacks in an Activity, register for a callback bound to the Activity's lifecycle:
  * <p>
  * <pre>{@code
- * public void onResume() {
+ * public void onCreate() {
  *     super.onResume();
- *     SecurityKeyManager.getInstance().registerCallback(this);
+ *     FidoSecurityKeyConnectionMode connectionMode = new FidoSecurityKeyConnectionMode();
+ *     SecurityKeyManager.getInstance().registerCallback(connectionMode, this, this);
  * }
- *
- * public void onPause() {
- *     super.onPause();
- *     SecurityKeyManager.getInstance().unregisterCallback(this);
+ * public void onSecurityKeyDiscovered(FidoSecurityKey securityKey) {
+ *     // perform operations on FidoSecurityKey
  * }
  * }</pre>
  * <p>
- * In the default configuration, SecurityKeyManager will listen for OpenPGP-Card compatible security keys. This
- * can be changed by passing a {@link SecurityKeyManagerConfig} during initialization.
- * <p>
- * These two patterns can be combined, to implement some behavior while a specific Activity is in the foreground,
- * and fall back to a default behavior while the App is open in any other Activity.
+ * Advanced applications that want to work with different applets on the same connected Security Key
+ * can do so using {@link de.cotech.hw.raw.RawSecurityKeyConnectionMode}.
  */
 public class SecurityKeyManager {
     private ArrayList<RegisteredConnectionMode<?>> registeredCallbacks = new ArrayList<>();

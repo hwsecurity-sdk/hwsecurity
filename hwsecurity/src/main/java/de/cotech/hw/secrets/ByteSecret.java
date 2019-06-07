@@ -22,94 +22,76 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.cotech.hw.bytesecret;
+package de.cotech.hw.secrets;
 
 
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.util.Arrays;
 
 import androidx.annotation.NonNull;
-import android.text.Editable;
 
 
 /**
- * A more secure wrapper for CharBuffer.
+ * A more secure wrapper for ByteBuffer.
  * <p>
- * This class wraps a CharBuffer, and attempts to ensure that its memory is overwritten when the object is freed, to
+ * This class wraps a ByteBuffer, and attempts to ensure that its memory is overwritten when the object is freed, to
  * keep secrets in memory as short a time as possible.
  *
- * @see ByteSecret
+ * @see CharSecret
  */
-public class CharSecret {
-    private CharBuffer secret;
-
-    /* According to http://stackoverflow.com/a/15844273 EditText is not using String internally
-     * but char[]. Thus, we can get the char[] directly from it. */
-    @NonNull
-    public static CharSecret fromEditableAndClear(Editable editable) {
-        int pl = editable.length();
-        char[] chars = new char[pl];
-        editable.getChars(0, pl, chars, 0);
-
-        CharBuffer secretCopy = ByteBuffer.allocateDirect(chars.length * 2).asCharBuffer();
-        secretCopy.put(chars);
-        Arrays.fill(chars, '\u0000');
-
-        return new CharSecret(secretCopy);
-    }
+public class ByteSecret {
+    private ByteBuffer secret;
 
     @NonNull
-    public static CharSecret fromCharArrayTakeOwnership(char[] secret) {
+    public static ByteSecret fromByteArrayTakeOwnership(byte[] secret) {
         if (secret == null) {
             throw new IllegalStateException("Secret has been cleared up before this call!");
         }
-        return new CharSecret(CharBuffer.wrap(secret));
+        return new ByteSecret(ByteBuffer.wrap(secret));
     }
 
     @NonNull
-    public static CharSecret fromCharArrayAndClear(char[] secret) {
-        CharBuffer secretCopy = ByteBuffer.allocateDirect(secret.length * 2).asCharBuffer();
+    public static ByteSecret fromByteArrayAndClear(byte[] secret) {
+        ByteBuffer secretCopy = ByteBuffer.allocateDirect(secret.length);
         secretCopy.put(secret);
-        Arrays.fill(secret, '\0');
-        return new CharSecret(secretCopy);
+        Arrays.fill(secret, (byte) 0);
+        return new ByteSecret(secretCopy);
     }
 
     @NonNull
-    public static CharSecret unsafeFromString(String secret) {
-        CharBuffer secretCopy = CharBuffer.allocate(secret.length());
-        secretCopy.put(secret.toCharArray());
-        return new CharSecret(secretCopy);
+    public static ByteSecret unsafeFromString(String secret) {
+        ByteBuffer secretCopy = ByteBuffer.allocateDirect(secret.length());
+        secretCopy.put(secret.getBytes());
+        return new ByteSecret(secretCopy);
     }
 
     @NonNull
-    public static CharSecret moveFromCharSecret(CharSecret charSecret) {
+    public static ByteSecret moveFromByteSecret(ByteSecret byteSecret) {
         try {
-            return new CharSecret(charSecret.secret);
+            return new ByteSecret(byteSecret.secret);
         } finally {
-            charSecret.secret = null;
+            byteSecret.secret = null;
         }
     }
 
-    private CharSecret(CharBuffer secret) {
+    private ByteSecret(ByteBuffer secret) {
         this.secret = secret;
         secret.clear();
     }
 
-    public char[] unsafeGetCharCopy() {
+    public byte[] unsafeGetByteCopy() {
         if (secret == null) {
             throw new IllegalStateException("Secret has been cleared up before this call!");
         }
-        char[] result = new char[secret.capacity()];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = (char) secret.get(i);
-        }
-        return result;
+        byte[] copy = new byte[secret.capacity()];
+        secret.get(copy);
+        secret.clear();
+        return copy;
     }
 
-    public char[] getCharCopyAndClear() {
+    public byte[] getByteCopyAndClear() {
         try {
-            return unsafeGetCharCopy();
+            return unsafeGetByteCopy();
         } finally {
             removeFromMemory();
         }
@@ -135,9 +117,36 @@ public class CharSecret {
         }
         secret.clear();
         while (secret.hasRemaining()) {
-            secret.put('\0');
+            secret.put((byte) 0);
         }
         secret = null;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof ByteSecret) {
+            ByteSecret other = (ByteSecret) obj;
+            if (isEmpty() != other.isEmpty()) {
+                return false;
+            }
+            return compareConstantTime(secret, other.secret);
+        }
+        return false;
+    }
+
+    private boolean compareConstantTime(ByteBuffer a, ByteBuffer b) {
+        if (a.limit() != b.limit()) {
+            return false;
+        }
+        if (a.position() != b.position()) {
+            return false;
+        }
+
+        int result = 0;
+        for (int i = 0; i < a.limit(); i++) {
+            result |= a.get(i) ^ b.get(i);
+        }
+        return result == 0;
     }
 
     @Override
@@ -146,7 +155,7 @@ public class CharSecret {
         super.finalize();
     }
 
-    public CharSecret copy() {
-        return CharSecret.fromCharArrayTakeOwnership(unsafeGetCharCopy());
+    public ByteSecret copy() {
+        return ByteSecret.fromByteArrayTakeOwnership(unsafeGetByteCopy());
     }
 }

@@ -8,7 +8,7 @@
 
     <application>
         <activity
-            android:name="de.cotech.hw.UsbIntentDispatchActivity"
+            android:name="de.cotech.hw.internal.dispatch.UsbIntentDispatchActivity"
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar">

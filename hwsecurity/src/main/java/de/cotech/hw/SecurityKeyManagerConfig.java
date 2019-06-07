@@ -25,16 +25,10 @@
 package de.cotech.hw;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import android.app.Application;
 
 import com.google.auto.value.AutoValue;
 import de.cotech.hw.internal.dispatch.UsbIntentDispatchActivity;
-import de.cotech.hw.util.Hex;
 
 
 /**
@@ -44,9 +38,6 @@ import de.cotech.hw.util.Hex;
  */
 @AutoValue
 public abstract class SecurityKeyManagerConfig {
-    private static final byte[] AID_SELECT_FILE_PIV = Hex.decodeHexOrFail("A000000308");
-
-    public abstract List<byte[]> getPivAidPrefixes();
     public abstract boolean isDisableUsbPermissionFallback();
     public abstract boolean isAllowUntestedUsbDevices();
     public abstract boolean isEnableDebugLogging();
@@ -55,7 +46,6 @@ public abstract class SecurityKeyManagerConfig {
 
     static SecurityKeyManagerConfig getDefaultConfig() {
         return new Builder()
-                .addDefaultPivAidPrefixes()
                 .build();
     }
 
@@ -64,44 +54,11 @@ public abstract class SecurityKeyManagerConfig {
      */
     @SuppressWarnings({ "unused", "WeakerAccess", "UnusedReturnValue" })
     public static class Builder {
-        private ArrayList<byte[]> pivAidPrefixes = new ArrayList<>();
         private boolean disableUsbPermissionFallback = false;
         private boolean isAllowUntestedUsbDevices = false;
         private boolean isEnableDebugLogging = false;
         private boolean isEnableNfcTagMonitoring = false;
         private boolean isDisableNfcDiscoverySound = false;
-
-        /**
-         * This adds the default OpenPGP-Card AID prefix to the list of accepted prefixes.
-         *
-         * Note that this prefix will be used by default if no explicit AID prefixes are added, so calling this method
-         * is only useful if other prefixes have been added with {@link #addPivAidPrefix(String)}.
-         */
-        public Builder addDefaultPivAidPrefixes() {
-            pivAidPrefixes.add(AID_SELECT_FILE_PIV);
-            return this;
-        }
-
-        /**
-         * This adds an AID prefix to the list of accepted prefixes for the PIV connection mode.
-         *
-         * Note that once an explicit prefix is added, the default prefix will no longer be included automatically.
-         * To add the default back, use {@link #addDefaultPivAidPrefixes()}.
-         *
-         * @throws IllegalArgumentException if hexStringAidPrefix does not contain a valid hex-encoded byte sequence
-         */
-        public Builder addPivAidPrefix(String hexStringAidPrefix) {
-            byte[] aidPrefix = Hex.decodeHexOrFail(hexStringAidPrefix);
-            pivAidPrefixes.add(aidPrefix);
-            return this;
-        }
-
-        /** This adds an AID prefix to the list of accepted prefixes. */
-        public Builder addPivAidPrefix(byte[] aidPrefix) {
-            aidPrefix = Arrays.copyOf(aidPrefix, aidPrefix.length);
-            pivAidPrefixes.add(aidPrefix);
-            return this;
-        }
 
         /**
          * This setting controls USB permission request behavior.
@@ -168,11 +125,7 @@ public abstract class SecurityKeyManagerConfig {
          * Constructs a SecurityKeyManagerConfig from the Builder.
          */
         public SecurityKeyManagerConfig build() {
-            if (pivAidPrefixes.isEmpty()) {
-                addDefaultPivAidPrefixes();
-            }
             return new AutoValue_SecurityKeyManagerConfig(
-                    Collections.unmodifiableList(pivAidPrefixes),
                     disableUsbPermissionFallback,
                     isAllowUntestedUsbDevices,
                     isEnableDebugLogging,

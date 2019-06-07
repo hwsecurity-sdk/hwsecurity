@@ -22,7 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.cotech.hw.standalone;
+package de.cotech.hw;
 
 
 import androidx.annotation.WorkerThread;
@@ -41,15 +41,15 @@ import java.security.NoSuchAlgorithmException;
  * <p>
  * Example:
  * <pre>{@code
- *     byte[] challenge = { (byte) 1, (byte) 2, (byte) 3, (byte) 4 };
- *     PairedAuthenticator authenticator = new SecurityKeyAuthenticator(keyInteractor, pairedPinProvider)
- *     byte[] signatureBytes = authenticator.authenticateWithDigest(challenge, "SHA-1");
+ * byte[] challenge = { (byte) 1, (byte) 2, (byte) 3, (byte) 4 };
+ * PairedAuthenticator authenticator = new SecurityKeyAuthenticator(keyInteractor, pairedPinProvider)
+ * byte[] signatureBytes = authenticator.authenticateWithDigest(challenge, "SHA-1");
  *
- *     Signature signature = Signature.getInstance("SHA1withRSA");
- *     signature.initVerify(authPublicKey);
- *     signature.update(challenge);
- *     boolean isVerified = signature.verify(signatureBytes);
- *     assert isVerified;
+ * Signature signature = Signature.getInstance("SHA1withRSA");
+ * signature.initVerify(authPublicKey);
+ * signature.update(challenge);
+ * boolean isVerified = signature.verify(signatureBytes);
+ * assert isVerified;
  * }</pre>
  */
 public interface SecurityKeyAuthenticator {

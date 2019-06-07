@@ -22,10 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.cotech.hw.pin;
-
-
-import de.cotech.hw.bytesecret.ByteSecret;
+package de.cotech.hw.secrets;
 
 
 /**

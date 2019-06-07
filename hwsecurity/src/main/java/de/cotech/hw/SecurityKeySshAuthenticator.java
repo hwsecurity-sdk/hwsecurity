@@ -22,7 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.cotech.hw.standalone;
+package de.cotech.hw;
 
 
 import java.io.IOException;
@@ -30,10 +30,6 @@ import java.security.NoSuchAlgorithmException;
 
 import androidx.annotation.NonNull;
 
-/**
- * TODO
- *
- */
 public interface SecurityKeySshAuthenticator {
     /**
      * Authenticate a challenge with the Security Key's authentication key.
@@ -68,12 +64,12 @@ public interface SecurityKeySshAuthenticator {
 
     /**
      * Returns the public key associated with the security key, encoded as a string.
-     *<p>
+     * <p>
      * This format is commonly found in openssh public key (".pub") files. It is ascii-encoded, and includes the
      * algorithm name ({@link #getSshPublicKeyAlgorithmName()}) plus the base 64 encoded public key blob
      * ({@link #getSshPublicKeyBlob()}). For example:
      * <p>
-     * ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKVzhwo9s+G2DrqxQDta5Af1Ro7mQolaKTOOqIPtrGjUVRYOLzo3s3FcFyWcysjeIfJ93SVMs9w95vwlUxR1Bcs=
+     * <pre>ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKVzhwo9s+G2DrqxQDta5Af1Ro7mQolaKTOOqIPtrGjUVRYOLzo3s3FcFyWcysjeIfJ93SVMs9w95vwlUxR1Bcs=</pre>
      */
     @NonNull
     String getSshPublicKeyString();

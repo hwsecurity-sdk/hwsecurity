@@ -22,10 +22,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.cotech.hw.pin;
+package de.cotech.hw.secrets;
 
-
-import de.cotech.hw.bytesecret.ByteSecret;
 
 /**
  * A trivial {@link PinProvider} that returns a static PIN.

@@ -34,10 +34,8 @@ import androidx.annotation.RestrictTo.Scope;
 public class WebsafeBase64 {
 
     /**
-     * websafe-base64 encoding
-     * This is the "Base 64 Encoding with URL and Filename Safe Alphabet" from Section 5 in [RFC4648] without padding.
-     * See Section 7
-     * https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-raw-message-formats-v1.2-ps-20170411.html#bib-RFC4648
+     * Websafe Base64 encoding as specified by the FIDO U2F specification:
+     * https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-raw-message-formats-v1.2-ps-20170411.html#client-data
      */
     public static String encodeToString(byte[] decoded) {
         return Base64.encodeToString(decoded, Base64.NO_PADDING | Base64.NO_WRAP | Base64.URL_SAFE);

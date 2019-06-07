@@ -29,11 +29,22 @@ import java.io.IOException;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.WorkerThread;
+import androidx.lifecycle.LifecycleOwner;
 import de.cotech.hw.internal.transport.SecurityKeyInfo.TransportType;
 import de.cotech.hw.internal.transport.Transport;
 
 
-public class SecurityKey {
+/**
+ * An abstract connected Security Key.
+ *
+ * Concrete instances of this class, such as FidoSecurityKey, PivSecurityKey, or OpenPgpSecurityKey,
+ * offer methods to interact with the connected Security Key and applet.
+ *
+ * @see SecurityKeyCallback
+ * @see SecurityKeyManager#registerCallback
+ */
+@SuppressWarnings({ "WeakerAccess", "unused" }) // public API
+public abstract class SecurityKey {
     protected final SecurityKeyManagerConfig config;
     protected final Transport transport;
 
@@ -73,6 +84,17 @@ public class SecurityKey {
         return transport.getTransportType() == TransportType.USB_CCID || transport.getTransportType() == TransportType.USB_U2FHID;
     }
 
+    /**
+     * @return true if the underlying transport is persistently connected.
+     */
+    @AnyThread
+    public boolean isPersistentlyConnected() {
+        return transport.isPersistentConnectionAllowed();
+    }
+
+    /**
+     * Releases the Security Key as well as the underlying transport.
+     */
     public void release() {
         transport.release();
     }

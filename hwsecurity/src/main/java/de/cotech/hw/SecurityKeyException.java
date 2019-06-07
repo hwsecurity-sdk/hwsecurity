@@ -30,6 +30,11 @@ import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 
 
+/**
+ * Base exception of the Hardware Security SDK.
+ *
+ * @see de.cotech.hw.exceptions
+ */
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class SecurityKeyException extends IOException {
     private short responseCode;

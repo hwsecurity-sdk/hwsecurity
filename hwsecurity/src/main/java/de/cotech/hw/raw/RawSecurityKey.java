@@ -28,12 +28,23 @@ package de.cotech.hw.raw;
 import java.io.IOException;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RestrictTo;
+import androidx.annotation.RestrictTo.Scope;
+import androidx.annotation.WorkerThread;
 import de.cotech.hw.SecurityKey;
 import de.cotech.hw.SecurityKeyConnectionMode;
 import de.cotech.hw.SecurityKeyManagerConfig;
 import de.cotech.hw.internal.transport.Transport;
 
 
+/**
+ * A shim Security Key that bears no semantics of its own, but allows the programmer
+ * to dynamically connect other connection modes via
+ * {@link RawSecurityKey#establishAppletConnection(SecurityKeyConnectionMode)}.
+ * <p>
+ * This SecurityKey is intended for advanced use cases. It should not be necessary for common
+ * use cases that only work with one kind of applet.
+ */
 public class RawSecurityKey extends SecurityKey {
     private SecurityKey currentSecurityKey;
 
@@ -41,11 +52,20 @@ public class RawSecurityKey extends SecurityKey {
         super(config, transport);
     }
 
+    @RestrictTo(Scope.LIBRARY_GROUP)
     public Transport getTransport() {
         return transport;
     }
 
+    /**
+     * Establishes a connection to an applet through the provided {@link SecurityKeyConnectionMode}.
+     * <p>
+     * Note that the {@link RawSecurityKey} does not thoroughly manage the status of the currently
+     * connected applet. A caller of this method must take care not to mix calls of different
+     * applets.
+     */
     @NonNull
+    @WorkerThread
     public <T extends SecurityKey> T establishAppletConnection(@NonNull SecurityKeyConnectionMode<T> securityKeyConnectionMode)
             throws IOException {
         T securityKey = securityKeyConnectionMode.establishSecurityKeyConnection(config, transport);

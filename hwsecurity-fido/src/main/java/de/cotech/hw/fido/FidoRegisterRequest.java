@@ -32,10 +32,7 @@ import com.google.auto.value.AutoValue;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/**
- * TODO: Make this more similar to the specified Javascript API?
- * https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html
- */
+
 @AutoValue
 public abstract class FidoRegisterRequest implements Parcelable {
     private static final String REQUEST_TYP_REGISTER = "navigator.id.finishEnrollment";

@@ -34,7 +34,13 @@ import de.cotech.hw.SecurityKeyManagerConfig;
 import de.cotech.hw.internal.transport.SecurityKeyInfo.TransportType;
 import de.cotech.hw.internal.transport.Transport;
 
-
+/**
+ * A connection mode that performs no initialization of its own, and instead allows the programmer
+ * to dynamically connect to applets via {@link RawSecurityKey#establishAppletConnection(SecurityKeyConnectionMode)}.
+ * <p>
+ * This connection mode is intended for advanced use cases. It should not be necessary for common
+ * use cases that only work with one kind of applet.
+ */
 public class RawSecurityKeyConnectionMode extends SecurityKeyConnectionMode<RawSecurityKey> {
     private final List<TransportType> allowedTransportTypes;
 

@@ -4,7 +4,7 @@
 
     <application>
         <activity
-            android:name="de.cotech.hw.NfcIntentDispatchActivity"
+            android:name="de.cotech.hw.internal.dispatch.NfcIntentDispatchActivity"
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar">

@@ -46,7 +46,7 @@ import timber.log.Timber;
  * a USB security key.</b> To avoid asking the user for permission every time a USB security key connects, it is
  * recommended to include this class.
  * <p>
- * This is an internal class used for discovering NFC security keys through the intent dispatch mechanism. It
+ * This is an internal class used for discovering USB security keys through the intent dispatch mechanism. It
  * should never be used directly, but automatically supplements the discovery mechanism in {@link SecurityKeyManager}.
  * <p>
  * To include this class, add the following to <code>build.gradle</code>:

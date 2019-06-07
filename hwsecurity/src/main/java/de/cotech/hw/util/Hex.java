@@ -25,9 +25,6 @@ import java.nio.ByteBuffer;
  * Converts hexadecimal Strings.
  *
  * This class is thread-safe.
- *
- * @since 1.1
- * @version $Id$
  */
 @SuppressWarnings("unused")
 public class Hex {

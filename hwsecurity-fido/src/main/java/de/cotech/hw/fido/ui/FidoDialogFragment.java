@@ -64,6 +64,7 @@ import androidx.annotation.UiThread;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.Guideline;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
@@ -556,7 +557,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         Animatable2Compat.AnimationCallback animationCallback = new Animatable2Compat.AnimationCallback() {
             @Override
             public void onAnimationEnd(Drawable drawable) {
-                if (!imageNfcFullscreen.isAttachedToWindow()) {
+                if (!ViewCompat.isAttachedToWindow(imageNfcFullscreen)) {
                     return;
                 }
 
@@ -749,7 +750,6 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         }
     }
 
-    @SuppressLint("NewApi")
     private void startAndLoopAnimation(ImageView imageView, int resId) {
         Animatable2Compat.AnimationCallback animationCallback = new Animatable2Compat.AnimationCallback() {
             @NonNull
@@ -757,7 +757,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
 
             @Override
             public void onAnimationEnd(@NonNull Drawable drawable) {
-                if (!imageView.isAttachedToWindow()) {
+                if (!ViewCompat.isAttachedToWindow(imageView)) {
                     return;
                 }
 

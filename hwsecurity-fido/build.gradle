@@ -27,12 +27,11 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:2.18.0'
 }
 
-
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        minSdkVersion 19
+        minSdkVersion 14
         versionCode rootProject.ext.hwSdkVersionCode
         versionName rootProject.ext.hwSdkVersionName
         vectorDrawables.useSupportLibrary = true
