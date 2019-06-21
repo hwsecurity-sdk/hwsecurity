@@ -2,7 +2,7 @@
 
 ## An SDK for Supporting Security Keys and Smartcards on Android
 
-Code examples and documentation can be found on our [developer page](https://hwsecurity.dev/guide).
+Code examples and documentation can be found on our [developer page](https://hwsecurity.dev/docs/).
 
 ## Open Source Release
 
