@@ -81,10 +81,6 @@ public class AuthenticateOp {
         CommandApdu command = connection.getCommandFactory().createAuthenticationCommand(data);
         ResponseApdu response = connection.communicateOrThrow(command);
 
-        if (!response.isSuccess()) {
-            throw new AssertionError("communicateOrThrow returned unsuccessful ResponseApdu!");
-        }
-
         return response.getData();
     }
 

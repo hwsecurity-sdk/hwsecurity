@@ -82,8 +82,8 @@ public class UsbConnectionDispatcher {
 
     @UiThread
     private boolean handleConnectedUsbDevice(UsbDevice usbDevice, boolean requestPermission) {
-        if (usbDeviceManager.isDeviceManaged(usbDevice)) {
-            Timber.d("Ignoring already managed device (0x%s 0x%s)",
+        if (usbDeviceManager.refreshDeviceIfManaged(usbDevice)) {
+            Timber.d("Refreshed already managed device (0x%s 0x%s)",
                     Integer.toHexString(usbDevice.getVendorId()), Integer.toHexString(usbDevice.getProductId()));
             return false;
         }

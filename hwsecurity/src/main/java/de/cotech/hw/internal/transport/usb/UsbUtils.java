@@ -34,6 +34,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.hardware.usb.UsbManager;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
@@ -133,5 +134,9 @@ public class UsbUtils {
             throw new IOException("Unable to retrieve U2FHID Report data");
         }
         return Arrays.copyOf(buf, bytesRead);
+    }
+
+    public static boolean isDeviceStillConnected(UsbManager usbManager, UsbDevice usbDevice) {
+        return usbManager.getDeviceList().containsValue(usbDevice);
     }
 }

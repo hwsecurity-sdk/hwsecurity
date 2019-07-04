@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <color name="hwSecurityColorPrimary">#1a73e8</color>
-    <color name="hwSecurityColorAccent">#1a73e8</color>
-    <!-- used for status bar on sdk <= 19 -->
-    <color name="hwSecurityColorPrimaryDark">#000</color>
-    <color name="hwSecurityColorError">#ff5032</color>
-
     <color name="hwSecurityWhite">#fff</color>
-    <color name="hwSecurityBlue">#9dc6d3</color>
+    <color name="hwSecurityBlue">#9dc5d2</color>
+    <color name="hwSecurityDarkBlue">#006a8b</color>s
+    <color name="hwSecurityRed">#e00f00</color>
+    <color name="hwSecurityGreen">#55d264</color>
 
 </resources>

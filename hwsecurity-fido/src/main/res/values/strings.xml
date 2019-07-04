@@ -13,6 +13,8 @@
     <string name="hwsecurity_error_wrong_key_handle">Wrong Security Key used.</string>
     <string name="hwsecurity_error_internal">Internal error: %1$s</string>
     <string name="hwsecurity_error_timeout">Timeout. Please try again!</string>
-
+    <string name="hwsecurity_nfc_disabled">NFC is disabled. You can enable it in Android\'s NFC settings.</string>
+    <string name="hwsecurity_nfc_disabled_button">NFC Settings</string>
+    <string name="hwsecurity_nfc_settings_toast">Please activate NFC and press Back to return to the app.</string>
 
 </resources>

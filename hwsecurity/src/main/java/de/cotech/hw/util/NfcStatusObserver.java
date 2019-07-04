@@ -62,18 +62,18 @@ import de.cotech.hw.SecurityKeyManager;
  *     protected void onCreate(@Nullable Bundle savedInstanceState) {
  *         super.onCreate(savedInstanceState);
  *
- *         if (!SecurityKeyManager.getInstance().isNfcHardwareAvailable(this)) {
+ *         if (!SecurityKeyManager.getInstance().isNfcHardwareAvailable()) {
  *             startActivityToNicelyTellUserThatNfcHardwareIsUnavailable();
  *             finish();
  *             return;
  *         }
  *
  *         this.nfcStatusObserver = new NfcStatusObserver((Context) this, (LifecycleOwner) this,
- *                 isEnabled -> showOrHideNfcDisabledView(!isEnabled));
+ *                 nfcEnabled -> showOrHideNfcDisabledView(nfcEnabled));
  *
  *         // this button should be part of the "nfc disabled view"
  *         View buttonPleaseEnableNfc = findViewById(R.id.buttonPleaseEnableNfc);
- *         buttonPleaseEnableNfc.setOnClickListener(view -> startAndroidNfcConfigActivityWithHint());
+ *         buttonPleaseEnableNfc.setOnClickListener(v -> startAndroidNfcConfigActivityWithHint());
  *     }
  *
  *     private void startAndroidNfcConfigActivityWithHint() {
@@ -86,7 +86,7 @@ import de.cotech.hw.SecurityKeyManager;
  *     protected void onResume() {
  *         super.onResume();
  *         // In case we missed a change while the activity was in the background
- *         showOrHideNfcDisabledView(!nfcStatusObserver.isNfcEnabled());
+ *         showOrHideNfcDisabledView(nfcStatusObserver.isNfcEnabled());
  *     }
  * }
  * }</pre>

@@ -36,8 +36,10 @@ import androidx.annotation.WorkerThread;
 import androidx.lifecycle.Lifecycle.Event;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
+import de.cotech.hw.exceptions.TransportGoneException;
 import de.cotech.hw.fido.exceptions.FidoPresenceRequiredException;
 import de.cotech.hw.fido.internal.FidoU2fAppletConnection;
+import timber.log.Timber;
 
 
 @RestrictTo(Scope.LIBRARY_GROUP)
@@ -80,6 +82,10 @@ abstract class FidoOperationThread<T> extends Thread implements LifecycleObserve
                 postToHandler(() -> deliverResponse(response));
                 break;
             } catch (InterruptedException e) {
+                Timber.e("Fido operation was interrupted");
+                break;
+            } catch (TransportGoneException e) {
+                Timber.e("Transport gone during fido operation");
                 break;
             } catch (FidoPresenceRequiredException e) {
                 try {
@@ -88,6 +94,10 @@ abstract class FidoOperationThread<T> extends Thread implements LifecycleObserve
                     break;
                 }
             } catch (IOException e) {
+                if (e.getCause() instanceof InterruptedException) {
+                    Timber.e("Fido operation was interrupted");
+                    break;
+                }
                 postToHandler(() -> deliverIoException(e));
                 break;
             }
@@ -106,7 +116,7 @@ abstract class FidoOperationThread<T> extends Thread implements LifecycleObserve
         });
     }
 
-    @OnLifecycleEvent(Event.ON_DESTROY)
+    @OnLifecycleEvent(Event.ON_STOP)
     public void onDestroy() {
         if (isAlive() && !isInterrupted()) {
             fidoAsyncOperationManager.clearAsyncOperation(true, this);

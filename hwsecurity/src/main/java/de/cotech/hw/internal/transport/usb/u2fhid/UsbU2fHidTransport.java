@@ -26,6 +26,7 @@ package de.cotech.hw.internal.transport.usb.u2fhid;
 
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import android.hardware.usb.UsbConstants;
@@ -33,12 +34,15 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.hardware.usb.UsbManager;
 import android.os.SystemClock;
 import android.util.Pair;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
+
+import de.cotech.hw.exceptions.TransportGoneException;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.internal.transport.SecurityKeyInfo.SecurityKeyType;
@@ -57,8 +61,9 @@ import timber.log.Timber;
  */
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class UsbU2fHidTransport implements Transport {
-    private static final List<String> HID_REPORT_FIDO_PREFIXES = java.util.Arrays.asList("06d0f10901", "06d0f10a0100");
+    private static final List<String> HID_REPORT_FIDO_PREFIXES = Arrays.asList("06d0f10901", "06d0f10a0100");
 
+    private final UsbManager usbManager;
     private final UsbDevice usbDevice;
     private final UsbDeviceConnection usbConnection;
     private final UsbInterface usbInterface;
@@ -68,13 +73,16 @@ public class UsbU2fHidTransport implements Transport {
     private boolean released = false;
     private TransportReleasedCallback transportReleasedCallback;
 
-    public static UsbU2fHidTransport createUsbTransport(UsbDevice usbDevice, UsbDeviceConnection usbConnection,
-                                                 UsbInterface usbInterface, boolean enableDebugLogging) {
-        return new UsbU2fHidTransport(usbDevice, usbConnection, usbInterface, enableDebugLogging);
+    public static UsbU2fHidTransport createUsbTransport(UsbManager usbManager, UsbDevice usbDevice,
+            UsbDeviceConnection usbConnection,
+            UsbInterface usbInterface, boolean enableDebugLogging) {
+        return new UsbU2fHidTransport(usbManager, usbDevice, usbConnection, usbInterface, enableDebugLogging);
     }
 
-    private UsbU2fHidTransport(UsbDevice usbDevice, UsbDeviceConnection usbConnection, UsbInterface usbInterface,
-                               boolean enableDebugLogging) {
+    private UsbU2fHidTransport(UsbManager usbManager, UsbDevice usbDevice,
+            UsbDeviceConnection usbConnection, UsbInterface usbInterface,
+            boolean enableDebugLogging) {
+        this.usbManager = usbManager;
         this.usbDevice = usbDevice;
         this.usbConnection = usbConnection;
         this.usbInterface = usbInterface;
@@ -158,9 +166,21 @@ public class UsbU2fHidTransport implements Transport {
     @Override
     public ResponseApdu transceive(CommandApdu commandApdu) throws IOException {
         if (released) {
-            throw new UsbTransportException("Transport is no longer available!");
+            throw new TransportGoneException();
         }
 
+        try {
+            return transceiveInternal(commandApdu);
+        } catch (UsbTransportException e) {
+            if (!UsbUtils.isDeviceStillConnected(usbManager, usbDevice)) {
+                release();
+                throw new TransportGoneException(e);
+            }
+            throw e;
+        }
+    }
+
+    private ResponseApdu transceiveInternal(CommandApdu commandApdu) throws IOException {
         // "For the U2FHID protocol, all raw U2F messages are encoded using extended length APDU encoding."
         // https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-hid-protocol-v1.2-ps-20170411.html
         // This will already be the case for some APDUs, see FidoU2fAppletConnection

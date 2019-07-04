@@ -25,10 +25,10 @@
 package de.cotech.hw.secrets;
 
 
+import androidx.annotation.NonNull;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-
-import androidx.annotation.NonNull;
 
 
 /**
@@ -52,8 +52,13 @@ public class ByteSecret {
 
     @NonNull
     public static ByteSecret fromByteArrayAndClear(byte[] secret) {
-        ByteBuffer secretCopy = ByteBuffer.allocateDirect(secret.length);
-        secretCopy.put(secret);
+        return fromByteArrayAndClear(secret, secret.length);
+    }
+
+    @NonNull
+    public static ByteSecret fromByteArrayAndClear(byte[] secret, int length) {
+        ByteBuffer secretCopy = ByteBuffer.allocateDirect(length);
+        secretCopy.put(secret, 0, length);
         Arrays.fill(secret, (byte) 0);
         return new ByteSecret(secretCopy);
     }

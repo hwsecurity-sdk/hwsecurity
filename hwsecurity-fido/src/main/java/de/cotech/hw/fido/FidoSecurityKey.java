@@ -50,7 +50,7 @@ import de.cotech.hw.util.HashUtil;
 
 @SuppressWarnings({ "unused", "WeakerAccess" }) // All methods are public API
 public class FidoSecurityKey extends SecurityKey {
-    private static final int USER_PRESENCE_CHECK_DELAY_MS = 1000;
+    private static final int USER_PRESENCE_CHECK_DELAY_MS = 250;
 
     private final FidoU2fAppletConnection fidoU2fAppletConnection;
     private final FidoAsyncOperationManager fidoAsyncOperationManager;

@@ -76,10 +76,6 @@ public class RegisterOp {
         CommandApdu command = connection.getCommandFactory().createRegistrationCommand(data);
         ResponseApdu response = connection.communicateOrThrow(command);
 
-        if (!response.isSuccess()) {
-            throw new AssertionError("communicateOrThrow returned unsuccessful ResponseApdu!");
-        }
-
         return response.getData();
     }
 

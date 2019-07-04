@@ -25,10 +25,11 @@
 package de.cotech.hw.fido.internal.jsapi;
 
 
-import java.nio.charset.StandardCharsets;
-
 import androidx.annotation.Nullable;
+
 import com.google.auto.value.AutoValue;
+
+import java.nio.charset.Charset;
 
 
 @AutoValue
@@ -46,7 +47,7 @@ public abstract class U2fResponse {
 
     public static U2fResponse createRegisterResponse(Long requestId, String clientData, byte[] registrationData) {
         RegisterResponseData responseData = new AutoValue_U2fResponse_RegisterResponseData(
-                REGISTER_RESPONSE_VERSION, registrationData, clientData.getBytes(StandardCharsets.UTF_8)
+                REGISTER_RESPONSE_VERSION, registrationData, clientData.getBytes(Charset.forName("UTF-8"))
         );
 
         return new AutoValue_U2fResponse(REGISTER_RESPONSE_TYPE, responseData, requestId);
@@ -55,7 +56,7 @@ public abstract class U2fResponse {
     public static U2fResponse createAuthenticateResponse(Long requestId, String clientData,
             byte[] keyHandle, byte[] signatureData) {
         SignResponseData reseponseData = new AutoValue_U2fResponse_SignResponseData(
-                keyHandle, signatureData, clientData.getBytes(StandardCharsets.UTF_8)
+                keyHandle, signatureData, clientData.getBytes(Charset.forName("UTF-8"))
         );
 
         return new AutoValue_U2fResponse(AUTHENTICATE_RESPONSE_TYPE, reseponseData, requestId);

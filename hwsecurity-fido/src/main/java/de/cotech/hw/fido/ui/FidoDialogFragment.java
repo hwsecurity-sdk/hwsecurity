@@ -25,19 +25,15 @@
 package de.cotech.hw.fido.ui;
 
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.drawable.Animatable;
 import android.graphics.drawable.Drawable;
@@ -46,6 +42,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -57,9 +54,11 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.UiThread;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.Guideline;
@@ -74,9 +73,15 @@ import androidx.transition.Transition;
 import androidx.transition.TransitionManager;
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat;
 import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat;
+
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import de.cotech.hw.SecurityKeyCallback;
 import de.cotech.hw.SecurityKeyException;
 import de.cotech.hw.SecurityKeyManager;
@@ -90,6 +95,7 @@ import de.cotech.hw.fido.FidoSecurityKey;
 import de.cotech.hw.fido.FidoSecurityKeyConnectionMode;
 import de.cotech.hw.fido.R;
 import de.cotech.hw.fido.exceptions.FidoWrongKeyHandleException;
+import de.cotech.hw.util.NfcStatusObserver;
 import de.cotech.sweetspot.NfcSweetspotData;
 import timber.log.Timber;
 
@@ -100,7 +106,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     private static final String ARG_FIDO_AUTHENTICATE_REQUEST = "ARG_FIDO_AUTHENTICATE_REQUEST";
     private static final String ARG_FIDO_OPTIONS = "de.cotech.hw.fido.ARG_FIDO_OPTIONS";
 
-    private static final long TIME_TO_SHOW_ERROR = 3000;
+    private static final long TIME_DELAYED_STATE_CHANGE = 3000;
 
     private OnFidoRegisterCallback fidoRegisterCallback;
     private OnFidoAuthenticateCallback fidoAuthenticateCallback;
@@ -112,19 +118,24 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
 
     private Button buttonCancel;
 
-    private TextView textViewTitle;
-    private TextView textViewDescription;
-    private TextView textViewNfc;
-    private TextView textViewUsb;
+    private TextView textTitle;
+    private TextView textDescription;
+    private TextView textNfc;
+    private TextView textUsb;
     private ImageView imageNfc;
     private ImageView imageNfcFullscreen;
     private ImageView imageUsb;
+
+    private TextView textViewNfcDisabled;
+    private Button buttonNfcDisabled;
 
     private TextView textError;
     private ImageView imageError;
 
     private ImageView sweetspotIndicator;
-    private TextView textViewNfcFullscreen;
+    private TextView textNfcFullscreen;
+
+    private NfcStatusObserver nfcStatusObserver;
 
     private FidoDialogOptions options;
     private FidoRegisterRequest fidoRegisterRequest;
@@ -154,19 +165,27 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     public interface OnFidoRegisterCallback {
         @UiThread
         void onFidoRegisterResponse(@NonNull FidoRegisterResponse fidoRegisterResponse);
+
         @UiThread
-        default void onFidoRegisterCancel(@NonNull FidoRegisterRequest fidoRegisterRequest) { }
+        default void onFidoRegisterCancel(@NonNull FidoRegisterRequest fidoRegisterRequest) {
+        }
+
         @UiThread
-        default void onFidoRegisterTimeout(@NonNull FidoRegisterRequest fidoRegisterRequest) { }
+        default void onFidoRegisterTimeout(@NonNull FidoRegisterRequest fidoRegisterRequest) {
+        }
     }
 
     public interface OnFidoAuthenticateCallback {
         @UiThread
         void onFidoAuthenticateResponse(@NonNull FidoAuthenticateResponse fidoAuthenticateResponse);
+
         @UiThread
-        default void onFidoAuthenticateCancel(@NonNull FidoAuthenticateRequest fidoAuthenticateRequest) { }
+        default void onFidoAuthenticateCancel(@NonNull FidoAuthenticateRequest fidoAuthenticateRequest) {
+        }
+
         @UiThread
-        default void onFidoAuthenticateTimeout(@NonNull FidoAuthenticateRequest fidoAuthenticateRequest) { }
+        default void onFidoAuthenticateTimeout(@NonNull FidoAuthenticateRequest fidoAuthenticateRequest) {
+        }
     }
 
     public static FidoDialogFragment newInstance(@NonNull FidoRegisterRequest fidoRegisterRequest, @NonNull FidoDialogOptions options) {
@@ -229,7 +248,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setStyle(STYLE_NORMAL, R.style.HwSecurity_Fido_BottomSheetDialog);
+        setStyle(STYLE_NORMAL, R.style.HwSecurity_Fido_Dialog);
 
         Context context = getContext();
         if (fidoRegisterCallback == null) {
@@ -296,7 +315,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
                     return;
                 }
                 dismiss();
-            }, TIME_TO_SHOW_ERROR);
+            }, TIME_DELAYED_STATE_CHANGE);
         }, timeoutSeconds * 1000);
     }
 
@@ -335,21 +354,66 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         innerBottomSheet = view.findViewById(R.id.hwSecurityFidoBottomSheet);
         guidelineForceHeight = view.findViewById(R.id.guidelineForceHeight);
         buttonCancel = view.findViewById(R.id.buttonCancel);
-        textViewTitle = view.findViewById(R.id.textTitle);
-        textViewDescription = view.findViewById(R.id.textDescription);
-        textViewNfc = view.findViewById(R.id.textNfc);
-        textViewNfcFullscreen = view.findViewById(R.id.textNfcFullscreen);
-        textViewUsb = view.findViewById(R.id.textUsb);
+        textTitle = view.findViewById(R.id.textTitle);
+        textDescription = view.findViewById(R.id.textDescription);
+        textNfc = view.findViewById(R.id.textNfc);
+        textNfcFullscreen = view.findViewById(R.id.textNfcFullscreen);
+        textUsb = view.findViewById(R.id.textUsb);
         imageNfc = view.findViewById(R.id.imageNfc);
         imageNfcFullscreen = view.findViewById(R.id.imageNfcFullscreen);
         sweetspotIndicator = view.findViewById(R.id.imageNfcSweetspot);
         imageUsb = view.findViewById(R.id.imageUsb);
         imageError = view.findViewById(R.id.imageError);
         textError = view.findViewById(R.id.textError);
+        textViewNfcDisabled = view.findViewById(R.id.textNfcDisabled);
+        buttonNfcDisabled = view.findViewById(R.id.buttonNfcDisabled);
+
+        nfcStatusObserver = new NfcStatusObserver(getContext(), this, this::showOrHideNfcDisabledView);
 
         buttonCancel.setOnClickListener(v -> getDialog().cancel());
+    }
 
-        gotoState(State.START);
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (currentState == State.START) {
+            // re-check NFC status, maybe user is coming back from settings
+            showOrHideNfcView();
+        }
+        if (currentState == null ||
+                currentState == State.USB_INSERT ||
+                currentState == State.USB_PRESS_BUTTON ||
+                currentState == State.USB_SELECT_AND_PRESS_BUTTON) {
+            gotoState(State.START);
+        }
+    }
+
+    private void showOrHideNfcView() {
+        boolean isNfcHardwareAvailable = SecurityKeyManager.getInstance().isNfcHardwareAvailable();
+        textNfc.setVisibility(isNfcHardwareAvailable ? View.VISIBLE : View.GONE);
+        imageNfc.setVisibility(isNfcHardwareAvailable ? View.VISIBLE : View.GONE);
+
+        if (isNfcHardwareAvailable) {
+            boolean nfcEnabled = nfcStatusObserver.isNfcEnabled();
+            showOrHideNfcDisabledView(nfcEnabled);
+        }
+    }
+
+    private void showOrHideNfcDisabledView(boolean nfcEnabled) {
+        textViewNfcDisabled.setVisibility(nfcEnabled ? View.GONE : View.VISIBLE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            buttonNfcDisabled.setOnClickListener(v -> startAndroidNfcConfigActivityWithHint());
+            buttonNfcDisabled.setVisibility(nfcEnabled ? View.GONE : View.VISIBLE);
+        }
+        textNfc.setVisibility(nfcEnabled ? View.VISIBLE : View.INVISIBLE);
+        imageNfc.setVisibility(nfcEnabled ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+    private void startAndroidNfcConfigActivityWithHint() {
+        Toast.makeText(getContext().getApplicationContext(),
+                R.string.hwsecurity_nfc_settings_toast, Toast.LENGTH_SHORT).show();
+        startActivity(new Intent(Settings.ACTION_NFC_SETTINGS));
     }
 
     @Override
@@ -423,19 +487,18 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         imageNfc.setImageResource(R.drawable.nfc_start);
         imageUsb.setImageResource(R.drawable.usb_start);
         buttonCancel.setText(R.string.hwsecurity_cancel);
-        textViewTitle.setText(getStartTitle());
-        textViewDescription.setText(R.string.hwsecurity_description_start);
+        textTitle.setText(getStartTitle());
+        textDescription.setText(R.string.hwsecurity_description_start);
 
         AutoTransition selectModeTransition = new AutoTransition();
         selectModeTransition.setDuration(150);
 
         TransitionManager.go(new Scene(innerBottomSheet), selectModeTransition);
+        showOrHideNfcView();
         imageUsb.setVisibility(View.VISIBLE);
-        imageNfc.setVisibility(View.VISIBLE);
-        textViewNfc.setVisibility(View.VISIBLE);
-        textViewUsb.setVisibility(View.VISIBLE);
-        textViewTitle.setVisibility(View.VISIBLE);
-        textViewDescription.setVisibility(View.VISIBLE);
+        textUsb.setVisibility(View.VISIBLE);
+        textTitle.setVisibility(View.VISIBLE);
+        textDescription.setVisibility(View.VISIBLE);
         textError.setVisibility(View.GONE);
         imageError.setVisibility(View.GONE);
     }
@@ -469,10 +532,12 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         TransitionManager.go(new Scene(innerBottomSheet), selectModeTransition);
         imageUsb.setVisibility(View.GONE);
         imageNfc.setVisibility(View.GONE);
-        textViewNfc.setVisibility(View.GONE);
-        textViewUsb.setVisibility(View.GONE);
-        textViewTitle.setVisibility(View.GONE);
-        textViewDescription.setVisibility(View.GONE);
+        textNfc.setVisibility(View.GONE);
+        textViewNfcDisabled.setVisibility(View.GONE);
+        buttonNfcDisabled.setVisibility(View.GONE);
+        textUsb.setVisibility(View.GONE);
+        textTitle.setVisibility(View.GONE);
+        textDescription.setVisibility(View.GONE);
         textError.setVisibility(View.GONE);
         imageError.setVisibility(View.GONE);
     }
@@ -551,8 +616,8 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     }
 
     private void animateNfcFinal() {
-        textViewNfcFullscreen.setText(R.string.hwsecurity_title_nfc_fullscreen);
-        textViewNfcFullscreen.setVisibility(View.VISIBLE);
+        textNfcFullscreen.setText(R.string.hwsecurity_title_nfc_fullscreen);
+        textNfcFullscreen.setVisibility(View.VISIBLE);
 
         Animatable2Compat.AnimationCallback animationCallback = new Animatable2Compat.AnimationCallback() {
             @Override
@@ -642,7 +707,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
 
             TransitionManager.beginDelayedTransition(innerBottomSheet);
             sweetspotIndicator.setVisibility(View.VISIBLE);
-            textViewNfcFullscreen.setVisibility(View.VISIBLE);
+            textNfcFullscreen.setVisibility(View.VISIBLE);
             imageNfcFullscreen.setVisibility(View.GONE);
             imageError.setVisibility(View.GONE);
             textError.setVisibility(View.GONE);
@@ -678,11 +743,13 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         });
 
         TransitionManager.go(new Scene(innerBottomSheet), selectModeTransition);
-        textViewTitle.setText(R.string.hwsecurity_title_usb_selected);
+        textTitle.setText(R.string.hwsecurity_title_usb_selected);
         imageNfc.setVisibility(View.GONE);
-        textViewDescription.setVisibility(View.GONE);
-        textViewNfc.setVisibility(View.GONE);
-        textViewUsb.setVisibility(View.GONE);
+        textViewNfcDisabled.setVisibility(View.GONE);
+        buttonNfcDisabled.setVisibility(View.GONE);
+        textDescription.setVisibility(View.GONE);
+        textNfc.setVisibility(View.GONE);
+        textUsb.setVisibility(View.GONE);
         textError.setVisibility(View.GONE);
         imageError.setVisibility(View.GONE);
     }
@@ -714,30 +781,34 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         });
 
         TransitionManager.go(new Scene(innerBottomSheet), selectModeTransition);
-        textViewTitle.setText(R.string.hwsecurity_title_usb_button);
+        textTitle.setText(R.string.hwsecurity_title_usb_button);
         imageNfc.setVisibility(View.GONE);
-        textViewDescription.setVisibility(View.GONE);
-        textViewNfc.setVisibility(View.GONE);
-        textViewUsb.setVisibility(View.GONE);
+        textViewNfcDisabled.setVisibility(View.GONE);
+        buttonNfcDisabled.setVisibility(View.GONE);
+        textDescription.setVisibility(View.GONE);
+        textNfc.setVisibility(View.GONE);
+        textUsb.setVisibility(View.GONE);
         textError.setVisibility(View.GONE);
         imageError.setVisibility(View.GONE);
     }
 
     private void animateUsbPressButton() {
         TransitionManager.beginDelayedTransition(innerBottomSheet);
-        textViewTitle.setText(R.string.hwsecurity_title_usb_button);
+        textTitle.setText(R.string.hwsecurity_title_usb_button);
         startAndLoopAnimation(imageUsb, R.drawable.usb_handling_b);
     }
 
     private void animateError() {
         TransitionManager.beginDelayedTransition(innerBottomSheet);
-        textViewTitle.setVisibility(View.GONE);
-        textViewDescription.setVisibility(View.GONE);
+        textTitle.setVisibility(View.GONE);
+        textDescription.setVisibility(View.GONE);
         imageNfc.setVisibility(View.GONE);
+        textViewNfcDisabled.setVisibility(View.GONE);
+        buttonNfcDisabled.setVisibility(View.GONE);
         imageUsb.setVisibility(View.GONE);
-        textViewNfc.setVisibility(View.GONE);
-        textViewUsb.setVisibility(View.GONE);
-        textViewNfcFullscreen.setVisibility(View.GONE);
+        textNfc.setVisibility(View.GONE);
+        textUsb.setVisibility(View.GONE);
+        textNfcFullscreen.setVisibility(View.GONE);
         imageNfcFullscreen.setVisibility(View.GONE);
         textError.setVisibility(View.VISIBLE);
         imageError.setVisibility(View.VISIBLE);
@@ -813,8 +884,9 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
                 }
                 break;
             }
-            default:
-                Timber.e("onSecurityKeyDiscovered unhandled state: %s", currentState.name());
+            default: {
+                Timber.d("onSecurityKeyDiscovered unhandled state: %s", currentState.name());
+            }
         }
 
         if (fidoRegisterRequest != null) {
@@ -865,9 +937,8 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
             case USB_SELECT_AND_PRESS_BUTTON:
                 gotoState(State.START);
             default:
-                Timber.e("onSecurityKeyDisconnected unhandled state: %s", currentState.name());
+                Timber.d("onSecurityKeyDisconnected unhandled state: %s", currentState.name());
         }
-
     }
 
     @Override
@@ -907,7 +978,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
                 return;
             }
             gotoState(stateBeforeError);
-        }, TIME_TO_SHOW_ERROR);
+        }, TIME_DELAYED_STATE_CHANGE);
     }
 
 }

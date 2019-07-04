@@ -111,7 +111,7 @@ public class U2fHidTransportProtocol {
             while (true) {
                 transferBuffer.clear();
                 if (!usbRequest.queue(transferBuffer, U2fHidFrameFactory.U2FHID_BUFFER_SIZE)) {
-                    throw new IOException("Failed to receive data!");
+                    throw new U2fHidFailedEnqueueException("Failed to receive data!");
                 }
                 usbCconnection.requestWait();
                 try {
@@ -143,13 +143,7 @@ public class U2fHidTransportProtocol {
                 throw new IOException("Read request could not be opened!");
             }
 
-            if (!usbRequest.queue(transferBuffer, U2fHidFrameFactory.U2FHID_BUFFER_SIZE)) {
-                throw new IOException("Failed to receive data!");
-            }
-            usbCconnection.requestWait();
-
-            transferBuffer.clear();
-            int expectedFrames = frameFactory.findExpectedFramesFromInitPacketHeader(channelId, transferBuffer);
+            int expectedFrames = readUntilInitHeaderForChannel(usbRequest);
 
             byte[] data = new byte[expectedFrames * U2fHidFrameFactory.U2FHID_BUFFER_SIZE];
             transferBuffer.clear();
@@ -158,7 +152,7 @@ public class U2fHidTransportProtocol {
             int offset = U2fHidFrameFactory.U2FHID_BUFFER_SIZE;
             for (int i = 1; i < expectedFrames; i++) {
                 if (!usbRequest.queue(transferBuffer, U2fHidFrameFactory.U2FHID_BUFFER_SIZE)) {
-                    throw new IOException("Failed to receive data!");
+                    throw new U2fHidFailedEnqueueException("Failed to receive data!");
                 }
                 usbCconnection.requestWait();
                 transferBuffer.clear();
@@ -168,6 +162,22 @@ public class U2fHidTransportProtocol {
 
             return data;
         }, 2 * 1000);
+    }
+
+    private int readUntilInitHeaderForChannel(UsbRequest usbRequest) throws IOException {
+        while (true) {
+            if (!usbRequest.queue(transferBuffer, U2fHidFrameFactory.U2FHID_BUFFER_SIZE)) {
+                throw new U2fHidFailedEnqueueException("Failed to receive data!");
+            }
+            usbCconnection.requestWait();
+
+            transferBuffer.clear();
+            try {
+                return frameFactory.findExpectedFramesFromInitPacketHeader(channelId, transferBuffer);
+            } catch (U2fHidChangedChannelException e) {
+                Timber.d("Received message from wrong channel - ignoring");
+            }
+        }
     }
 
     @WorkerThread
@@ -186,7 +196,7 @@ public class U2fHidTransportProtocol {
                 transferBuffer.clear();
                 transferBuffer.put(hidFrame, offset, U2fHidFrameFactory.U2FHID_BUFFER_SIZE);
                 if (!usbRequest.queue(transferBuffer, U2fHidFrameFactory.U2FHID_BUFFER_SIZE)) {
-                    throw new IOException("Failed to send data!");
+                    throw new U2fHidFailedEnqueueException("Failed to send data!");
                 }
                 usbCconnection.requestWait(); // blocking
                 offset += U2fHidFrameFactory.U2FHID_BUFFER_SIZE;
@@ -202,9 +212,15 @@ public class U2fHidTransportProtocol {
         try {
             Future<T> future = executor.submit(() -> task.performUsbRequest(usbRequest));
             return future.get(timeoutMs, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+        } catch (ExecutionException e) {
             usbRequest.cancel();
-            throw new UsbTransportException("Error transmitting data!", e);
+            throw new UsbTransportException("Error transmitting data!", e.getCause());
+        } catch (InterruptedException e) {
+            usbRequest.cancel();
+            throw new UsbTransportException("Received interrupt during usb transaction", e);
+        } catch (TimeoutException e) {
+            usbRequest.cancel();
+            throw new UsbTransportException("Timed out transmitting data");
         } finally {
             usbRequest.close();
         }

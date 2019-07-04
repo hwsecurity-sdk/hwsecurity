@@ -95,6 +95,38 @@
         app:srcCompat="@drawable/nfc_start"
         tools:visibility="visible" />
 
+    <TextView
+        android:id="@+id/textNfcDisabled"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="24dp"
+        android:gravity="center"
+        android:text="@string/hwsecurity_nfc_disabled"
+        android:visibility="gone"
+        app:layout_constraintEnd_toStartOf="@+id/imageUsb"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textNfc"
+        app:srcCompat="@drawable/nfc_start"
+        tools:visibility="visible" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonNfcDisabled"
+        style="@style/HwSecurity.Fido.Dialog.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/hwsecurity_nfc_disabled_button"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/guidelineBottom"
+        app:layout_constraintEnd_toStartOf="@+id/imageUsb"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textNfcDisabled"
+        tools:visibility="visible" />
+
     <ImageView
         android:id="@+id/imageNfcFullscreen"
         android:layout_width="0dp"
@@ -142,7 +174,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        android:textColor="@color/hwSecurityColorError"
+        android:textColor="@color/hwSecurityRed"
         android:textSize="16sp"
         android:visibility="gone"
         app:fontFamily="sans-serif-medium"
@@ -176,7 +208,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonCancel"
-        style="@style/HwSecurity.Fido.Dialog.Button"
+        style="@style/HwSecurity.Fido.Dialog.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -186,7 +218,7 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonSecond"
-        style="@style/HwSecurity.Fido.Dialog.Button"
+        style="@style/HwSecurity.Fido.Dialog.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"

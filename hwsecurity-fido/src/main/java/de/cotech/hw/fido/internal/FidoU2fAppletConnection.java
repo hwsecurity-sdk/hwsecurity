@@ -35,10 +35,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 import de.cotech.hw.SecurityKeyException;
-import de.cotech.hw.exceptions.ClaNotSupportedException;
-import de.cotech.hw.exceptions.InsNotSupportedException;
-import de.cotech.hw.exceptions.SelectAppletException;
-import de.cotech.hw.exceptions.WrongRequestLengthException;
+import de.cotech.hw.exceptions.*;
 import de.cotech.hw.fido.exceptions.FidoPresenceRequiredException;
 import de.cotech.hw.fido.exceptions.FidoWrongKeyHandleException;
 import de.cotech.hw.internal.iso7816.CommandApdu;
@@ -58,6 +55,8 @@ public class FidoU2fAppletConnection {
             // see to "FIDO U2F NFC protocol", Section 5. Applet selection
             // https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-nfc-protocol-v1.2-ps-20170411.html
             Hex.decodeHexOrFail("A0000006472F0001"),
+            // Workaround for Solokey: https://github.com/solokeys/solo/issues/213
+            Hex.decodeHexOrFail("A0000006472F000100"),
             // old Yubico demo applet AID
             Hex.decodeHexOrFail("A0000005271002")
     );
@@ -129,16 +128,17 @@ public class FidoU2fAppletConnection {
 
     private byte[] selectFileOrFail(byte[] fileAid) throws IOException {
         CommandApdu select = commandFactory.createSelectFileCommand(fileAid);
-        ResponseApdu response = communicate(select);
 
-        if (response.isSuccess()) {
+        try {
+            ResponseApdu response = communicateOrThrow(select);
+
             // "FIDO authenticator SHALL reply with its version string in the successful response"
             // https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-nfc-protocol-v1.2-ps-20170411.html
             checkVersionOrThrow(response.getData());
             return fileAid;
+        } catch (AppletFileNotFoundException e) {
+            return null;
         }
-
-        return null;
     }
 
     // endregion
@@ -173,6 +173,8 @@ public class FidoU2fAppletConnection {
                 throw new FidoPresenceRequiredException();
             case FidoWrongKeyHandleException.SW_WRONG_KEY_HANDLE:
                 throw new FidoWrongKeyHandleException();
+            case AppletFileNotFoundException.SW_FILE_NOT_FOUND:
+                throw new AppletFileNotFoundException();
             case ClaNotSupportedException.SW_CLA_NOT_SUPPORTED:
                 throw new ClaNotSupportedException();
             case InsNotSupportedException.SW_INS_NOT_SUPPORTED:
@@ -200,7 +202,13 @@ public class FidoU2fAppletConnection {
          */
         if (transport.isExtendedLengthSupported() && commandFactory.isSuitableForExtendedApdu(commandApdu)) {
             CommandApdu extendedLengthApdu = commandApdu.withNe(65536);
-            return transport.transceive(extendedLengthApdu);
+            ResponseApdu response = transport.transceive(extendedLengthApdu);
+            if (response.getSw() == WrongRequestLengthException.SW_WRONG_REQUEST_LENGTH) {
+                Timber.d("Received WRONG_REQUEST_LENGTH error. Retrying with compatibility workaround");
+                CommandApdu shortApdu = commandFactory.createShortApdu(commandApdu);
+                return transport.transceive(shortApdu);
+            }
+            return response;
         }
 
         if (commandFactory.isSuitableForShortApdu(commandApdu)) {

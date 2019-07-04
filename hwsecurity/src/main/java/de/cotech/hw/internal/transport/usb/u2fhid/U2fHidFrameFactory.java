@@ -143,8 +143,7 @@ final class U2fHidFrameFactory {
             initPacket.mark();
             FrameInitPacketHeader initPacketHeader = FrameInitPacketHeader.fromByteBuffer(initPacket);
             if (expectedChannelId != U2FHID_CHANNEL_ID_BROADCAST && initPacketHeader.channelId != expectedChannelId) {
-                throw new UsbTransportException("Channel changed during transaction, " + expectedChannelId + " to " +
-                        initPacketHeader.channelId);
+                throw new U2fHidChangedChannelException(expectedChannelId, initPacketHeader.channelId);
             }
             initPacket.reset();
             return calculatePacketCountForPayload(initPacketHeader.payloadLength);
@@ -180,7 +179,7 @@ final class U2fHidFrameFactory {
         }
 
         if (expectedChannelId != U2FHID_CHANNEL_ID_BROADCAST && initPacket.channelId != expectedChannelId) {
-            throw new UsbTransportException("Channel changed during transaction, " + expectedChannelId + " to " + initPacket.channelId);
+            throw new U2fHidChangedChannelException(expectedChannelId, initPacket.channelId);
         }
 
         // check we don't have less data than claimed
@@ -215,8 +214,7 @@ final class U2fHidFrameFactory {
             throws UsbTransportException {
         int channelId = frame.getInt();
         if (channelId != expectedChannelId) {
-            throw new UsbTransportException(
-                    "Channel changed during transaction = " + expectedChannelId + " to " + channelId);
+            throw new U2fHidChangedChannelException(expectedChannelId, channelId);
         }
 
         byte sequenceId = frame.get();

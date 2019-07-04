@@ -30,6 +30,7 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import android.hardware.usb.UsbManager;
 import android.util.Pair;
 
 import java.io.IOException;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
+import de.cotech.hw.exceptions.TransportGoneException;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.internal.transport.SecurityKeyInfo.SecurityKeyType;
@@ -56,6 +58,7 @@ import timber.log.Timber;
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class UsbCcidTransport implements Transport {
 
+    private final UsbManager usbManager;
     private final UsbDevice usbDevice;
     private final UsbDeviceConnection usbConnection;
     private final UsbInterface usbInterface;
@@ -65,13 +68,16 @@ public class UsbCcidTransport implements Transport {
     private boolean released = false;
     private TransportReleasedCallback transportReleasedCallback;
 
-    public static UsbCcidTransport createUsbTransport(UsbDevice usbDevice, UsbDeviceConnection usbConnection,
-                                               UsbInterface usbInterface, boolean enableDebugLogging) {
-        return new UsbCcidTransport(usbDevice, usbConnection, usbInterface, enableDebugLogging);
+    public static UsbCcidTransport createUsbTransport(UsbManager usbManager, UsbDevice usbDevice,
+            UsbDeviceConnection usbConnection,
+            UsbInterface usbInterface, boolean enableDebugLogging) {
+        return new UsbCcidTransport(usbManager, usbDevice, usbConnection, usbInterface, enableDebugLogging);
     }
 
-    private UsbCcidTransport(UsbDevice usbDevice, UsbDeviceConnection usbConnection, UsbInterface usbInterface,
-                             boolean enableDebugLogging) {
+    private UsbCcidTransport(UsbManager usbManager, UsbDevice usbDevice,
+            UsbDeviceConnection usbConnection, UsbInterface usbInterface,
+            boolean enableDebugLogging) {
+        this.usbManager = usbManager;
         this.usbDevice = usbDevice;
         this.usbConnection = usbConnection;
         this.usbInterface = usbInterface;
@@ -146,21 +152,29 @@ public class UsbCcidTransport implements Transport {
     @Override
     public ResponseApdu transceive(CommandApdu commandApdu) throws IOException {
         if (released) {
-            throw new UsbTransportException("Transport is no longer available!");
+            throw new TransportGoneException();
         }
         byte[] rawCommand = commandApdu.toBytes();
         if (enableDebugLogging) {
             Timber.d("USB_CCID out: %s", commandApdu);
         }
 
-        byte[] rawResponse = ccidTransportProtocol.transceive(rawCommand);
+        try {
+            byte[] rawResponse = ccidTransportProtocol.transceive(rawCommand);
 
-        ResponseApdu responseApdu = ResponseApdu.fromBytes(rawResponse);
-        if (enableDebugLogging) {
-            Timber.d("USB_CCID  in: %s", responseApdu);
+            ResponseApdu responseApdu = ResponseApdu.fromBytes(rawResponse);
+            if (enableDebugLogging) {
+                Timber.d("USB_CCID  in: %s", responseApdu);
+            }
+
+            return responseApdu;
+        } catch (UsbTransportException e) {
+            if (!UsbUtils.isDeviceStillConnected(usbManager, usbDevice)) {
+                release();
+                throw new TransportGoneException(e);
+            }
+            throw e;
         }
-
-        return responseApdu;
     }
 
     @Override

@@ -115,8 +115,25 @@ public class UsbDeviceManager {
     }
 
     @UiThread
-    boolean isDeviceManaged(UsbDevice usbDevice) {
-        return managedUsbDevices.containsKey(usbDevice);
+    boolean refreshDeviceIfManaged(UsbDevice usbDevice) {
+        synchronized (managedUsbDevices) {
+            ManagedUsbDevice managedUsbDevice = managedUsbDevices.get(usbDevice);
+            if (managedUsbDevice == null) {
+                return false;
+            }
+
+            try {
+                managedUsbDevice.claimInterface();
+            } catch (UsbTransportException e) {
+                Timber.d("Failed to reclaim USB device, releasing (0x%s 0x%s)",
+                        Integer.toHexString(usbDevice.getVendorId()), Integer.toHexString(usbDevice.getProductId()));
+                managedUsbDevice.clearAllActiveUsbTransports();
+                managedUsbDevices.remove(usbDevice);
+                return false;
+            }
+
+            return true;
+        }
     }
 
     @UiThread
@@ -134,13 +151,8 @@ public class UsbDeviceManager {
         }
         Timber.d("USB connection: %s", usbConnection.getSerial());
 
-        ManagedUsbDevice managedUsbDevice = new ManagedUsbDevice(usbDevice, usbConnection);
-        for (UsbInterface usbInterface : usbInterfaces) {
-            Timber.d("Claiming USB interface: %s", usbInterface);
-            if (!usbConnection.claimInterface(usbInterface, true)) {
-                throw new UsbTransportException("USB error: failed to claim interface");
-            }
-        }
+        ManagedUsbDevice managedUsbDevice = new ManagedUsbDevice(usbDevice, usbConnection, usbInterfaces);
+        managedUsbDevice.claimInterface();
         startMonitorThread(managedUsbDevice, usbInterfaces).start();
         return managedUsbDevice;
     }
@@ -166,12 +178,25 @@ public class UsbDeviceManager {
     private class ManagedUsbDevice {
         private UsbDevice usbDevice;
         private UsbDeviceConnection usbConnection;
+        private List<UsbInterface> usbInterfaces;
 
         private Map<UsbInterface, Transport> currentActiveTransports = new HashMap<>();
 
-        private ManagedUsbDevice(UsbDevice usbDevice, UsbDeviceConnection usbConnection) {
+        private ManagedUsbDevice(
+                UsbDevice usbDevice, UsbDeviceConnection usbConnection, List<UsbInterface> usbInterfaces) {
             this.usbDevice = usbDevice;
             this.usbConnection = usbConnection;
+            this.usbInterfaces = usbInterfaces;
+        }
+
+        @AnyThread
+        synchronized void claimInterface() throws UsbTransportException {
+            for (UsbInterface usbInterface : usbInterfaces) {
+                Timber.d("(Re)claiming USB interface: %s", usbInterface);
+                if (!usbConnection.claimInterface(usbInterface, true)) {
+                    throw new UsbTransportException("USB error: failed to claim interface");
+                }
+            }
         }
 
         @AnyThread
@@ -201,10 +226,10 @@ public class UsbDeviceManager {
             Transport usbTransport;
             if (usbInterface.getInterfaceClass() == UsbConstants.USB_CLASS_CSCID) {
                 usbTransport = UsbCcidTransport.createUsbTransport(
-                        usbDevice, usbConnection, usbInterface, enableDebugLogging);
+                        usbManager, usbDevice, usbConnection, usbInterface, enableDebugLogging);
             } else if (usbInterface.getInterfaceClass() == UsbConstants.USB_CLASS_HID) {
                 usbTransport = UsbU2fHidTransport.createUsbTransport(
-                        usbDevice, usbConnection, usbInterface, enableDebugLogging);
+                        usbManager, usbDevice, usbConnection, usbInterface, enableDebugLogging);
             } else {
                 throw new RuntimeException("unsupported USB class");
             }
@@ -287,7 +312,7 @@ public class UsbDeviceManager {
 
         @AnyThread
         boolean deviceIsStillConnected() {
-            return usbManager.getDeviceList().containsValue(managedUsbDevice.usbDevice);
+            return UsbUtils.isDeviceStillConnected(usbManager, managedUsbDevice.usbDevice);
         }
     }
 
