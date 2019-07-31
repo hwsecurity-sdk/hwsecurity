@@ -25,6 +25,14 @@
 package de.cotech.hw.internal.transport;
 
 
+import android.os.Parcelable;
+
+import androidx.annotation.Nullable;
+import androidx.annotation.RestrictTo;
+import androidx.annotation.RestrictTo.Scope;
+
+import com.google.auto.value.AutoValue;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,13 +41,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import android.os.Parcelable;
-
-import androidx.annotation.Nullable;
-import androidx.annotation.RestrictTo;
-import androidx.annotation.RestrictTo.Scope;
-import com.google.auto.value.AutoValue;
 
 
 @AutoValue
@@ -139,10 +140,5 @@ public abstract class SecurityKeyInfo implements Parcelable {
         }
         return Version.create(matcher.group(1));
     }
-
-//    public Version getOpenPgpVersion() {
-//        OpenPgpAid aid = OpenPgpAid.create(getAid());
-//        return aid.getOpenPgpSpecVersion();
-//    }
 
 }

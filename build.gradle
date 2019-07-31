@@ -22,5 +22,5 @@ ext {
     compileSdkVersion = 28
     hwSdkIncludeAsSubmodule = false
     hwSdkVersionCode = 8
-    hwSdkVersionName = '2.2.3'
+    hwSdkVersionName = '2.3.3'
 }

@@ -24,6 +24,11 @@
 
 package de.cotech.hw.internal.transport.usb;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import android.annotation.SuppressLint;
 import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
@@ -130,4 +135,26 @@ public class UsbSecurityKeyTypes {
     static boolean isSecurityKey(int vendorId, int productId) {
         return UsbSecurityKeyTypes.getSecurityKeyTypeFromUsbDeviceInfo(vendorId, productId, null) != null;
     }
+
+    private static final Map<SecurityKeyInfo.SecurityKeyType, String> SECURITY_KEY_NAMES = createVendorMap();
+
+    private static Map<SecurityKeyInfo.SecurityKeyType, String> createVendorMap() {
+        @SuppressLint("UseSparseArrays") Map<SecurityKeyInfo.SecurityKeyType, String> result = new HashMap<>();
+        result.put(SecurityKeyInfo.SecurityKeyType.YUBIKEY_NEO, "YubiKey NEO");
+        result.put(SecurityKeyInfo.SecurityKeyType.YUBIKEY_4_5, "YubiKey");
+        result.put(SecurityKeyInfo.SecurityKeyType.NITROKEY_PRO, "Nitrokey Pro");
+        result.put(SecurityKeyInfo.SecurityKeyType.NITROKEY_STORAGE, "Nitrokey Storage");
+        result.put(SecurityKeyInfo.SecurityKeyType.NITROKEY_START_OLD, "Nitrokey Start");
+        result.put(SecurityKeyInfo.SecurityKeyType.NITROKEY_START_1_25_AND_NEWER, "Nitrokey Start");
+        result.put(SecurityKeyInfo.SecurityKeyType.GNUK_OLD, "Gnuk");
+        result.put(SecurityKeyInfo.SecurityKeyType.GNUK_1_25_AND_NEWER, "Gnuk");
+        result.put(SecurityKeyInfo.SecurityKeyType.LEDGER_NANO_S, "Ledger Nano S");
+        result.put(SecurityKeyInfo.SecurityKeyType.GEMALTO_PROX_DU, "Gemalto Prox DU");
+        return Collections.unmodifiableMap(result);
+    }
+
+    public static String getSecurityKeyName(SecurityKeyInfo.SecurityKeyType securityKeyType) {
+        return SECURITY_KEY_NAMES.get(securityKeyType);
+    }
+
 }

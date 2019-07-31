@@ -76,8 +76,5 @@ public interface SecurityKeyAuthenticator {
      * @param hashAlgo the algorithm to digest the challenge with before signing
      */
     @WorkerThread
-    default byte[] authenticateWithDigest(byte[] challenge, String hashAlgo) throws IOException, NoSuchAlgorithmException {
-        byte[] digest = MessageDigest.getInstance(hashAlgo).digest(challenge);
-        return authenticatePresignedDigest(digest, hashAlgo);
-    }
+    byte[] authenticateWithDigest(byte[] challenge, String hashAlgo) throws IOException, NoSuchAlgorithmException;
 }

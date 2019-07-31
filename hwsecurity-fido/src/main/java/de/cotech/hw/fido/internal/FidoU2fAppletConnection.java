@@ -149,10 +149,10 @@ public class FidoU2fAppletConnection {
     private ResponseApdu communicate(CommandApdu commandApdu) throws IOException {
         ResponseApdu lastResponse;
 
-        lastResponse = transceiveWithChaining(commandApdu);
+        lastResponse = sendWithChaining(commandApdu);
         if (lastResponse.getSw1() == RESPONSE_SW1_INCORRECT_LENGTH && lastResponse.getSw2() != 0) {
             commandApdu = commandApdu.withNe(lastResponse.getSw2());
-            lastResponse = transceiveWithChaining(commandApdu);
+            lastResponse = sendWithChaining(commandApdu);
         }
         lastResponse = readChainedResponseIfAvailable(lastResponse);
 
@@ -188,9 +188,8 @@ public class FidoU2fAppletConnection {
 
     // ISO/IEC 7816-4
     @NonNull
-    private ResponseApdu transceiveWithChaining(CommandApdu commandApdu) throws IOException {
-        /* If extended length is supported, we use an Lc of 65536 to enforce extended length
-         * APDUs for the register and authenticate commands.
+    private ResponseApdu sendWithChaining(CommandApdu commandApdu) throws IOException {
+        /* We use an Lc of 65536 to enforce extended length APDUs for the register and authenticate commands.
          *
          * This forces APDU case 4e in CommandApdu:
          * apdu[apdu.length - 2] = 0;
@@ -199,16 +198,21 @@ public class FidoU2fAppletConnection {
          * see also:
          * https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-hid-protocol-v1.2-ps-20170411.html
          * https://docs.oracle.com/javacard/3.0.5/prognotes/extended_apdu_format.htm
+         *
+         * Note:
+         * We do *not* check for `transport.isExtendedLengthSupported()` here! There are phones (including
+         * the Nexus 5X) that return "false" to this, but some Security Keys (like Yubikey Neo) still
+         * require us to send extended APDUs. So what we do is, send an extended APDU, and if that doesn't
+         * work, fall back to a short one.
          */
-        if (transport.isExtendedLengthSupported() && commandFactory.isSuitableForExtendedApdu(commandApdu)) {
+        if (commandFactory.isSuitableForExtendedApdu(commandApdu)) {
             CommandApdu extendedLengthApdu = commandApdu.withNe(65536);
             ResponseApdu response = transport.transceive(extendedLengthApdu);
-            if (response.getSw() == WrongRequestLengthException.SW_WRONG_REQUEST_LENGTH) {
+            if (response.getSw() != WrongRequestLengthException.SW_WRONG_REQUEST_LENGTH) {
+                return response;
+            } else {
                 Timber.d("Received WRONG_REQUEST_LENGTH error. Retrying with compatibility workaround");
-                CommandApdu shortApdu = commandFactory.createShortApdu(commandApdu);
-                return transport.transceive(shortApdu);
             }
-            return response;
         }
 
         if (commandFactory.isSuitableForShortApdu(commandApdu)) {

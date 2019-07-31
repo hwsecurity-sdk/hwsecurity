@@ -44,10 +44,10 @@ import android.text.Editable;
 public class CharSecret {
     private CharBuffer secret;
 
-    /* According to http://stackoverflow.com/a/15844273 EditText is not using String internally
-     * but char[]. Thus, we can get the char[] directly from it. */
     @NonNull
     public static CharSecret fromEditableAndClear(Editable editable) {
+        /* According to http://stackoverflow.com/a/15844273 EditText is not using String internally
+         * but char[]. Thus, we can get the char[] directly from it. */
         int pl = editable.length();
         char[] chars = new char[pl];
         editable.getChars(0, pl, chars, 0);

@@ -103,12 +103,14 @@ public class U2fHidTransportProtocol {
         byte[] requestFrame = frameFactory.wrapFrame(channelId, U2fHidFrameFactory.U2FHID_INIT, initRequestBytes);
         writeHidPacketsToUsbDevice(requestFrame);
 
-        return performUsbRequestWithTimeout(usbRequest -> {
+        return performUsbRequestWithTimeout((thread, usbRequest) -> {
+            checkInterrupt(thread);
             if (!usbRequest.initialize(usbCconnection, usbEndpointIn)) {
                 throw new IOException("Read request could not be opened!");
             }
 
             while (true) {
+                checkInterrupt(thread);
                 transferBuffer.clear();
                 if (!usbRequest.queue(transferBuffer, U2fHidFrameFactory.U2FHID_BUFFER_SIZE)) {
                     throw new U2fHidFailedEnqueueException("Failed to receive data!");
@@ -138,11 +140,14 @@ public class U2fHidTransportProtocol {
 
     @WorkerThread
     private byte[] readHidPacketsFromUsbDevice() throws UsbTransportException {
-        return performUsbRequestWithTimeout(usbRequest -> {
+        return performUsbRequestWithTimeout((thread, usbRequest) -> {
+            checkInterrupt(thread);
+
             if (!usbRequest.initialize(usbCconnection, usbEndpointIn)) {
                 throw new IOException("Read request could not be opened!");
             }
 
+            checkInterrupt(thread);
             int expectedFrames = readUntilInitHeaderForChannel(usbRequest);
 
             byte[] data = new byte[expectedFrames * U2fHidFrameFactory.U2FHID_BUFFER_SIZE];
@@ -151,6 +156,7 @@ public class U2fHidTransportProtocol {
 
             int offset = U2fHidFrameFactory.U2FHID_BUFFER_SIZE;
             for (int i = 1; i < expectedFrames; i++) {
+                checkInterrupt(thread);
                 if (!usbRequest.queue(transferBuffer, U2fHidFrameFactory.U2FHID_BUFFER_SIZE)) {
                     throw new U2fHidFailedEnqueueException("Failed to receive data!");
                 }
@@ -186,13 +192,16 @@ public class U2fHidTransportProtocol {
             throw new IllegalArgumentException("Invalid HID frame size!");
         }
 
-        performUsbRequestWithTimeout(usbRequest -> {
+        performUsbRequestWithTimeout((thread, usbRequest) -> {
+            checkInterrupt(thread);
+
             if (!usbRequest.initialize(usbCconnection, usbEndpointOut)) {
                 throw new IOException("Request could not be opened!");
             }
 
             int offset = 0;
             while (offset < hidFrame.length) {
+                checkInterrupt(thread);
                 transferBuffer.clear();
                 transferBuffer.put(hidFrame, offset, U2fHidFrameFactory.U2FHID_BUFFER_SIZE);
                 if (!usbRequest.queue(transferBuffer, U2fHidFrameFactory.U2FHID_BUFFER_SIZE)) {
@@ -209,20 +218,25 @@ public class U2fHidTransportProtocol {
     @WorkerThread
     private <T> T performUsbRequestWithTimeout(UsbRequestTask<T> task, int timeoutMs) throws UsbTransportException {
         UsbRequest usbRequest = newUsbRequest();
+
+        Future<T> future = executor.submit(() -> {
+            Thread thread = Thread.currentThread();
+            try {
+                return task.performUsbRequest(thread, usbRequest);
+            } finally {
+                usbRequest.close();
+            }
+        });
+
         try {
-            Future<T> future = executor.submit(() -> task.performUsbRequest(usbRequest));
             return future.get(timeoutMs, TimeUnit.MILLISECONDS);
         } catch (ExecutionException e) {
-            usbRequest.cancel();
             throw new UsbTransportException("Error transmitting data!", e.getCause());
         } catch (InterruptedException e) {
-            usbRequest.cancel();
+            future.cancel(true);
             throw new UsbTransportException("Received interrupt during usb transaction", e);
         } catch (TimeoutException e) {
-            usbRequest.cancel();
             throw new UsbTransportException("Timed out transmitting data");
-        } finally {
-            usbRequest.close();
         }
     }
 
@@ -238,6 +252,13 @@ public class U2fHidTransportProtocol {
 
     interface UsbRequestTask<T> {
         @WorkerThread
-        T performUsbRequest(UsbRequest request) throws IOException;
+        T performUsbRequest(Thread thread, UsbRequest request) throws IOException, InterruptedException;
+    }
+
+    private static void checkInterrupt(Thread thread) throws InterruptedException {
+        if (thread.isInterrupted()) {
+            Timber.d("Received interrupt, canceling USB operation");
+            throw new InterruptedException();
+        }
     }
 }

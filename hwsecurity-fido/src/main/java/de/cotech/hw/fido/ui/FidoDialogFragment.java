@@ -95,6 +95,7 @@ import de.cotech.hw.fido.FidoSecurityKey;
 import de.cotech.hw.fido.FidoSecurityKeyConnectionMode;
 import de.cotech.hw.fido.R;
 import de.cotech.hw.fido.exceptions.FidoWrongKeyHandleException;
+import de.cotech.hw.fido.internal.AnimatedVectorDrawableHelper;
 import de.cotech.hw.util.NfcStatusObserver;
 import de.cotech.sweetspot.NfcSweetspotData;
 import timber.log.Timber;
@@ -234,12 +235,14 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
             coordinator = bottomSheetDialog.findViewById(com.google.android.material.R.id.coordinator);
             bottomSheet = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
 
-            // never just "peek", always fully expand the bottom sheet
-            if (bottomSheet != null) {
-                BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-                bottomSheetBehavior.setSkipCollapsed(true);
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            if (bottomSheet == null) {
+                throw new IllegalStateException("bottomSheet is null");
             }
+
+            // never just "peek", always fully expand the bottom sheet
+            BottomSheetBehavior bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+            bottomSheetBehavior.setSkipCollapsed(true);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
         });
 
         return dialog;
@@ -302,11 +305,6 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         final Handler handler = new Handler();
         handler.postDelayed(() -> {
             Timber.d("Timeout after %s seconds.", timeoutSeconds);
-            if (fidoAuthenticateRequest != null) {
-                fidoAuthenticateCallback.onFidoAuthenticateTimeout(fidoAuthenticateRequest);
-            } else if (fidoRegisterRequest != null) {
-                fidoRegisterCallback.onFidoRegisterTimeout(fidoRegisterRequest);
-            }
 
             textError.setText(R.string.hwsecurity_error_timeout);
             gotoState(State.ERROR);
@@ -315,6 +313,12 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
                     return;
                 }
                 dismiss();
+
+                if (fidoAuthenticateRequest != null) {
+                    fidoAuthenticateCallback.onFidoAuthenticateTimeout(fidoAuthenticateRequest);
+                } else if (fidoRegisterRequest != null) {
+                    fidoRegisterCallback.onFidoRegisterTimeout(fidoRegisterRequest);
+                }
             }, TIME_DELAYED_STATE_CHANGE);
         }, timeoutSeconds * 1000);
     }
@@ -630,14 +634,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
             }
         };
 
-        if (Build.VERSION.SDK_INT <= 24) {
-            AnimatedVectorDrawableCompat avdCompat = setAndStartAnimatedVectorDrawableSdk24(imageNfcFullscreen, R.drawable.nfc_handling);
-            avdCompat.registerAnimationCallback(animationCallback);
-        } else {
-            AnimatedVectorDrawableCompat.registerAnimationCallback(imageNfcFullscreen.getDrawable(), animationCallback);
-            Animatable animatable = (Animatable) imageNfcFullscreen.getDrawable();
-            animatable.start();
-        }
+        AnimatedVectorDrawableHelper.startAnimation(getActivity(), imageNfcFullscreen, R.drawable.nfc_handling, animationCallback);
     }
 
     private void fadeToNfcSweetSpot() {
@@ -713,7 +710,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
             textError.setVisibility(View.GONE);
         });
 
-        startAndLoopAnimation(sweetspotIndicator, R.drawable.nfc_sweet_spot_a);
+        AnimatedVectorDrawableHelper.startAndLoopAnimation(getActivity(), sweetspotIndicator, R.drawable.nfc_sweet_spot_a);
     }
 
     private void animateSelectUsb() {
@@ -726,7 +723,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
 
             @Override
             public void onTransitionEnd(@NonNull Transition transition) {
-                startAndLoopAnimation(imageUsb, R.drawable.usb_handling_a);
+                AnimatedVectorDrawableHelper.startAndLoopAnimation(getActivity(), imageUsb, R.drawable.usb_handling_a);
             }
 
             @Override
@@ -764,7 +761,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
 
             @Override
             public void onTransitionEnd(@NonNull Transition transition) {
-                startAndLoopAnimation(imageUsb, R.drawable.usb_handling_b);
+                AnimatedVectorDrawableHelper.startAndLoopAnimation(getActivity(), imageUsb, R.drawable.usb_handling_b);
             }
 
             @Override
@@ -795,7 +792,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     private void animateUsbPressButton() {
         TransitionManager.beginDelayedTransition(innerBottomSheet);
         textTitle.setText(R.string.hwsecurity_title_usb_button);
-        startAndLoopAnimation(imageUsb, R.drawable.usb_handling_b);
+        AnimatedVectorDrawableHelper.startAndLoopAnimation(getActivity(), imageUsb, R.drawable.usb_handling_b);
     }
 
     private void animateError() {
@@ -813,59 +810,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         textError.setVisibility(View.VISIBLE);
         imageError.setVisibility(View.VISIBLE);
 
-        if (Build.VERSION.SDK_INT <= 24) {
-            setAndStartAnimatedVectorDrawableSdk24(imageError, R.drawable.error);
-        } else {
-            Animatable animatable = (Animatable) imageError.getDrawable();
-            animatable.start();
-        }
-    }
-
-    private void startAndLoopAnimation(ImageView imageView, int resId) {
-        Animatable2Compat.AnimationCallback animationCallback = new Animatable2Compat.AnimationCallback() {
-            @NonNull
-            private final Handler fHandler = new Handler(Looper.getMainLooper());
-
-            @Override
-            public void onAnimationEnd(@NonNull Drawable drawable) {
-                if (!ViewCompat.isAttachedToWindow(imageView)) {
-                    return;
-                }
-
-                fHandler.post(() -> {
-                    if (Build.VERSION.SDK_INT <= 24) {
-                        AnimatedVectorDrawableCompat avdCompat = setAndStartAnimatedVectorDrawableSdk24(imageView, resId);
-                        avdCompat.registerAnimationCallback(this);
-                    } else {
-                        ((Animatable) drawable).start();
-                    }
-                });
-            }
-        };
-
-        if (Build.VERSION.SDK_INT <= 24) {
-            AnimatedVectorDrawableCompat avdCompat = setAndStartAnimatedVectorDrawableSdk24(imageView, resId);
-            avdCompat.registerAnimationCallback(animationCallback);
-        } else {
-            imageView.setImageResource(resId);
-            AnimatedVectorDrawableCompat.registerAnimationCallback(imageView.getDrawable(), animationCallback);
-            Animatable animatable = (Animatable) imageView.getDrawable();
-            animatable.start();
-        }
-    }
-
-    private AnimatedVectorDrawableCompat setAndStartAnimatedVectorDrawableSdk24(ImageView imageView, int resId) {
-        AnimatedVectorDrawableCompat avdCompat = AnimatedVectorDrawableCompat.create(getContext(), resId);
-
-        // on SDK <= 24, the alphaFill values are not resetted properly to their initial state
-        // The states of AnimatedVectorDrawables are stored centrally per resource.
-        // Thus, making the drawable mutate allows it to have a completely new state
-        avdCompat.mutate();
-
-        imageView.setImageDrawable(avdCompat);
-        avdCompat.start();
-
-        return avdCompat;
+        AnimatedVectorDrawableHelper.startAnimation(getActivity(), imageError, R.drawable.error);
     }
 
     @UiThread

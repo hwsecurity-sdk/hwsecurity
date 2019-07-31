@@ -272,7 +272,7 @@ public class SecurityKeyManager {
             if (activeNfcDispatcher != null) {
                 activeNfcDispatcher.onResume();
             }
-            postTriggerCallacksActively();
+            postTriggerCallbacksActively();
         }
 
         @Override
@@ -358,7 +358,7 @@ public class SecurityKeyManager {
     }
 
     @AnyThread
-    private void postTriggerCallacksActively() {
+    private void postTriggerCallbacksActively() {
         if (callbackDedup.getAndSet(true)) {
             return;
         }
@@ -406,7 +406,7 @@ public class SecurityKeyManager {
         lifecycleOwner.getLifecycle().addObserver(registeredConnectionMode);
         registeredCallbacks.add(0, registeredConnectionMode);
 
-        postTriggerCallacksActively();
+        postTriggerCallbacksActively();
     }
 
     /**
@@ -437,6 +437,11 @@ public class SecurityKeyManager {
             }
         }
         return Collections.unmodifiableList(result);
+    }
+
+    @AnyThread
+    public void rediscoverConnectedSecurityKeys() {
+        postTriggerCallbacksActively();
     }
 
     /**

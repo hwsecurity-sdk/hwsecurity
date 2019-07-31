@@ -25,9 +25,12 @@
 package de.cotech.hw.secrets;
 
 
+import android.text.Editable;
 import androidx.annotation.NonNull;
 
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 
 
@@ -41,6 +44,25 @@ import java.util.Arrays;
  */
 public class ByteSecret {
     private ByteBuffer secret;
+
+    @NonNull
+    public static ByteSecret fromEditableAsUtf8AndClear(Editable editable) {
+        /* According to http://stackoverflow.com/a/15844273 EditText is not using String internally
+         * but char[]. Thus, we can get the char[] directly from it. */
+        int pl = editable.length();
+        char[] chars = new char[pl];
+        editable.getChars(0, pl, chars, 0);
+
+        CharBuffer charBuffer = CharBuffer.wrap(chars);
+        ByteBuffer encodedBuffer = Charset.forName("UTF-8").encode(charBuffer);
+        ByteBuffer secretCopy = ByteBuffer.allocateDirect(chars.length);
+        // get only the actual used length
+        secretCopy.put(encodedBuffer);
+
+        Arrays.fill(chars, '\u0000');
+
+        return new ByteSecret(secretCopy);
+    }
 
     @NonNull
     public static ByteSecret fromByteArrayTakeOwnership(byte[] secret) {
