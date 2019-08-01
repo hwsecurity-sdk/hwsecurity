@@ -53,7 +53,7 @@ import de.cotech.hw.internal.transport.Transport;
 import de.cotech.hw.internal.transport.usb.ccid.UsbCcidTransport;
 import de.cotech.hw.internal.transport.usb.u2fhid.UsbU2fHidTransport;
 import de.cotech.hw.util.Hex;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 public class UsbDeviceManager {
@@ -85,8 +85,8 @@ public class UsbDeviceManager {
     public void onUsbIntent(Intent intent) {
         UsbDevice usbDevice = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
         if (usbDevice == null) {
-            Timber.e("Got USB discovery intent, but missing device extra!");
-            Timber.e("Intent: %s", intent);
+            HwTimber.e("Got USB discovery intent, but missing device extra!");
+            HwTimber.e("Intent: %s", intent);
             return;
         }
         initializeUsbDevice(usbDevice);
@@ -95,13 +95,13 @@ public class UsbDeviceManager {
     @UiThread
     void initializeUsbDevice(UsbDevice usbDevice) {
         if (!isRelevantDevice(usbDevice)) {
-            Timber.d("Ignoring unknown security key USB device (%s)", usbDevice.getDeviceName());
+            HwTimber.d("Ignoring unknown security key USB device (%s)", usbDevice.getDeviceName());
             return;
         }
 
         synchronized (managedUsbDevices) {
             if (managedUsbDevices.containsKey(usbDevice)) {
-                Timber.d("USB security key already managed, ignoring (%s)", usbDevice.getDeviceName());
+                HwTimber.d("USB security key already managed, ignoring (%s)", usbDevice.getDeviceName());
                 return;
             }
 
@@ -109,7 +109,7 @@ public class UsbDeviceManager {
                 ManagedUsbDevice managedUsbDevice = createManagedUsbDevice(usbDevice);
                 managedUsbDevices.put(usbDevice, managedUsbDevice);
             } catch (IOException e) {
-                Timber.e(e, "Failed to initialize usb device!");
+                HwTimber.e(e, "Failed to initialize usb device!");
             }
         }
     }
@@ -125,7 +125,7 @@ public class UsbDeviceManager {
             try {
                 managedUsbDevice.claimInterface();
             } catch (UsbTransportException e) {
-                Timber.d("Failed to reclaim USB device, releasing (0x%s 0x%s)",
+                HwTimber.d("Failed to reclaim USB device, releasing (0x%s 0x%s)",
                         Integer.toHexString(usbDevice.getVendorId()), Integer.toHexString(usbDevice.getProductId()));
                 managedUsbDevice.clearAllActiveUsbTransports();
                 managedUsbDevices.remove(usbDevice);
@@ -138,7 +138,7 @@ public class UsbDeviceManager {
 
     @UiThread
     private ManagedUsbDevice createManagedUsbDevice(UsbDevice usbDevice) throws UsbTransportException {
-        Timber.d("Initializing managed USB security key");
+        HwTimber.d("Initializing managed USB security key");
 
         List<UsbInterface> usbInterfaces = UsbUtils.getCcidAndU2fHidInterfaces(usbDevice);
         if (usbInterfaces.isEmpty()) {
@@ -149,7 +149,7 @@ public class UsbDeviceManager {
         if (usbConnection == null) {
             throw new UsbTransportException("USB error: failed to connect to device");
         }
-        Timber.d("USB connection: %s", usbConnection.getSerial());
+        HwTimber.d("USB connection: %s", usbConnection.getSerial());
 
         ManagedUsbDevice managedUsbDevice = new ManagedUsbDevice(usbDevice, usbConnection, usbInterfaces);
         managedUsbDevice.claimInterface();
@@ -192,7 +192,7 @@ public class UsbDeviceManager {
         @AnyThread
         synchronized void claimInterface() throws UsbTransportException {
             for (UsbInterface usbInterface : usbInterfaces) {
-                Timber.d("(Re)claiming USB interface: %s", usbInterface);
+                HwTimber.d("(Re)claiming USB interface: %s", usbInterface);
                 if (!usbConnection.claimInterface(usbInterface, true)) {
                     throw new UsbTransportException("USB error: failed to claim interface");
                 }
@@ -219,7 +219,7 @@ public class UsbDeviceManager {
         @AnyThread
         synchronized void createNewActiveUsbTransport(UsbInterface usbInterface) {
             if (currentActiveTransports.containsKey(usbInterface)) {
-                Timber.d("Usb interface already connected");
+                HwTimber.d("Usb interface already connected");
                 return;
             }
 
@@ -233,7 +233,7 @@ public class UsbDeviceManager {
             } else {
                 throw new RuntimeException("unsupported USB class");
             }
-            Timber.d("USB transport created on interface class %s", usbInterface.getInterfaceClass());
+            HwTimber.d("USB transport created on interface class %s", usbInterface.getInterfaceClass());
             currentActiveTransports.put(usbInterface, usbTransport);
             callbackHandler.post(() -> callback.usbTransportDiscovered(usbTransport));
         }
@@ -251,11 +251,11 @@ public class UsbDeviceManager {
 
     @WorkerThread
     private void onUsbDeviceLost(UsbDevice usbDevice) {
-        Timber.d("Lost USB security key, dropping managed device");
+        HwTimber.d("Lost USB security key, dropping managed device");
         synchronized (managedUsbDevices) {
             ManagedUsbDevice managedUsbDevice = managedUsbDevices.get(usbDevice);
             if (managedUsbDevice == null) {
-                Timber.d("Device already dropped");
+                HwTimber.d("Device already dropped");
                 return;
             }
             managedUsbDevice.clearAllActiveUsbTransports();
@@ -274,7 +274,7 @@ public class UsbDeviceManager {
     @WorkerThread
     private void onIccDisconnect(UsbDevice usbDevice, UsbInterface usbInterface) {
         if (VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP) {
-            Timber.d("ICC disconnected on interface %s", usbInterface.getName());
+            HwTimber.d("ICC disconnected on interface %s", usbInterface.getName());
         }
         synchronized (managedUsbDevices) {
             ManagedUsbDevice managedUsbDevice = managedUsbDevices.get(usbDevice);
@@ -326,7 +326,7 @@ public class UsbDeviceManager {
 
         @WorkerThread
         void loopMonitorUsb() {
-            Timber.d("Simple device, assuming all ICCs are connected");
+            HwTimber.d("Simple device, assuming all ICCs are connected");
             for (UsbInterface usbInterface : usbInterfaces) {
                 onIccConnect(managedUsbDevice.usbDevice, usbInterface);
             }
@@ -360,11 +360,11 @@ public class UsbDeviceManager {
                 usbRequest.queue(responseBuffer, responseBuffer.capacity());
             }
 
-            Timber.d("Listening…");
+            HwTimber.d("Listening…");
             while (deviceIsStillConnected()) {
                 UsbRequest returnedRequest = managedUsbDevice.usbConnection.requestWait();
                 if (returnedRequest == null) {
-                    Timber.d("Got error listening on interrupt endpoint");
+                    HwTimber.d("Got error listening on interrupt endpoint");
                     break;
                 }
 
@@ -379,24 +379,24 @@ public class UsbDeviceManager {
                         byte bmSlotIccState = responseBuffer.get();
                         UsbInterface usbInterface = usbInterruptEndpoints.get(returnedRequest.getEndpoint());
                         if (bmSlotIccState == ICC_SLOT_CHANGE_PRESENT) {
-                            Timber.d("ICC state change: slot 0 connected");
+                            HwTimber.d("ICC state change: slot 0 connected");
                             onIccConnect(managedUsbDevice.usbDevice, usbInterface);
                         } else if (bmSlotIccState == ICC_SLOT_CHANGE_NOT_PRESENT) {
-                            Timber.d("ICC state change: slot 0 disconnected");
+                            HwTimber.d("ICC state change: slot 0 disconnected");
                             onIccDisconnect(managedUsbDevice.usbDevice, usbInterface);
                         } else {
-                            Timber.e("Ignoring unknown ICC state change 0x%x", bmSlotIccState);
+                            HwTimber.e("Ignoring unknown ICC state change 0x%x", bmSlotIccState);
                         }
                         break;
                     }
                     case 0x00: {
-                        Timber.d("Ignoring 0x00 message on interrupt endpoint");
+                        HwTimber.d("Ignoring 0x00 message on interrupt endpoint");
                         break;
                     }
                     default: {
-                        Timber.e("Got unexpected message type 0x%x on interrupt endpoint!", bMessageType);
+                        HwTimber.e("Got unexpected message type 0x%x on interrupt endpoint!", bMessageType);
                         String bufferHex = Hex.encodeHexString(responseBuffer.array());
-                        Timber.e("Buffer: %s", bufferHex);
+                        HwTimber.e("Buffer: %s", bufferHex);
                         break;
                     }
                 }

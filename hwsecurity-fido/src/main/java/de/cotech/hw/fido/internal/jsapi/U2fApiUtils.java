@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 public class U2fApiUtils {
     private static final String U2F_VERSION2 = "U2F_V2";
@@ -48,7 +48,7 @@ public class U2fApiUtils {
             throws IOException {
         for (U2fRegisterRequest.RegisterRequest request : registerRequests) {
             if (U2fApiUtils.U2F_VERSION2.equals(request.version())) {
-                Timber.d("picking registerRequest: version=%s, challenge=%s", request.version(), request.challenge());
+                HwTimber.d("picking registerRequest: version=%s, challenge=%s", request.version(), request.challenge());
                 return request.challenge();
             }
         }

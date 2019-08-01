@@ -46,7 +46,7 @@ import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 import de.cotech.hw.internal.transport.usb.UsbTransportException;
 import de.cotech.hw.internal.transport.usb.u2fhid.U2fHidInitStructFactory.U2fHidInitResponse;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 @RestrictTo(Scope.LIBRARY_GROUP)
@@ -93,7 +93,7 @@ public class U2fHidTransportProtocol {
 
     @WorkerThread
     public void connect() throws UsbTransportException {
-        Timber.d("Initializing U2FHID transport…");
+        HwTimber.d("Initializing U2FHID transport…");
 
         this.channelId = negotiateChannelId();
     }
@@ -120,10 +120,10 @@ public class U2fHidTransportProtocol {
                     byte[] response = frameFactory.unwrapFrame(channelId, U2fHidFrameFactory.U2FHID_INIT, transferBuffer.array());
                     U2fHidInitResponse initResponse = initStructFactory.parseInitResponse(response, initRequestBytes);
 
-                    Timber.d("U2FHID_INIT response: %s", initResponse);
+                    HwTimber.d("U2FHID_INIT response: %s", initResponse);
                     return initResponse.channelId();
                 } catch (UsbTransportException e) {
-                    Timber.d("Ignoring unrelated INIT response");
+                    HwTimber.d("Ignoring unrelated INIT response");
                 }
             }
         }, 850);
@@ -181,7 +181,7 @@ public class U2fHidTransportProtocol {
             try {
                 return frameFactory.findExpectedFramesFromInitPacketHeader(channelId, transferBuffer);
             } catch (U2fHidChangedChannelException e) {
-                Timber.d("Received message from wrong channel - ignoring");
+                HwTimber.d("Received message from wrong channel - ignoring");
             }
         }
     }
@@ -257,7 +257,7 @@ public class U2fHidTransportProtocol {
 
     private static void checkInterrupt(Thread thread) throws InterruptedException {
         if (thread.isInterrupted()) {
-            Timber.d("Received interrupt, canceling USB operation");
+            HwTimber.d("Received interrupt, canceling USB operation");
             throw new InterruptedException();
         }
     }

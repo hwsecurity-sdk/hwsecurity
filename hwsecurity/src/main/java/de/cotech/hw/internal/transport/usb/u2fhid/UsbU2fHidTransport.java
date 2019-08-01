@@ -52,7 +52,7 @@ import de.cotech.hw.internal.transport.usb.UsbSecurityKeyTypes;
 import de.cotech.hw.internal.transport.usb.UsbTransportException;
 import de.cotech.hw.internal.transport.usb.UsbUtils;
 import de.cotech.hw.util.Hex;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 /**
@@ -187,7 +187,7 @@ public class UsbU2fHidTransport implements Transport {
         CommandApdu extendedCommandApdu = commandApdu.withNe(65536);
 
         if (enableDebugLogging) {
-            Timber.d("U2FHID out: %s", extendedCommandApdu);
+            HwTimber.d("U2FHID out: %s", extendedCommandApdu);
         }
 
         long startRealtime = SystemClock.elapsedRealtime();
@@ -196,8 +196,8 @@ public class UsbU2fHidTransport implements Transport {
         ResponseApdu responseApdu = ResponseApdu.fromBytes(rawResponse);
         if (enableDebugLogging) {
             long totalTime = SystemClock.elapsedRealtime() - startRealtime;
-            Timber.d("U2FHID in: %s", responseApdu);
-            Timber.d("U2FHID communication took %dms", totalTime);
+            HwTimber.d("U2FHID in: %s", responseApdu);
+            HwTimber.d("U2FHID communication took %dms", totalTime);
         }
 
         return responseApdu;
@@ -211,7 +211,7 @@ public class UsbU2fHidTransport implements Transport {
     @Override
     public void release() {
         if (!released) {
-            Timber.d("Usb transport disconnected");
+            HwTimber.d("Usb transport disconnected");
             this.released = true;
             usbConnection.releaseInterface(usbInterface);
             if (transportReleasedCallback != null) {

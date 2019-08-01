@@ -33,7 +33,7 @@ import de.cotech.hw.internal.transport.usb.ccid.CcidTransceiver.CcidDataBlock;
 import de.cotech.hw.internal.transport.usb.ccid.CcidTransportProtocol;
 import de.cotech.hw.internal.transport.usb.UsbTransportException;
 import de.cotech.hw.util.Arrays;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 /* T=1 Protocol, see http://www.icedev.se/proxmark3/docs/ISO-7816.pdf, Part 11 */
@@ -105,10 +105,10 @@ public class T1TpduProtocol implements CcidTransportProtocol {
             sentLength += len;
 
             if (responseBlock instanceof SBlock) {
-                Timber.d("S-Block received %s", responseBlock);
+                HwTimber.d("S-Block received %s", responseBlock);
                 // just ignore
             } else if (responseBlock instanceof RBlock) {
-                Timber.d("R-Block received %s", responseBlock);
+                HwTimber.d("R-Block received %s", responseBlock);
                 if (((RBlock) responseBlock).getError() != RBlock.RError.NO_ERROR) {
                     throw new UsbTransportException("R-Block reports error " + ((RBlock) responseBlock).getError());
                 }
@@ -134,7 +134,7 @@ public class T1TpduProtocol implements CcidTransportProtocol {
             Block responseBlock = blockFactory.fromBytes(response.getData());
 
             if (!(responseBlock instanceof IBlock)) {
-                Timber.e("Invalid response block received %s", responseBlock);
+                HwTimber.e("Invalid response block received %s", responseBlock);
                 throw new UsbTransportException("Response: invalid state - invalid block received");
             }
 

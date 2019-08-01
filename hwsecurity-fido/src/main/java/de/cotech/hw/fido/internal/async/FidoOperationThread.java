@@ -39,7 +39,7 @@ import androidx.lifecycle.OnLifecycleEvent;
 import de.cotech.hw.exceptions.TransportGoneException;
 import de.cotech.hw.fido.exceptions.FidoPresenceRequiredException;
 import de.cotech.hw.fido.internal.FidoU2fAppletConnection;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 @RestrictTo(Scope.LIBRARY_GROUP)
@@ -82,10 +82,10 @@ abstract class FidoOperationThread<T> extends Thread implements LifecycleObserve
                 postToHandler(() -> deliverResponse(response));
                 break;
             } catch (InterruptedException e) {
-                Timber.e("Fido operation was interrupted");
+                HwTimber.e("Fido operation was interrupted");
                 break;
             } catch (TransportGoneException e) {
-                Timber.e("Transport gone during fido operation");
+                HwTimber.e("Transport gone during fido operation");
                 break;
             } catch (FidoPresenceRequiredException e) {
                 try {
@@ -95,7 +95,7 @@ abstract class FidoOperationThread<T> extends Thread implements LifecycleObserve
                 }
             } catch (IOException e) {
                 if (e.getCause() instanceof InterruptedException) {
-                    Timber.e("Fido operation was interrupted");
+                    HwTimber.e("Fido operation was interrupted");
                     break;
                 }
                 postToHandler(() -> deliverIoException(e));

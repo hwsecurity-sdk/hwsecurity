@@ -38,7 +38,7 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 import androidx.annotation.UiThread;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 @RestrictTo(Scope.LIBRARY_GROUP)
@@ -69,7 +69,7 @@ public class UsbConnectionDispatcher {
             if (action == null) {
                 return;
             }
-            Timber.d("Callback: %s", intent);
+            HwTimber.d("Callback: %s", intent);
 
             if (ACTION_USB.equals(action)) {
                 usbDeviceRequestedPermissions = null;
@@ -83,17 +83,17 @@ public class UsbConnectionDispatcher {
     @UiThread
     private boolean handleConnectedUsbDevice(UsbDevice usbDevice, boolean requestPermission) {
         if (usbDeviceManager.refreshDeviceIfManaged(usbDevice)) {
-            Timber.d("Refreshed already managed device (0x%s 0x%s)",
+            HwTimber.d("Refreshed already managed device (0x%s 0x%s)",
                     Integer.toHexString(usbDevice.getVendorId()), Integer.toHexString(usbDevice.getProductId()));
             return false;
         }
         if (!usbDeviceManager.isRelevantDevice(usbDevice)) {
-            Timber.d("Ignoring unknown security key USB device (%s)", usbDevice);
+            HwTimber.d("Ignoring unknown security key USB device (%s)", usbDevice);
             return false;
         }
 
         if (usbManager.hasPermission(usbDevice)) {
-            Timber.d("Permission for device already available!");
+            HwTimber.d("Permission for device already available!");
 
             usbDeviceManager.initializeUsbDevice(usbDevice);
             return false;
@@ -104,7 +104,7 @@ public class UsbConnectionDispatcher {
             return true;
         }
 
-        Timber.d("Didn't get permission for security key, giving up.");
+        HwTimber.d("Didn't get permission for security key, giving up.");
         return false;
     }
 
@@ -125,7 +125,7 @@ public class UsbConnectionDispatcher {
             requestPermission = false;
         }
 
-        Timber.d("Actively scanning for USB devices");
+        HwTimber.d("Actively scanning for USB devices");
         for (UsbDevice usbDevice : usbManager.getDeviceList().values()) {
             if (usbDevice == usbDeviceRequestedPermissions) {
                 continue;
@@ -151,7 +151,7 @@ public class UsbConnectionDispatcher {
         answerBroadcastIntent.setPackage(context.getApplicationInfo().packageName);
         PendingIntent answerPendingIntent = PendingIntent.getBroadcast(context, 0, answerBroadcastIntent, 0);
 
-        Timber.d("Requesting permission for %s", usbDevice.getDeviceName());
+        HwTimber.d("Requesting permission for %s", usbDevice.getDeviceName());
         usbManager.requestPermission(usbDevice, answerPendingIntent);
     }
 

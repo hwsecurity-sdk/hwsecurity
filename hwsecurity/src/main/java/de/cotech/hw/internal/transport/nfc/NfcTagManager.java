@@ -38,7 +38,7 @@ import androidx.annotation.RestrictTo.Scope;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import de.cotech.hw.util.Hex;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 @RestrictTo(Scope.LIBRARY_GROUP)
@@ -71,8 +71,8 @@ public class NfcTagManager {
     public void onNfcIntent(Intent intent) {
         Tag nfcTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
         if (nfcTag == null) {
-            Timber.e("Got NFC discovery intent, but missing device extra!");
-            Timber.e("Intent: %s", intent);
+            HwTimber.e("Got NFC discovery intent, but missing device extra!");
+            HwTimber.e("Intent: %s", intent);
             return;
         }
         initializeNfcTag(nfcTag);
@@ -87,7 +87,7 @@ public class NfcTagManager {
     private void initializeNfcTag(Tag nfcTag) {
         synchronized (managedNfcTags) {
             if (managedNfcTags.containsKey(nfcTag)) {
-                Timber.d("NFC security key already managed, ignoring (%s)",  getNfcTagIdentifier(nfcTag));
+                HwTimber.d("NFC security key already managed, ignoring (%s)",  getNfcTagIdentifier(nfcTag));
                 return;
             }
 
@@ -98,7 +98,7 @@ public class NfcTagManager {
 
     @AnyThread
     private ManagedNfcTag createManagedNfcTag(Tag nfcTag) {
-        Timber.d("Initializing managed NFC security key");
+        HwTimber.d("Initializing managed NFC security key");
 
         ManagedNfcTag managedNfcTag = new ManagedNfcTag(nfcTag);
         managedNfcTag.createNewActiveNfcTransport();
@@ -120,10 +120,10 @@ public class NfcTagManager {
 
         @AnyThread
         synchronized void createNewActiveNfcTransport() {
-            Timber.d("Discovered NFC tag (%s)", getNfcTagIdentifier(nfcTag));
+            HwTimber.d("Discovered NFC tag (%s)", getNfcTagIdentifier(nfcTag));
 
             if (activeTransport != null) {
-                Timber.d("Tag already connected!");
+                HwTimber.d("Tag already connected!");
                 return;
             }
 
@@ -141,11 +141,11 @@ public class NfcTagManager {
 
     @WorkerThread
     private void onNfcTagLost(Tag nfcTag) {
-        Timber.d("Lost NFC tag");
+        HwTimber.d("Lost NFC tag");
         synchronized (managedNfcTags) {
             ManagedNfcTag managedNfcTag = managedNfcTags.get(nfcTag);
             if (managedNfcTag == null) {
-                Timber.d("Tag was dropped before!");
+                HwTimber.d("Tag was dropped before!");
                 return;
             }
             managedNfcTag.clearActiveNfcTransport();

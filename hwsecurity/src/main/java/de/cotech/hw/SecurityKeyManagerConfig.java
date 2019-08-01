@@ -27,8 +27,11 @@ package de.cotech.hw;
 
 import android.app.Application;
 
+import androidx.annotation.Nullable;
+
 import com.google.auto.value.AutoValue;
 import de.cotech.hw.internal.dispatch.UsbIntentDispatchActivity;
+import de.cotech.hw.util.HwTimber;
 
 
 /**
@@ -41,6 +44,8 @@ public abstract class SecurityKeyManagerConfig {
     public abstract boolean isDisableUsbPermissionFallback();
     public abstract boolean isAllowUntestedUsbDevices();
     public abstract boolean isEnableDebugLogging();
+    @Nullable
+    public abstract HwTimber.Tree getLoggingTree();
     public abstract boolean isEnableNfcTagMonitoring();
     public abstract boolean isDisableNfcDiscoverySound();
 
@@ -57,6 +62,7 @@ public abstract class SecurityKeyManagerConfig {
         private boolean disableUsbPermissionFallback = false;
         private boolean isAllowUntestedUsbDevices = false;
         private boolean isEnableDebugLogging = false;
+        private HwTimber.Tree loggingTree = null;
         private boolean isEnableNfcTagMonitoring = false;
         private boolean isDisableNfcDiscoverySound = false;
 
@@ -100,6 +106,16 @@ public abstract class SecurityKeyManagerConfig {
         }
 
         /**
+         * Set a custom logging Tree.
+         * <p>
+         * This tree overrides {@link SecurityKeyManagerConfig.Builder#setEnableDebugLogging(boolean)}.
+         */
+        public Builder setLoggingTree(HwTimber.Tree loggingTree) {
+            this.loggingTree = loggingTree;
+            return this;
+        }
+
+        /**
          * This setting enables presence monitoring for NFC tags, which will allow the use persistent of NFC tags.
          *
          * Enable this setting if you need to retrieve NFC Security Keys via
@@ -129,6 +145,7 @@ public abstract class SecurityKeyManagerConfig {
                     disableUsbPermissionFallback,
                     isAllowUntestedUsbDevices,
                     isEnableDebugLogging,
+                    loggingTree,
                     isEnableNfcTagMonitoring,
                     isDisableNfcDiscoverySound
             );

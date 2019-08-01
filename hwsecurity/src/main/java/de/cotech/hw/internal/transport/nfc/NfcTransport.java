@@ -43,7 +43,7 @@ import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.internal.transport.SecurityKeyInfo;
 import de.cotech.hw.internal.transport.SecurityKeyInfo.TransportType;
 import de.cotech.hw.internal.transport.Transport;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class NfcTransport implements Transport {
@@ -90,7 +90,7 @@ public class NfcTransport implements Transport {
                 isTransceivingChain = (commandApdu.getCLA() & CLA_MASK_CHAINING) == CLA_MASK_CHAINING;
                 byte[] rawCommand = commandApdu.toBytes();
                 if (enableDebugLogging) {
-                    Timber.d("NFC out: %s", commandApdu);
+                    HwTimber.d("NFC out: %s", commandApdu);
                 }
 
                 long startRealtime = SystemClock.elapsedRealtime();
@@ -99,8 +99,8 @@ public class NfcTransport implements Transport {
                 ResponseApdu responseApdu = ResponseApdu.fromBytes(rawResponse);
                 if (enableDebugLogging) {
                     long totalTime = SystemClock.elapsedRealtime() - startRealtime;
-                    Timber.d("NFC  in: %s", responseApdu);
-                    Timber.d("NFC communication took %dms", totalTime);
+                    HwTimber.d("NFC  in: %s", responseApdu);
+                    HwTimber.d("NFC communication took %dms", totalTime);
                 }
 
                 if (responseApdu.getSw1() == APDU_SW1_RESPONSE_AVAILABLE) {
@@ -119,20 +119,20 @@ public class NfcTransport implements Transport {
         if (!isConnected()) {
             return false;
         }
-        Timber.d("Sending nfc ping…");
+        HwTimber.d("Sending nfc ping…");
         long startTime = SystemClock.elapsedRealtime();
         try {
             transceive(PING_APDU);
             long totalTime = SystemClock.elapsedRealtime() - startTime;
-            Timber.d("got pong in %dms!", totalTime);
+            HwTimber.d("got pong in %dms!", totalTime);
             return true;
         } catch (TagLostException e) {
             long totalTime = SystemClock.elapsedRealtime() - startTime;
-            Timber.d("tag lost, waited %dms!", totalTime);
+            HwTimber.d("tag lost, waited %dms!", totalTime);
             return false;
         } catch (IOException e) {
             long totalTime = SystemClock.elapsedRealtime() - startTime;
-            Timber.e(e, "tag lost, waited %dms!", totalTime);
+            HwTimber.e(e, "tag lost, waited %dms!", totalTime);
             return false;
         }
     }
@@ -144,7 +144,7 @@ public class NfcTransport implements Transport {
         if (isTransceivingChain) {
             boolean isChainTransceiveTimeout = lastTransceiveTime + TIMEOUT_WHILE_CHAINING > System.currentTimeMillis();
             if (!isChainTransceiveTimeout) {
-                Timber.d("Timeout while chaining commands!");
+                HwTimber.d("Timeout while chaining commands!");
                 return System.currentTimeMillis();
             }
         }
@@ -169,7 +169,7 @@ public class NfcTransport implements Transport {
     @WorkerThread
     public void release() {
         if (!released) {
-            Timber.d("Nfc transport disconnected");
+            HwTimber.d("Nfc transport disconnected");
             this.released = true;
             if (transportReleasedCallback != null) {
                 transportReleasedCallback.onTransportReleased();

@@ -41,7 +41,7 @@ import de.cotech.hw.fido.internal.FidoU2fAppletConnection;
 import de.cotech.hw.fido.internal.operations.RegisterOp;
 import de.cotech.hw.util.HashUtil;
 import de.cotech.hw.util.Hex;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 @RestrictTo(Scope.LIBRARY_GROUP)
@@ -67,9 +67,9 @@ public class FidoRegisterOperationThread extends FidoOperationThread<FidoRegiste
         challengeParam = HashUtil.sha256(registerRequest.getClientData());
         applicationParam = HashUtil.sha256(registerRequest.getAppId());
 
-        Timber.d("challenge param: %s", Hex.encodeHexString(challengeParam));
-        Timber.d("application param: %s", Hex.encodeHexString(applicationParam));
-        Timber.d("client data: %s", registerRequest.getClientData());
+        HwTimber.d("challenge param: %s", Hex.encodeHexString(challengeParam));
+        HwTimber.d("application param: %s", Hex.encodeHexString(applicationParam));
+        HwTimber.d("client data: %s", registerRequest.getClientData());
     }
 
     @Override

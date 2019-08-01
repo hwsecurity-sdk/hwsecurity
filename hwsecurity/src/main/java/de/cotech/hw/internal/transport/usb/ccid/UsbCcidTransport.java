@@ -47,7 +47,7 @@ import de.cotech.hw.internal.transport.Transport;
 import de.cotech.hw.internal.transport.usb.UsbSecurityKeyTypes;
 import de.cotech.hw.internal.transport.usb.UsbTransportException;
 import de.cotech.hw.internal.transport.usb.UsbUtils;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 /**
@@ -135,7 +135,7 @@ public class UsbCcidTransport implements Transport {
         }
 
         CcidDescriptor ccidDescriptor = CcidDescriptor.fromRawDescriptors(usbConnection.getRawDescriptors());
-        Timber.d("CCID Descriptor: %s", ccidDescriptor);
+        HwTimber.d("CCID Descriptor: %s", ccidDescriptor);
         CcidTransceiver transceiver = new CcidTransceiver(usbConnection, usbBulkIn, usbBulkOut, ccidDescriptor);
 
         CcidTransportProtocol ccidTransportProtocol = ccidDescriptor.getSuitableTransportProtocol();
@@ -156,7 +156,7 @@ public class UsbCcidTransport implements Transport {
         }
         byte[] rawCommand = commandApdu.toBytes();
         if (enableDebugLogging) {
-            Timber.d("USB_CCID out: %s", commandApdu);
+            HwTimber.d("USB_CCID out: %s", commandApdu);
         }
 
         try {
@@ -164,7 +164,7 @@ public class UsbCcidTransport implements Transport {
 
             ResponseApdu responseApdu = ResponseApdu.fromBytes(rawResponse);
             if (enableDebugLogging) {
-                Timber.d("USB_CCID  in: %s", responseApdu);
+                HwTimber.d("USB_CCID  in: %s", responseApdu);
             }
 
             return responseApdu;
@@ -180,7 +180,7 @@ public class UsbCcidTransport implements Transport {
     @Override
     public void release() {
         if (!released) {
-            Timber.d("USB_CCID transport disconnected");
+            HwTimber.d("USB_CCID transport disconnected");
             this.released = true;
             usbConnection.releaseInterface(usbInterface);
             if (transportReleasedCallback != null) {

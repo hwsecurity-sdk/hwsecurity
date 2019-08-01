@@ -35,7 +35,7 @@ import androidx.annotation.RestrictTo.Scope;
 
 import de.cotech.hw.SecurityKeyManager;
 import de.cotech.hw.SecurityKeyManagerConfig.Builder;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 /**
@@ -68,7 +68,7 @@ public final class UsbIntentDispatchActivity extends Activity {
             return;
         }
 
-        Timber.d("Usb Security Key connected!");
+        HwTimber.d("Usb Security Key connected!");
         securityKeyManager.onUsbIntent(intent);
 
         finish();

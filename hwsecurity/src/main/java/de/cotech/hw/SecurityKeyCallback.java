@@ -26,9 +26,10 @@ package de.cotech.hw;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
-import timber.log.Timber;
 
 import java.io.IOException;
+
+import de.cotech.hw.util.HwTimber;
 
 /**
  * A callback interface when a security key is discovered.
@@ -55,7 +56,7 @@ public interface SecurityKeyCallback<T extends SecurityKey> {
      */
     @UiThread
     default void onSecurityKeyDiscoveryFailed(@NonNull IOException exception) {
-        Timber.e(exception, "Failed to connect to SecurityKey");
+        HwTimber.e(exception, "Failed to connect to SecurityKey");
     }
 
     /**

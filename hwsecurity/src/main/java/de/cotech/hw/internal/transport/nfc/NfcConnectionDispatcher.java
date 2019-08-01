@@ -44,7 +44,7 @@ import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 import androidx.annotation.UiThread;
 import de.cotech.hw.util.Hex;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 @RestrictTo(Scope.LIBRARY_GROUP)
@@ -154,7 +154,7 @@ public class NfcConnectionDispatcher {
     public void ignoreNfcTag(Tag nfcTag) {
         if (VERSION.SDK_INT >= VERSION_CODES.N) {
             if (nfcAdapter != null) {
-                Timber.d("Debouncing NFC tag %s for %dms", Hex.encodeHexString(nfcTag.getId()), NFC_IGNORE_DEBOUNCE_MS);
+                HwTimber.d("Debouncing NFC tag %s for %dms", Hex.encodeHexString(nfcTag.getId()), NFC_IGNORE_DEBOUNCE_MS);
                 nfcAdapter.ignore(nfcTag, NFC_IGNORE_DEBOUNCE_MS, null, null);
             }
         }

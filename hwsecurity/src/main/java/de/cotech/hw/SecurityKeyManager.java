@@ -60,8 +60,8 @@ import de.cotech.hw.internal.transport.nfc.NfcTagManager;
 import de.cotech.hw.internal.transport.nfc.NfcTransport;
 import de.cotech.hw.internal.transport.usb.UsbConnectionDispatcher;
 import de.cotech.hw.internal.transport.usb.UsbDeviceManager;
-import timber.log.Timber;
-import timber.log.Timber.DebugTree;
+import de.cotech.hw.util.HwTimber;
+import de.cotech.hw.util.HwTimber.DebugTree;
 
 
 /**
@@ -173,8 +173,13 @@ public class SecurityKeyManager {
         config = securityKeyManagerConfig;
         this.application = application;
 
-        if (config.isEnableDebugLogging() && Timber.treeCount() == 0) {
-            Timber.plant(new DebugTree() {
+        HwTimber.Tree loggingTree = config.getLoggingTree();
+        if (loggingTree != null && HwTimber.treeCount() == 0) {
+            HwTimber.plant(loggingTree);
+        }
+
+        if (config.isEnableDebugLogging() && HwTimber.treeCount() == 0) {
+            HwTimber.plant(new DebugTree() {
                 @Override
                 protected String createStackElementTag(@NonNull StackTraceElement element) {
                     if (element.getClassName().startsWith("de.cotech.hw")) {
@@ -211,11 +216,11 @@ public class SecurityKeyManager {
         try {
             Class<?> securityProviderClass = Class.forName("de.cotech.hw.provider.CotechSecurityKeyProvider");
             securityProviderClass.getDeclaredMethod("installProvider").invoke(null);
-            Timber.d("CotechSecurityKeyProvider installed");
+            HwTimber.d("CotechSecurityKeyProvider installed");
         } catch (ClassNotFoundException e) {
             // provider not available - never mind
         } catch (Exception e) {
-            Timber.e(e, "CotechSecurityKeyProvider available, but failed to install!");
+            HwTimber.e(e, "CotechSecurityKeyProvider available, but failed to install!");
         }
     }
 
@@ -331,7 +336,7 @@ public class SecurityKeyManager {
         try {
             transport.connect();
         } catch (IOException e) {
-            Timber.e(e, "Failed initial connection with card");
+            HwTimber.e(e, "Failed initial connection with card");
             transport.release();
             return;
         }
@@ -346,7 +351,7 @@ public class SecurityKeyManager {
             }
         }
 
-        Timber.i("Discovered transport not delivered immediately: %s", transport.getClass().getSimpleName());
+        HwTimber.i("Discovered transport not delivered immediately: %s", transport.getClass().getSimpleName());
 
         for (RegisteredConnectionMode<?> mode : registeredCallbacks) {
             if (mode.transportAttemptPostpone(transport)) {
@@ -354,7 +359,7 @@ public class SecurityKeyManager {
             }
         }
 
-        Timber.i("Unhandled transport %s", transport.getClass().getSimpleName());
+        HwTimber.i("Unhandled transport %s", transport.getClass().getSimpleName());
     }
 
     @AnyThread
@@ -482,7 +487,7 @@ public class SecurityKeyManager {
             this.isActive = isActive;
             this.isBoundForever = isActive;
 
-            Timber.d("%s for %s created",
+            HwTimber.d("%s for %s created",
                     connectionMode.getClass().getSimpleName(), callback.getClass().getSimpleName());
         }
 
@@ -503,7 +508,7 @@ public class SecurityKeyManager {
                 return false;
             }
             if (!isActive && connectionMode.isRelevantTransport(transport)) {
-                Timber.d("Postponing callback for paused %s callback", connectionMode.getClass().getSimpleName());
+                HwTimber.d("Postponing callback for paused %s callback", connectionMode.getClass().getSimpleName());
                 postponedTransport = transport;
                 return true;
             }
@@ -519,11 +524,11 @@ public class SecurityKeyManager {
             this.postponedTransport = null;
 
             if (deliveredTransport.isReleased()) {
-                Timber.d("Postponed transport already released, holding off on delivering");
+                HwTimber.d("Postponed transport already released, holding off on delivering");
                 return;
             }
 
-            Timber.d("Delivering postponed transport");
+            HwTimber.d("Delivering postponed transport");
             callbackHandlerWorker.post(() ->
                     attemptConnectWithRegisteredSecurityMode(deliveredTransport));
         }
@@ -550,7 +555,7 @@ public class SecurityKeyManager {
             } catch (IOException e) {
                 callbackHandlerMain.post(() -> {
                     if (!isActive) {
-                        Timber.d("%s no longer active - onSecurityKeyDiscoveryFailed callback!",
+                        HwTimber.d("%s no longer active - onSecurityKeyDiscoveryFailed callback!",
                                 connectionMode.getClass().getSimpleName());
                         return;
                     }
@@ -573,7 +578,7 @@ public class SecurityKeyManager {
 
             callbackHandlerMain.post(() -> {
                 if (!isActive) {
-                    Timber.d("%s no longer active - dropping onSecurityKeyDiscovered callback!",
+                    HwTimber.d("%s no longer active - dropping onSecurityKeyDiscovered callback!",
                             connectionMode.getClass().getSimpleName());
                     return;
                 }
@@ -592,7 +597,7 @@ public class SecurityKeyManager {
             if (isActive && securityKey.transport.isPersistentConnectionAllowed()) {
                 callbackHandlerMain.post(() -> {
                     if (!isActive) {
-                        Timber.d("%s no longer active - dropping onSecurityKeyDisconnected callback!",
+                        HwTimber.d("%s no longer active - dropping onSecurityKeyDisconnected callback!",
                                 connectionMode.getClass().getSimpleName());
                         return;
                     }
@@ -604,7 +609,7 @@ public class SecurityKeyManager {
         @OnLifecycleEvent(Event.ON_RESUME)
         @UiThread
         void onResume() {
-            Timber.d("onResume: %s for %s active",
+            HwTimber.d("onResume: %s for %s active",
                     connectionMode.getClass().getSimpleName(), callback.getClass().getSimpleName());
             isActive = true;
 
@@ -614,7 +619,7 @@ public class SecurityKeyManager {
         @OnLifecycleEvent(Event.ON_PAUSE)
         @UiThread
         void onPause() {
-            Timber.d("onPause: %s for %s inactive",
+            HwTimber.d("onPause: %s for %s inactive",
                     connectionMode.getClass().getSimpleName(), callback.getClass().getSimpleName());
             isActive = false;
         }
@@ -622,7 +627,7 @@ public class SecurityKeyManager {
         @OnLifecycleEvent(Event.ON_DESTROY)
         @UiThread
         void onDestroy() {
-            Timber.d("onDestroy: %s for %s destroyed",
+            HwTimber.d("onDestroy: %s for %s destroyed",
                     connectionMode.getClass().getSimpleName(), callback.getClass().getSimpleName());
             registeredCallbacks.remove(this);
             postponedTransport = null;

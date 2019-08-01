@@ -35,13 +35,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.graphics.drawable.Animatable;
 import android.graphics.drawable.Drawable;
 import android.nfc.TagLostException;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Pair;
@@ -72,7 +70,6 @@ import androidx.transition.Scene;
 import androidx.transition.Transition;
 import androidx.transition.TransitionManager;
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat;
-import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -98,7 +95,7 @@ import de.cotech.hw.fido.exceptions.FidoWrongKeyHandleException;
 import de.cotech.hw.fido.internal.AnimatedVectorDrawableHelper;
 import de.cotech.hw.util.NfcStatusObserver;
 import de.cotech.sweetspot.NfcSweetspotData;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 public class FidoDialogFragment extends BottomSheetDialogFragment implements SecurityKeyCallback<FidoSecurityKey> {
@@ -268,7 +265,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
 
         if (fidoRegisterCallback == null && fidoAuthenticateCallback == null) {
             if (savedInstanceState != null) {
-                Timber.e("Dismissing FidoDialogFragment left without callbacks after configuration change!");
+                HwTimber.e("Dismissing FidoDialogFragment left without callbacks after configuration change!");
                 dismiss();
                 return;
             }
@@ -294,7 +291,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
             int keyboardChanges = ActivityInfo.CONFIG_KEYBOARD | ActivityInfo.CONFIG_KEYBOARD_HIDDEN;
             boolean isKeyboardConfigChange = (changingConfigurations & keyboardChanges) != 0;
             if (isKeyboardConfigChange) {
-                Timber.e("Activity is recreated due to a keyboard config change, which may cause UI flickering!\n" +
+                HwTimber.e("Activity is recreated due to a keyboard config change, which may cause UI flickering!\n" +
                         "To fix this issue, the Activity's configChanges attribute " +
                         "in AndroidManifest.xml should include keyboard|keyboardHidden");
             }
@@ -304,7 +301,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     private void initTimeout(long timeoutSeconds) {
         final Handler handler = new Handler();
         handler.postDelayed(() -> {
-            Timber.d("Timeout after %s seconds.", timeoutSeconds);
+            HwTimber.d("Timeout after %s seconds.", timeoutSeconds);
 
             textError.setText(R.string.hwsecurity_error_timeout);
             gotoState(State.ERROR);
@@ -640,7 +637,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     private void fadeToNfcSweetSpot() {
         Pair<Double, Double> nfcPosition = NfcSweetspotData.getSweetspotForBuildModel();
         if (nfcPosition == null) {
-            Timber.d("No NFC sweetspot data available for this model.");
+            HwTimber.d("No NFC sweetspot data available for this model.");
             return;
         }
 
@@ -830,7 +827,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
                 break;
             }
             default: {
-                Timber.d("onSecurityKeyDiscovered unhandled state: %s", currentState.name());
+                HwTimber.d("onSecurityKeyDiscovered unhandled state: %s", currentState.name());
             }
         }
 
@@ -875,14 +872,14 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
 
     @Override
     public void onSecurityKeyDisconnected(@NonNull FidoSecurityKey securityKey) {
-        Timber.d("onSecurityKeyDisconnected");
+        HwTimber.d("onSecurityKeyDisconnected");
 
         switch (currentState) {
             case USB_PRESS_BUTTON:
             case USB_SELECT_AND_PRESS_BUTTON:
                 gotoState(State.START);
             default:
-                Timber.d("onSecurityKeyDisconnected unhandled state: %s", currentState.name());
+                HwTimber.d("onSecurityKeyDisconnected unhandled state: %s", currentState.name());
         }
     }
 
@@ -892,7 +889,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     }
 
     private void handleError(IOException exception) {
-        Timber.d(exception);
+        HwTimber.d(exception);
 
         if (currentState == State.ERROR) {
             // keep stateBeforeError

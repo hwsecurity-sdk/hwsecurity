@@ -57,7 +57,7 @@ import de.cotech.hw.fido.ui.FidoDialogFragment;
 import de.cotech.hw.fido.ui.FidoDialogFragment.OnFidoAuthenticateCallback;
 import de.cotech.hw.fido.ui.FidoDialogFragment.OnFidoRegisterCallback;
 import de.cotech.hw.fido.ui.FidoDialogOptions;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 @TargetApi(VERSION_CODES.LOLLIPOP)
@@ -113,11 +113,11 @@ public class WebViewFidoBridge {
 
     @SuppressWarnings("unused") // parity with WebViewClient.shouldInterceptRequest
     public void delegateShouldInterceptRequest(WebView view, WebResourceRequest request) {
-        Timber.d("shouldInterceptRequest %s", request.getUrl());
+        HwTimber.d("shouldInterceptRequest %s", request.getUrl());
 
         if (loadingNewPage) {
             loadingNewPage = false;
-            Timber.d("Scheduling fido bridge injection!");
+            HwTimber.d("Scheduling fido bridge injection!");
             Handler handler = new Handler(context.getMainLooper());
             handler.postAtFrontOfQueue(this::injectJavascriptFidoBridge);
         }
@@ -134,7 +134,7 @@ public class WebViewFidoBridge {
         Uri uri = Uri.parse(url);
 
         if (!"https".equalsIgnoreCase(uri.getScheme())) {
-            Timber.e("Fido only supported for HTTPS websites!");
+            HwTimber.e("Fido only supported for HTTPS websites!");
             return;
         }
 
@@ -147,7 +147,7 @@ public class WebViewFidoBridge {
             String jsContent = AndroidUtils.loadTextFromAssets(context, ASSETS_BRIDGE_JS, Charset.defaultCharset());
             webView.evaluateJavascript("javascript:(" + jsContent + ")()", null);
         } catch (IOException e) {
-            Timber.e(e);
+            HwTimber.e(e);
             throw new IllegalStateException();
         }
     }
@@ -161,7 +161,7 @@ public class WebViewFidoBridge {
         try {
             u2fRegisterRequest = U2fJsonParser.parseU2fRegisterRequest(requestJson);
         } catch (IOException e) {
-            Timber.e(e);
+            HwTimber.e(e);
             return;
         }
         RequestData requestData = RequestData.create(u2fRegisterRequest.type(), u2fRegisterRequest.requestId());
@@ -173,7 +173,7 @@ public class WebViewFidoBridge {
 
             showRegisterFragment(requestData, appId, challenge, u2fRegisterRequest.timeoutSeconds());
         } catch (IOException e) {
-            Timber.e(e);
+            HwTimber.e(e);
             handleError(requestData, ErrorCode.BAD_REQUEST);
         }
     }
@@ -201,13 +201,13 @@ public class WebViewFidoBridge {
         public void onFidoRegisterCancel(@NonNull FidoRegisterRequest fidoRegisterRequest) {
             // Google's Authenticator does not return any error code when the user closes the activity
             // but we do
-            Timber.d("onRegisterCancel");
+            HwTimber.d("onRegisterCancel");
             handleError(fidoRegisterRequest.getCustomData(), ErrorCode.OTHER_ERROR);
         }
 
         @Override
         public void onFidoRegisterTimeout(@NonNull FidoRegisterRequest fidoRegisterRequest) {
-            Timber.d("onRegisterTimeout");
+            HwTimber.d("onRegisterTimeout");
             handleError(fidoRegisterRequest.getCustomData(), ErrorCode.TIMEOUT);
         }
     };
@@ -221,7 +221,7 @@ public class WebViewFidoBridge {
         try {
             u2fAuthenticateRequest = U2fJsonParser.parseU2fAuthenticateRequest(requestJson);
         } catch (IOException e) {
-            Timber.e(e);
+            HwTimber.e(e);
             return;
         }
         RequestData requestData = RequestData.create(u2fAuthenticateRequest.type(), u2fAuthenticateRequest.requestId());
@@ -234,7 +234,7 @@ public class WebViewFidoBridge {
             showSignFragment(requestData, appId, keyHandles,
                     u2fAuthenticateRequest.challenge(), u2fAuthenticateRequest.timeoutSeconds());
         } catch (IOException e) {
-            Timber.e(e);
+            HwTimber.e(e);
             handleError(requestData, ErrorCode.BAD_REQUEST);
         }
     }
@@ -253,7 +253,7 @@ public class WebViewFidoBridge {
     private OnFidoAuthenticateCallback fidoAuthenticateCallback = new OnFidoAuthenticateCallback() {
         @Override
         public void onFidoAuthenticateResponse(@NonNull FidoAuthenticateResponse authenticateResponse) {
-            Timber.d("onAuthenticateResponse");
+            HwTimber.d("onAuthenticateResponse");
             U2fResponse u2fResponse = U2fResponse.createAuthenticateResponse(
                     authenticateResponse.<RequestData>getCustomData().getRequestId(),
                     authenticateResponse.getClientData(),
@@ -266,13 +266,13 @@ public class WebViewFidoBridge {
         public void onFidoAuthenticateCancel(@NonNull FidoAuthenticateRequest fidoAuthenticateRequest) {
             // Google's Authenticator does not return any error code when the user closes the activity
             // but we do
-            Timber.d("onAuthenticateCancel");
+            HwTimber.d("onAuthenticateCancel");
             handleError(fidoAuthenticateRequest.getCustomData(), ErrorCode.OTHER_ERROR);
         }
 
         @Override
         public void onFidoAuthenticateTimeout(@NonNull FidoAuthenticateRequest fidoAuthenticateRequest) {
-            Timber.d("onAuthenticateTimeout");
+            HwTimber.d("onAuthenticateTimeout");
             handleError(fidoAuthenticateRequest.getCustomData(), ErrorCode.TIMEOUT);
         }
     };

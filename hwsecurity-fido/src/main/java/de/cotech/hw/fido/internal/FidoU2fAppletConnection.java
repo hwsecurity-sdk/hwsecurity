@@ -43,7 +43,7 @@ import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.internal.transport.SecurityKeyInfo.TransportType;
 import de.cotech.hw.internal.transport.Transport;
 import de.cotech.hw.util.Hex;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 @RestrictTo(Scope.LIBRARY_GROUP)
@@ -55,7 +55,7 @@ public class FidoU2fAppletConnection {
             // see to "FIDO U2F NFC protocol", Section 5. Applet selection
             // https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-nfc-protocol-v1.2-ps-20170411.html
             Hex.decodeHexOrFail("A0000006472F0001"),
-            // Workaround for Solokey: https://github.com/solokeys/solo/issues/213
+            // Workaround for Solokey for firmware < 2.4.0: https://github.com/solokeys/solo/issues/213
             Hex.decodeHexOrFail("A0000006472F000100"),
             // old Yubico demo applet AID
             Hex.decodeHexOrFail("A0000005271002")
@@ -90,12 +90,12 @@ public class FidoU2fAppletConnection {
     private void connectToDevice() throws IOException {
         try {
             if (transport.getTransportType() == TransportType.USB_U2FHID) {
-                Timber.d("Using USB U2F HID as a transport. No need to select AID.");
+                HwTimber.d("Using USB U2F HID as a transport. No need to select AID.");
                 byte[] versionBytes = readVersion();
                 checkVersionOrThrow(versionBytes);
             } else {
                 byte[] selectedAid = selectFilesFromPrefixOrFail();
-                Timber.d("Connected to AID %s", Hex.encodeHexString(selectedAid));
+                HwTimber.d("Connected to AID %s", Hex.encodeHexString(selectedAid));
             }
 
             isFidoAppletConnected = true;
@@ -119,9 +119,9 @@ public class FidoU2fAppletConnection {
         String version = new String(versionBytes, Charset.forName("ASCII"));
 
         if ("U2F_V2".equals(version)) {
-            Timber.d("U2F applet answered correctly with version U2F_V2");
+            HwTimber.d("U2F applet answered correctly with version U2F_V2");
         } else {
-            Timber.e("U2F applet did NOT answer with a correct version string!");
+            HwTimber.e("U2F applet did NOT answer with a correct version string!");
             throw new IOException("Applet replied with incorrect version string!");
         }
     }
@@ -211,7 +211,7 @@ public class FidoU2fAppletConnection {
             if (response.getSw() != WrongRequestLengthException.SW_WRONG_REQUEST_LENGTH) {
                 return response;
             } else {
-                Timber.d("Received WRONG_REQUEST_LENGTH error. Retrying with compatibility workaround");
+                HwTimber.d("Received WRONG_REQUEST_LENGTH error. Retrying with compatibility workaround");
             }
         }
 

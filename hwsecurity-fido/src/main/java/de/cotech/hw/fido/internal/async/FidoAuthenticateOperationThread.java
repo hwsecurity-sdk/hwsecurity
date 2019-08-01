@@ -45,7 +45,7 @@ import de.cotech.hw.fido.internal.FidoU2fAppletConnection;
 import de.cotech.hw.fido.internal.operations.AuthenticateOp;
 import de.cotech.hw.util.HashUtil;
 import de.cotech.hw.util.Hex;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 @RestrictTo(Scope.LIBRARY_GROUP)
@@ -74,9 +74,9 @@ public class FidoAuthenticateOperationThread extends FidoOperationThread<FidoAut
         challengeParam = HashUtil.sha256(authenticateRequest.getClientData());
         applicationParam = HashUtil.sha256(authenticateRequest.getAppId());
 
-        Timber.d("challenge param: %s", Hex.encodeHexString(challengeParam));
-        Timber.d("application param: %s", Hex.encodeHexString(applicationParam));
-        Timber.d("client data: %s", authenticateRequest.getClientData());
+        HwTimber.d("challenge param: %s", Hex.encodeHexString(challengeParam));
+        HwTimber.d("application param: %s", Hex.encodeHexString(applicationParam));
+        HwTimber.d("client data: %s", authenticateRequest.getClientData());
     }
 
     @Override
@@ -99,7 +99,7 @@ public class FidoAuthenticateOperationThread extends FidoOperationThread<FidoAut
                 acceptedKeyHandle = keyHandle;
                 throw e;
             } catch (WrongRequestLengthException e) {
-                Timber.d("Received %s, treating as WRONG_DATA", e.getShortErrorName());
+                HwTimber.d("Received %s, treating as WRONG_DATA", e.getShortErrorName());
                 lastWrongKeyHandleException = e;
             } catch (FidoWrongKeyHandleException e) {
                 lastWrongKeyHandleException = e;

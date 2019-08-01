@@ -40,7 +40,7 @@ import com.google.auto.value.AutoValue;
 import de.cotech.hw.internal.transport.usb.UsbTransportException;
 import de.cotech.hw.util.Arrays;
 import de.cotech.hw.util.Hex;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class CcidTransceiver {
@@ -93,14 +93,14 @@ public class CcidTransceiver {
 
         CcidDataBlock response = null;
         for (CcidDescriptor.Voltage v : usbCcidDescription.getVoltages()) {
-            Timber.v("CCID: attempting to power on with voltage %s", v.toString());
+            HwTimber.v("CCID: attempting to power on with voltage %s", v.toString());
             try {
                 response = iccPowerOnVoltage(v.powerOnValue);
             } catch (UsbCcidErrorException e) {
                 if (e.getErrorResponse().getError() == 7) { // Power select error
-                    Timber.v("CCID: failed to power on with voltage %s", v.toString());
+                    HwTimber.v("CCID: failed to power on with voltage %s", v.toString());
                     iccPowerOff();
-                    Timber.v("CCID: powered off");
+                    HwTimber.v("CCID: powered off");
                     continue;
                 }
 
@@ -115,7 +115,7 @@ public class CcidTransceiver {
 
         long elapsedTime = SystemClock.elapsedRealtime() - startTime;
 
-        Timber.d("Usb transport connected, took " + elapsedTime + "ms, ATR=" +
+        HwTimber.d("Usb transport connected, took " + elapsedTime + "ms, ATR=" +
                 Hex.encodeHexString(response.getData()));
 
         return response;
@@ -182,7 +182,7 @@ public class CcidTransceiver {
         CcidDataBlock ccidDataBlock = receiveDataBlock(sequenceNumber);
 
         long elapsedTime = SystemClock.elapsedRealtime() - startTime;
-        Timber.d("USB XferBlock call took " + elapsedTime + "ms");
+        HwTimber.d("USB XferBlock call took " + elapsedTime + "ms");
 
         return ccidDataBlock;
     }
@@ -193,7 +193,7 @@ public class CcidTransceiver {
             ignoredBytes = usbConnection.bulkTransfer(
                     usbBulkIn, inputBuffer, inputBuffer.length, DEVICE_SKIP_TIMEOUT_MILLIS);
             if (ignoredBytes > 0) {
-                Timber.e("Skipped " + ignoredBytes + " bytes: " + Hex.encodeHexString(
+                HwTimber.e("Skipped " + ignoredBytes + " bytes: " + Hex.encodeHexString(
                         Arrays.copyOfRange(inputBuffer, 0, ignoredBytes)));
             }
         } while (ignoredBytes > 0);

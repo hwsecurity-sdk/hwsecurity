@@ -21,6 +21,6 @@ allprojects {
 ext {
     compileSdkVersion = 28
     hwSdkIncludeAsSubmodule = false
-    hwSdkVersionCode = 8
-    hwSdkVersionName = '2.3.3'
+    hwSdkVersionCode = 9
+    hwSdkVersionName = '2.4.0'
 }

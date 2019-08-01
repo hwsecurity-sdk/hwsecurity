@@ -34,7 +34,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 import de.cotech.hw.SecurityKeyManager;
-import timber.log.Timber;
+import de.cotech.hw.util.HwTimber;
 
 
 /**
@@ -64,7 +64,7 @@ public final class NfcIntentDispatchActivity extends Activity {
             return;
         }
 
-        Timber.d("Nfc Security Key connected!");
+        HwTimber.d("Nfc Security Key connected!");
         securityKeyManager.onNfcIntent(intent);
         finish();
     }
