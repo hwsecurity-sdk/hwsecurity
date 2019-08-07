@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="hwSecurityButtonColor" format="color" />
+    <attr name="hwSecuritySurfaceColor" format="color" />
+    <attr name="hwSecurityErrorColor" format="color" />
+</resources>

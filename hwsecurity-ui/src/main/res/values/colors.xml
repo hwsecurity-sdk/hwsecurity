@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="hwSecurityWhite">#fff</color>
+    <color name="hwSecurityBlue">#9dc5d2</color>
+    <color name="hwSecurityDarkBlue">#006a8b</color>s
+    <color name="hwSecurityRed">#e00f00</color>
+    <color name="hwSecurityGreen">#55d264</color>
+
+</resources>

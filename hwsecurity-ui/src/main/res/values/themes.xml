@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="HwSecurity.Dialog.TextButton" parent="Widget.MaterialComponents.Button.TextButton">
+        <!--<item name="android:textSize">12sp</item>-->
+    </style>
+
+    <style name="HwSecurity.Dialog.PinButton" parent="Widget.MaterialComponents.Button.UnelevatedButton">
+        <item name="android:textSize">32sp</item>
+        <item name="android:layout_width">64dp</item>
+        <item name="android:layout_height">64dp</item>
+        <item name="android:textColor">#000</item>
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetRight">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="rippleColor">#888</item>
+        <item name="backgroundTint">#00ffffff</item>
+        <item name="cornerRadius">64dp</item>
+    </style>
+
+    <style name="HwSecurity.Dialog.PinButton.Icon" parent="HwSecurity.Dialog.PinButton">
+        <item name="iconTint">#000</item>
+        <item name="android:paddingLeft">20dp</item>
+    </style>
+
+    <style name="HwSecurity.Dialog" parent="HwSecurity.BaseDialog">
+        <item name="hwSecurityButtonColor">@color/hwSecurityDarkBlue</item>
+        <item name="hwSecuritySurfaceColor">@color/hwSecurityBlue</item>
+        <item name="hwSecurityErrorColor">@color/hwSecurityRed</item>
+    </style>
+
+    <style name="HwSecurity.BaseDialog" parent="Theme.MaterialComponents.Light.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/HwSecurity.Dialog.Modal</item>
+        <item name="colorSecondary">?attr/hwSecurityButtonColor</item>
+        <item name="colorPrimary">?attr/hwSecuritySurfaceColor</item>
+    </style>
+
+    <style name="HwSecurity.Dialog.Modal" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@drawable/hwsecurity_bottom_sheet_rounded_corners</item>
+    </style>
+</resources>

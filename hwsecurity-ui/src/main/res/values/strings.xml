@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hwsecurity_ui_error_wrong_pin">Wrong PIN!\n(Keep in mind that you have only 3 tries!)</string>
+    <string name="hwsecurity_ui_error_too_short_pin">PIN too short!</string>
+    <string name="hwsecurity_ui_error_no_pin_tries">PIN has been entered 3 times wrong! Card is blocked.</string>
+    <string name="hwsecurity_ui_error_wrong_puk">Wrong PUK!\n(Keep in mind that you have only 3 tries!)</string>
+    <string name="hwsecurity_ui_error_no_puk_tries">PUK has been entered 3 times wrong! Card is fully blocked.</string>
+    <string name="hwsecurity_ui_error_no_pubkey">No cryptographic key on this security key!</string>
+    <string name="hwsecurity_ui_cancel">Cancel</string>
+    <string name="hwsecurity_ui_reset_pin">Reset PIN</string>
+    <string name="hwsecurity_ui_title">Login with Security Key</string>
+    <string name="hwsecurity_ui_description_enter_pin">Enter your PIN.</string>
+    <string name="hwsecurity_ui_description_smartcard">"Just do it, or click for help."</string>
+    <string name="hwsecurity_ui_description_hold_nfc">Keep security key against the back of your device. Don\'t move it.</string>
+    <string name="hwsecurity_ui_title_reset_pin">Reset your Security Key</string>
+    <string name="hwsecurity_ui_description_enter_puk">Enter the PUK (not PIN!)</string>
+    <string name="hwsecurity_ui_description_enter_new_pin">Enter your new favorite PIN</string>
+    <string name="hwsecurity_ui_changed_pin">PIN has been changed!</string>
+
+
+    <string name="hwsecurity_description_start">"Just do it, or click for help."</string>
+    <string name="hwsecurity_start_nfc">NFC help</string>
+    <string name="hwsecurity_start_usb">USB help</string>
+    <string name="hwsecurity_title_default_register">Register your Security Key</string>
+    <string name="hwsecurity_title_default_authenticate">Login with your Security Key</string>
+    <string name="hwsecurity_title_usb_selected">Insert your Security Key into the USB port.</string>
+    <string name="hwsecurity_title_usb_button">Tap the button or golden disc.</string>
+    <string name="hwsecurity_title_nfc_fullscreen">Hold the Security Key at the back of your smartphone at the NFC spot.</string>
+    <string name="hwsecurity_error_wrong_key_handle">Wrong Security Key used.</string>
+    <string name="hwsecurity_error_internal">Internal error: %1$s</string>
+    <string name="hwsecurity_error_timeout">Timeout. Please try again!</string>
+    <string name="hwsecurity_nfc_disabled">NFC is disabled. You can enable it in Android\'s NFC settings.</string>
+    <string name="hwsecurity_nfc_disabled_button">NFC Settings</string>
+    <string name="hwsecurity_nfc_settings_toast">Please activate NFC and press Back to return to the app.</string>
+
+
+</resources>
