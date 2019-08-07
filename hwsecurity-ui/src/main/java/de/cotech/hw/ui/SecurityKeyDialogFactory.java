@@ -28,9 +28,9 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import de.cotech.hw.openpgp.OpenPgpSecurityKey;
 import de.cotech.hw.openpgp.OpenPgpSecurityKeyConnectionModeConfig;
-import de.cotech.hw.piv.PivSecurityKey;
+//import de.cotech.hw.piv.PivSecurityKey;
 import de.cotech.hw.ui.internal.OpenPgpSecurityKeyDialogFragment;
-import de.cotech.hw.ui.internal.PivSecurityKeyDialogFragment;
+//import de.cotech.hw.ui.internal.PivSecurityKeyDialogFragment;
 
 public class SecurityKeyDialogFactory {
 
@@ -58,23 +58,23 @@ public class SecurityKeyDialogFactory {
         return fragment;
     }
 
-    public static SecurityKeyDialogFragment<PivSecurityKey> newPivInstance() {
-        return newPivInstance(SecurityKeyDialogOptions.builder().build());
-    }
-
-    public static SecurityKeyDialogFragment<PivSecurityKey> newPivInstance(@NonNull SecurityKeyDialogOptions options) {
-        try {
-            Class.forName("de.cotech.hw.piv.PivSecurityKey");
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("You must include the hwsecurity-piv Maven artifact!");
-        }
-
-        Bundle args = new Bundle();
-        args.putParcelable(PivSecurityKeyDialogFragment.ARG_DIALOG_OPTIONS, options);
-
-        PivSecurityKeyDialogFragment fragment = new PivSecurityKeyDialogFragment();
-        fragment.setArguments(args);
-        return fragment;
-    }
+//     public static SecurityKeyDialogFragment<PivSecurityKey> newPivInstance() {
+//         return newPivInstance(SecurityKeyDialogOptions.builder().build());
+//     }
+// 
+//     public static SecurityKeyDialogFragment<PivSecurityKey> newPivInstance(@NonNull SecurityKeyDialogOptions options) {
+//         try {
+//             Class.forName("de.cotech.hw.piv.PivSecurityKey");
+//         } catch (ClassNotFoundException e) {
+//             throw new IllegalArgumentException("You must include the hwsecurity-piv Maven artifact!");
+//         }
+// 
+//         Bundle args = new Bundle();
+//         args.putParcelable(PivSecurityKeyDialogFragment.ARG_DIALOG_OPTIONS, options);
+// 
+//         PivSecurityKeyDialogFragment fragment = new PivSecurityKeyDialogFragment();
+//         fragment.setArguments(args);
+//         return fragment;
+//     }
 
 }
