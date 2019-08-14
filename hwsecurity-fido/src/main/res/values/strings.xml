@@ -7,6 +7,8 @@
     <string name="hwsecurity_start_usb">USB help</string>
     <string name="hwsecurity_title_default_register">Register your Security Key</string>
     <string name="hwsecurity_title_default_authenticate">Login with your Security Key</string>
+    <string name="hwsecurity_title_default_register_app_id">Register your Security Key for %s</string>
+    <string name="hwsecurity_title_default_authenticate_app_id">Login into %s with your Security Key</string>
     <string name="hwsecurity_title_usb_selected">Insert your Security Key into the USB port.</string>
     <string name="hwsecurity_title_usb_button">Tap the button or golden disc.</string>
     <string name="hwsecurity_title_nfc_fullscreen">Hold the Security Key at the back of your smartphone at the NFC spot.</string>

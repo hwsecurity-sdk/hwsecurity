@@ -27,8 +27,11 @@ package de.cotech.hw.fido.ui;
 import android.os.Parcelable;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.StyleRes;
 
 import com.google.auto.value.AutoValue;
+
+import de.cotech.hw.fido.R;
 
 @AutoValue
 public abstract class FidoDialogOptions implements Parcelable {
@@ -41,19 +44,54 @@ public abstract class FidoDialogOptions implements Parcelable {
 
     public abstract boolean getPreventScreenshots();
 
+    @StyleRes
+    public abstract int getTheme();
+
     // default values
     public static Builder builder() {
         return new AutoValue_FidoDialogOptions.Builder()
-                .setPreventScreenshots(false);
+                .setPreventScreenshots(false)
+                .setTheme(R.style.HwSecurity_Fido_Dialog);
     }
 
     @AutoValue.Builder
     public abstract static class Builder {
+        /**
+         * Title shown inside the dialog
+         * <p>
+         * Default: "Register your Security Key" or "Login with your Security Key"
+         */
         public abstract Builder setTitle(String title);
 
+        /**
+         * Automatically aborts the authentication after a certain time. Many website use a timeout
+         * of 30 seconds for FIDO U2F. For native Android apps, we do not recommend setting a timeout.
+         * <p>
+         * Default: No timeout
+         */
         public abstract Builder setTimeoutSeconds(Long timeoutSeconds);
 
+        /**
+         * Sets FLAG_SECURE on the dialog fragment.
+         * <p>
+         * This sets the content of the window as 'secure', preventing it from appearing in screenshots,
+         * screen recordings or from being viewed on non-secure displays.
+         * <p>
+         * Default: false (because FIDO U2F requires no PIN input)
+         */
         public abstract Builder setPreventScreenshots(boolean preventScreenshots);
+
+        /**
+         * Set your own custom theme for the dialog to change colors:
+         * <pre>{@code
+         * <style name="MyCustomDialog" parent="HwSecurity.Fido.Dialog">
+         *     <item name="hwSecurityButtonColor">@color/hwSecurityDarkBlue</item>
+         *     <item name="hwSecuritySurfaceColor">@color/hwSecurityBlue</item>
+         *     <item name="hwSecurityErrorColor">@color/hwSecurityRed</item>
+         * </style>
+         * }</pre>
+         */
+        public abstract Builder setTheme(@StyleRes int theme);
 
         public abstract FidoDialogOptions build();
     }

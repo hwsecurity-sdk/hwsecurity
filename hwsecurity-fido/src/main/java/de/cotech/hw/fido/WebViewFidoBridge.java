@@ -26,6 +26,8 @@ package de.cotech.hw.fido;
 
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.List;
 
@@ -33,6 +35,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -44,7 +47,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
+
 import com.google.auto.value.AutoValue;
+
 import de.cotech.hw.fido.internal.jsapi.U2fApiUtils;
 import de.cotech.hw.fido.internal.jsapi.U2fAuthenticateRequest;
 import de.cotech.hw.fido.internal.jsapi.U2fJsonParser;
@@ -60,7 +65,16 @@ import de.cotech.hw.fido.ui.FidoDialogOptions;
 import de.cotech.hw.util.HwTimber;
 
 
-@TargetApi(VERSION_CODES.LOLLIPOP)
+/**
+ * If you are using a WebView for your login flow, you can use this WebViewFidoBridge
+ * for extending the WebView's Javascript API with the official FIDO U2F APIs.
+ * <p>
+ * Currently supported:
+ * - High level API of U2F v1.1, https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-javascript-api-v1.2-ps-20170411.html
+ * <p>
+ * Note: Currently only compatible and tested with Android SDK >= 19 due to evaluateJavascript() calls.
+ */
+@TargetApi(VERSION_CODES.KITKAT)
 public class WebViewFidoBridge {
     private static final String FIDO_BRIDGE_INTERFACE = "fidobridgejava";
     private static final String ASSETS_BRIDGE_JS = "fidobridge.js";
@@ -68,31 +82,45 @@ public class WebViewFidoBridge {
     private final Context context;
     private final FragmentManager fragmentManager;
     private final WebView webView;
+    private final FidoDialogOptions.Builder optionsBuilder;
 
     private String currentLoadedHost;
     private boolean loadingNewPage;
 
-
+    @SuppressWarnings("unused") // public API
     public static WebViewFidoBridge createInstanceForWebView(AppCompatActivity activity, WebView webView) {
-        return createInstanceForWebView(activity.getApplicationContext(), activity.getSupportFragmentManager(), webView);
+        return createInstanceForWebView(activity.getApplicationContext(), activity.getSupportFragmentManager(), webView, null);
     }
 
-    // TODO should this be public API?
-    private static WebViewFidoBridge createInstanceForWebView(
-            Context context, FragmentManager fragmentManager, WebView webView) {
+    /**
+     * Same as createInstanceForWebView, but allows to set FidoDialogOptions.
+     * <p>
+     * Note: Timeout and Title will be overwritten.
+     */
+    @SuppressWarnings("unused") // public API
+    public static WebViewFidoBridge createInstanceForWebView(AppCompatActivity activity, WebView webView, FidoDialogOptions.Builder optionsBuilder) {
+        return createInstanceForWebView(activity.getApplicationContext(), activity.getSupportFragmentManager(), webView, optionsBuilder);
+    }
+
+    public static WebViewFidoBridge createInstanceForWebView(Context context, FragmentManager fragmentManager, WebView webView) {
+        return createInstanceForWebView(context, fragmentManager, webView, null);
+    }
+
+    @SuppressWarnings("WeakerAccess") // public API
+    public static WebViewFidoBridge createInstanceForWebView(Context context, FragmentManager fragmentManager, WebView webView, FidoDialogOptions.Builder optionsBuilder) {
         Context applicationContext = context.getApplicationContext();
 
-        WebViewFidoBridge webViewFidoBridge = new WebViewFidoBridge(applicationContext, fragmentManager, webView);
+        WebViewFidoBridge webViewFidoBridge = new WebViewFidoBridge(applicationContext, fragmentManager, webView, optionsBuilder);
         webViewFidoBridge.addJavascriptInterfaceToWebView();
 
         return webViewFidoBridge;
     }
 
-
-    private WebViewFidoBridge(Context context, FragmentManager fragmentManager, WebView webView) {
+    private WebViewFidoBridge(Context context, FragmentManager fragmentManager, WebView webView, FidoDialogOptions.Builder optionsBuilder) {
         this.context = context;
         this.fragmentManager = fragmentManager;
         this.webView = webView;
+        this.optionsBuilder = optionsBuilder;
     }
 
     private void addJavascriptInterfaceToWebView() {
@@ -111,16 +139,26 @@ public class WebViewFidoBridge {
 
     // region delegate
 
-    @SuppressWarnings("unused") // parity with WebViewClient.shouldInterceptRequest
+    /**
+     * Call this in your WebViewClient.shouldInterceptRequest(WebView view, WebResourceRequest request)
+     */
+    @TargetApi(VERSION_CODES.LOLLIPOP)
+    @SuppressWarnings("unused")
+    // parity with WebViewClient.shouldInterceptRequest(WebView view, WebResourceRequest request)
     public void delegateShouldInterceptRequest(WebView view, WebResourceRequest request) {
-        HwTimber.d("shouldInterceptRequest %s", request.getUrl());
+        HwTimber.d("shouldInterceptRequest(WebView view, WebResourceRequest request) %s", request.getUrl());
+        injectOnInterceptRequest();
+    }
 
-        if (loadingNewPage) {
-            loadingNewPage = false;
-            HwTimber.d("Scheduling fido bridge injection!");
-            Handler handler = new Handler(context.getMainLooper());
-            handler.postAtFrontOfQueue(this::injectJavascriptFidoBridge);
-        }
+    /**
+     * Call this in your WebViewClient.shouldInterceptRequest(WebView view, String url)
+     */
+    @TargetApi(VERSION_CODES.KITKAT)
+    @SuppressWarnings("unused")
+    // parity with WebViewClient.shouldInterceptRequest(WebView view, String url)
+    public void delegateShouldInterceptRequest(WebView view, String url) {
+        HwTimber.d("shouldInterceptRequest(WebView view, String url): %s", url);
+        injectOnInterceptRequest();
     }
 
     @SuppressWarnings("unused") // parity with WebViewClient.onPageStarted
@@ -140,6 +178,15 @@ public class WebViewFidoBridge {
 
         this.currentLoadedHost = uri.getHost();
         this.loadingNewPage = true;
+    }
+
+    private void injectOnInterceptRequest() {
+        if (loadingNewPage) {
+            loadingNewPage = false;
+            HwTimber.d("Scheduling fido bridge injection!");
+            Handler handler = new Handler(context.getMainLooper());
+            handler.postAtFrontOfQueue(this::injectJavascriptFidoBridge);
+        }
     }
 
     private void injectJavascriptFidoBridge() {
@@ -179,11 +226,15 @@ public class WebViewFidoBridge {
     }
 
     private void showRegisterFragment(RequestData requestData, String appId, String challenge,
-            Long timeoutSeconds) {
+                                      Long timeoutSeconds) {
         FidoRegisterRequest registerRequest = FidoRegisterRequest.create(
                 appId, getCurrentFacetId(), challenge, requestData);
-        FidoDialogOptions fidoDialogOptions = getFidoDialogOptions(timeoutSeconds);
-        FidoDialogFragment fidoDialogFragment = FidoDialogFragment.newInstance(registerRequest, fidoDialogOptions);
+
+        FidoDialogOptions.Builder opsBuilder = optionsBuilder != null ? optionsBuilder : FidoDialogOptions.builder();
+        opsBuilder.setTimeoutSeconds(timeoutSeconds);
+        opsBuilder.setTitle(context.getString(R.string.hwsecurity_title_default_register_app_id, getDisplayAppId(appId)));
+
+        FidoDialogFragment fidoDialogFragment = FidoDialogFragment.newInstance(registerRequest, opsBuilder.build());
         fidoDialogFragment.setFidoRegisterCallback(fidoRegisterCallback);
         fidoDialogFragment.show(fragmentManager);
     }
@@ -199,15 +250,12 @@ public class WebViewFidoBridge {
 
         @Override
         public void onFidoRegisterCancel(@NonNull FidoRegisterRequest fidoRegisterRequest) {
-            // Google's Authenticator does not return any error code when the user closes the activity
-            // but we do
-            HwTimber.d("onRegisterCancel");
+            // Google's Authenticator does not return error codes when the user closes the activity, but we do
             handleError(fidoRegisterRequest.getCustomData(), ErrorCode.OTHER_ERROR);
         }
 
         @Override
         public void onFidoRegisterTimeout(@NonNull FidoRegisterRequest fidoRegisterRequest) {
-            HwTimber.d("onRegisterTimeout");
             handleError(fidoRegisterRequest.getCustomData(), ErrorCode.TIMEOUT);
         }
     };
@@ -244,8 +292,12 @@ public class WebViewFidoBridge {
             Long timeoutSeconds) {
         FidoAuthenticateRequest authenticateRequest = FidoAuthenticateRequest.create(
                 appId, getCurrentFacetId(), challenge, keyHandles, requestData);
-        FidoDialogOptions fidoDialogOptions = getFidoDialogOptions(timeoutSeconds);
-        FidoDialogFragment fidoDialogFragment = FidoDialogFragment.newInstance(authenticateRequest, fidoDialogOptions);
+
+        FidoDialogOptions.Builder opsBuilder = optionsBuilder != null ? optionsBuilder : FidoDialogOptions.builder();
+        opsBuilder.setTimeoutSeconds(timeoutSeconds);
+        opsBuilder.setTitle(context.getString(R.string.hwsecurity_title_default_authenticate_app_id, getDisplayAppId(appId)));
+
+        FidoDialogFragment fidoDialogFragment = FidoDialogFragment.newInstance(authenticateRequest, opsBuilder.build());
         fidoDialogFragment.setFidoAuthenticateCallback(fidoAuthenticateCallback);
         fidoDialogFragment.show(fragmentManager);
     }
@@ -253,7 +305,6 @@ public class WebViewFidoBridge {
     private OnFidoAuthenticateCallback fidoAuthenticateCallback = new OnFidoAuthenticateCallback() {
         @Override
         public void onFidoAuthenticateResponse(@NonNull FidoAuthenticateResponse authenticateResponse) {
-            HwTimber.d("onAuthenticateResponse");
             U2fResponse u2fResponse = U2fResponse.createAuthenticateResponse(
                     authenticateResponse.<RequestData>getCustomData().getRequestId(),
                     authenticateResponse.getClientData(),
@@ -264,15 +315,12 @@ public class WebViewFidoBridge {
 
         @Override
         public void onFidoAuthenticateCancel(@NonNull FidoAuthenticateRequest fidoAuthenticateRequest) {
-            // Google's Authenticator does not return any error code when the user closes the activity
-            // but we do
-            HwTimber.d("onAuthenticateCancel");
+            // Google's Authenticator does not return error codes when the user closes the activity, but we do
             handleError(fidoAuthenticateRequest.getCustomData(), ErrorCode.OTHER_ERROR);
         }
 
         @Override
         public void onFidoAuthenticateTimeout(@NonNull FidoAuthenticateRequest fidoAuthenticateRequest) {
-            HwTimber.d("onAuthenticateTimeout");
             handleError(fidoAuthenticateRequest.getCustomData(), ErrorCode.TIMEOUT);
         }
     };
@@ -285,19 +333,21 @@ public class WebViewFidoBridge {
         return "https://" + currentLoadedHost;
     }
 
+    private String getDisplayAppId(String appId) {
+        try {
+            URI appIdUri = new URI(appId);
+            return appIdUri.getHost();
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("Invalid URI used for appId");
+        }
+    }
+
     private void checkAppIdForFacet(String appId) throws IOException {
         Uri appIdUri = Uri.parse(appId);
         String appIdHost = appIdUri.getHost();
         if (appIdHost == null || !currentLoadedHost.endsWith(appIdHost)) {
             throw new IOException("AppID '" + appId + "' isn't allowed for FacetID '" + getCurrentFacetId() + "'!");
         }
-    }
-
-    private FidoDialogOptions getFidoDialogOptions(Long timeoutSeconds) {
-        return FidoDialogOptions.builder()
-//                    .setTitle(getString(R.string.fido_authenticate, getDisplayAppId(u2fAuthenticateRequest.appId)))
-                .setTimeoutSeconds(timeoutSeconds)
-                .build();
     }
 
     private void handleError(RequestData requestData, ErrorCode errorCode) {
@@ -320,6 +370,7 @@ public class WebViewFidoBridge {
         }
 
         abstract String getType();
+
         @Nullable
         abstract Long getRequestId();
     }

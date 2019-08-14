@@ -104,11 +104,10 @@ public abstract class SecurityKeyDialogOptions implements Parcelable {
         public abstract Builder setPukLength(Integer pukLength);
 
         /**
-         * Sets setFilterTouchesWhenObscured(true) and FLAG_SECURE on the dialog fragment.
+         * Sets FLAG_SECURE on the dialog fragment.
          * <p>
-         * This prevents clicks from being processed when the dialog is obscured by other views (clickjacking attacks)
-         * and treats the content of the window as secure, preventing it from appearing in screenshots
-         * or from being viewed on non-secure displays.
+         * This sets the content of the window as 'secure', preventing it from appearing in screenshots,
+         * screen recordings or from being viewed on non-secure displays.
          * <p>
          * Default: true
          */

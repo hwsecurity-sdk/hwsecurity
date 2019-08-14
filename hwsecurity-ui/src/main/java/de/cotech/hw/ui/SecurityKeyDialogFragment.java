@@ -231,8 +231,6 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
             // prevent screenshots
             Window window = Objects.requireNonNull(getDialog().getWindow());
             window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-            // prevent clicks from being processed when view is obscured by other view (prevents clickjacking)
-            view.setFilterTouchesWhenObscured(true);
         }
 
         innerBottomSheet = view.findViewById(R.id.hwSecurityDialogBottomSheet);

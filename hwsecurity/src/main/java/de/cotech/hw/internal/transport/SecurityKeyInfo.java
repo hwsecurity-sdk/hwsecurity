@@ -88,7 +88,7 @@ public abstract class SecurityKeyInfo implements Parcelable {
 
     public enum SecurityKeyType {
         YUBIKEY_NEO, YUBIKEY_4_5, FIDESMO, NITROKEY_PRO, NITROKEY_STORAGE, NITROKEY_START_OLD,
-        NITROKEY_START_1_25_AND_NEWER, GNUK_OLD, GNUK_1_25_AND_NEWER, LEDGER_NANO_S, GEMALTO_PROX_DU,
+        NITROKEY_START_1_25_AND_NEWER, GNUK_OLD, GNUK_1_25_AND_NEWER, LEDGER_NANO_S, GEMALTO_PROX_DU, ACS_ACR1252,
         ONLYKEY, UNKNOWN
     }
 
@@ -102,7 +102,8 @@ public abstract class SecurityKeyInfo implements Parcelable {
             SecurityKeyType.GNUK_OLD,
             SecurityKeyType.GNUK_1_25_AND_NEWER,
             SecurityKeyType.LEDGER_NANO_S,
-            SecurityKeyType.GEMALTO_PROX_DU
+            SecurityKeyType.GEMALTO_PROX_DU,
+            SecurityKeyType.ACS_ACR1252
     )));
 
     private static final Set<SecurityKeyType> SUPPORTED_USB_SETUP = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(

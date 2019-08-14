@@ -42,11 +42,18 @@ import de.cotech.hw.util.HwTimber;
 @AutoValue
 public abstract class SecurityKeyManagerConfig {
     public abstract boolean isDisableUsbPermissionFallback();
+
     public abstract boolean isAllowUntestedUsbDevices();
+
     public abstract boolean isEnableDebugLogging();
+
     @Nullable
     public abstract HwTimber.Tree getLoggingTree();
+
     public abstract boolean isEnableNfcTagMonitoring();
+
+    public abstract boolean isIgnoreNfcTagAfterUse();
+
     public abstract boolean isDisableNfcDiscoverySound();
 
     static SecurityKeyManagerConfig getDefaultConfig() {
@@ -55,20 +62,21 @@ public abstract class SecurityKeyManagerConfig {
     }
 
     /**
-     *  Builder for SecurityKeyManagerConfig.
+     * Builder for SecurityKeyManagerConfig.
      */
-    @SuppressWarnings({ "unused", "WeakerAccess", "UnusedReturnValue" })
+    @SuppressWarnings({"unused", "WeakerAccess", "UnusedReturnValue"})
     public static class Builder {
         private boolean disableUsbPermissionFallback = false;
         private boolean isAllowUntestedUsbDevices = false;
         private boolean isEnableDebugLogging = false;
         private HwTimber.Tree loggingTree = null;
         private boolean isEnableNfcTagMonitoring = false;
+        private boolean isIgnoreNfcTagAfterUse = false;
         private boolean isDisableNfcDiscoverySound = false;
 
         /**
          * This setting controls USB permission request behavior.
-         *
+         * <p>
          * By default, when a compatible USB device is connected, {@link SecurityKeyManager} will automatically request
          * permission for the device to make it available in the callback. However, this is only a fallback mechanism
          * that is used when the Intent-based USB dispatch fails.
@@ -82,12 +90,12 @@ public abstract class SecurityKeyManagerConfig {
 
         /**
          * This setting controls whether "untested" USB devices will be dispatched or not.
-         *
+         * <p>
          * While any spec-compliant device should work in theory, there are often quirks to specific devices that may
          * result in arbitrary bugs or insecure behavior. For this reason, the default is to ignore devices that
          * weren't explicitly tested and are known to work.
          *
-         * @see <a href="https://www.cotech.de/docs/hw-supported-hardware/">https://www.cotech.de/docs/hw-supported-hardware/</a>
+         * @see <a href="https://hwsecurity.dev/docs/supported-hardware/">https://hwsecurity.dev/docs/supported-hardware/</a>
          */
         public Builder setAllowUntestedUsbDevices(boolean allowUntestedUsbDevices) {
             this.isAllowUntestedUsbDevices = allowUntestedUsbDevices;
@@ -106,7 +114,34 @@ public abstract class SecurityKeyManagerConfig {
         }
 
         /**
-         * Set a custom logging Tree.
+         * If you like to filter based on different priorities or delegate output to other logging frameworks
+         * (by default Android’s Log class is used), a custom logging tree can be used.
+         * Setting your own logging tree overrides setEnableDebugLogging(true).
+         * <pre>{@code
+         * .setLoggingTree(new HwTimber.DebugTree() {
+         *     @Override
+         *     protected String createStackElementTag(@NonNull StackTraceElement element) {
+         *         if (element.getClassName().startsWith("de.cotech.hw")) {
+         *             return super.createStackElementTag(element);
+         *         } else {
+         *             return null;
+         *         }
+         *     }
+         *
+         *     @Override
+         *     protected boolean isLoggable(String tag, int priority) {
+         *         if (tag == null) {
+         *             return false;
+         *         }
+         *         // TODO: filter based on priority
+         *     }
+         *
+         *     @Override
+         *     protected void log(int priority, String tag, @NonNull String message, Throwable t) {
+         *         // TODO: delegate log output to your own logging framework
+         *     }
+         * });
+         * }</pre>
          * <p>
          * This tree overrides {@link SecurityKeyManagerConfig.Builder#setEnableDebugLogging(boolean)}.
          */
@@ -117,7 +152,7 @@ public abstract class SecurityKeyManagerConfig {
 
         /**
          * This setting enables presence monitoring for NFC tags, which will allow the use persistent of NFC tags.
-         *
+         * <p>
          * Enable this setting if you need to retrieve NFC Security Keys via
          * {@link SecurityKeyManager#getConnectedPersistentSecurityKeys()}.
          */
@@ -127,9 +162,21 @@ public abstract class SecurityKeyManagerConfig {
         }
 
         /**
+         * This setting debounces the NFC tag for 1500 ms after it has been used.
+         * <p>
+         * Enable this setting to prevent other apps from detecting the NFC Security Key directly after
+         * your app is closed. This could lead to a second vibration by Android's NFC system after
+         * the tag has been used.
+         */
+        public Builder setIgnoreNfcTagAfterUse(boolean isIgnoreNfcTagAfterUse) {
+            this.isIgnoreNfcTagAfterUse = isIgnoreNfcTagAfterUse;
+            return this;
+        }
+
+        /**
          * This setting controls whether the platform sound upon discovery of an NFC device will be suppressed.
          * <p>
-         * Note that, as of api level 28, there is no way to influence the platform sound other than enabling or
+         * Note that, as of API level 28, there is no way to influence the platform sound other than enabling or
          * disabling.
          */
         public Builder setDisableNfcDiscoverySound(boolean isDisableNfcDiscoverySound) {
@@ -147,6 +194,7 @@ public abstract class SecurityKeyManagerConfig {
                     isEnableDebugLogging,
                     loggingTree,
                     isEnableNfcTagMonitoring,
+                    isIgnoreNfcTagAfterUse,
                     isDisableNfcDiscoverySound
             );
         }

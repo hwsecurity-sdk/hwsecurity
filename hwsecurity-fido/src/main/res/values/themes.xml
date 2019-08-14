@@ -5,12 +5,19 @@
         <!--<item name="android:textSize">12sp</item>-->
     </style>
 
-    <style name="HwSecurity.Fido.Dialog" parent="Theme.MaterialComponents.Light.BottomSheetDialog">
+    <style name="HwSecurity.Fido.Dialog" parent="HwSecurity.Fido.BaseDialog">
+        <item name="hwSecurityButtonColor">@color/hwSecurityDarkBlue</item>
+        <item name="hwSecuritySurfaceColor">@color/hwSecurityBlue</item>
+        <item name="hwSecurityErrorColor">@color/hwSecurityRed</item>
+    </style>
+
+    <style name="HwSecurity.Fido.BaseDialog" parent="Theme.MaterialComponents.Light.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/HwSecurity.Fido.Dialog.Modal</item>
-        <item name="colorPrimary">@color/hwSecurityDarkBlue</item>
+        <item name="colorSecondary">?attr/hwSecurityButtonColor</item>
+        <item name="colorPrimary">?attr/hwSecuritySurfaceColor</item>
     </style>
 
     <style name="HwSecurity.Fido.Dialog.Modal" parent="Widget.Design.BottomSheet.Modal">
-        <item name="android:background">@drawable/bottom_sheet_rounded_corners</item>
+        <item name="android:background">@drawable/hwsecurity_bottom_sheet_rounded_corners</item>
     </style>
 </resources>

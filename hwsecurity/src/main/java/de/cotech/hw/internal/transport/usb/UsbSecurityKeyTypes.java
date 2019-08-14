@@ -68,6 +68,9 @@ public class UsbSecurityKeyTypes {
     private static final int VENDOR_ONLYKEY2 = 7504;
     private static final int PRODUCT_ONLYKEY2 = 24828;
 
+    private static final int VENDOR_ACS = 0x72f;
+    private static final int PRODUCT_ACR1252 = 0x223e;
+
     @Nullable
     public static SecurityKeyInfo.SecurityKeyType getSecurityKeyTypeFromUsbDeviceInfo(int vendorId, int productId, String serialNo) {
         switch (vendorId) {
@@ -109,12 +112,6 @@ public class UsbSecurityKeyTypes {
             case VENDOR_LEDGER: {
                 return SecurityKeyInfo.SecurityKeyType.LEDGER_NANO_S;
             }
-            case VENDOR_GEMALTO: {
-                switch (productId) {
-                    case PRODUCT_PROX_DU:
-                        return SecurityKeyInfo.SecurityKeyType.GEMALTO_PROX_DU;
-                }
-            }
             case VENDOR_ONLYKEY1: {
                 switch (productId) {
                     case PRODUCT_ONLYKEY1:
@@ -127,18 +124,31 @@ public class UsbSecurityKeyTypes {
                         return SecurityKeyInfo.SecurityKeyType.ONLYKEY;
                 }
             }
+            case VENDOR_GEMALTO: {
+                switch (productId) {
+                    case PRODUCT_PROX_DU:
+                        return SecurityKeyInfo.SecurityKeyType.GEMALTO_PROX_DU;
+                }
+            }
+            case VENDOR_ACS: {
+                switch (productId) {
+                    case PRODUCT_ACR1252:
+                        return SecurityKeyInfo.SecurityKeyType.GEMALTO_PROX_DU;
+                }
+            }
         }
 
         return null;
     }
 
-    static boolean isSecurityKey(int vendorId, int productId) {
+    static boolean isTestedSecurityKey(int vendorId, int productId) {
         return UsbSecurityKeyTypes.getSecurityKeyTypeFromUsbDeviceInfo(vendorId, productId, null) != null;
     }
 
-    private static final Map<SecurityKeyInfo.SecurityKeyType, String> SECURITY_KEY_NAMES = createVendorMap();
+    private static final Map<SecurityKeyInfo.SecurityKeyType, String> SECURITY_KEY_NAMES = createTypeNameMap();
 
-    private static Map<SecurityKeyInfo.SecurityKeyType, String> createVendorMap() {
+    private static Map<SecurityKeyInfo.SecurityKeyType, String> createTypeNameMap() {
+        // NOTE: Only add Security Keys, do not add smartcard reader!
         @SuppressLint("UseSparseArrays") Map<SecurityKeyInfo.SecurityKeyType, String> result = new HashMap<>();
         result.put(SecurityKeyInfo.SecurityKeyType.YUBIKEY_NEO, "YubiKey NEO");
         result.put(SecurityKeyInfo.SecurityKeyType.YUBIKEY_4_5, "YubiKey");
@@ -149,7 +159,7 @@ public class UsbSecurityKeyTypes {
         result.put(SecurityKeyInfo.SecurityKeyType.GNUK_OLD, "Gnuk");
         result.put(SecurityKeyInfo.SecurityKeyType.GNUK_1_25_AND_NEWER, "Gnuk");
         result.put(SecurityKeyInfo.SecurityKeyType.LEDGER_NANO_S, "Ledger Nano S");
-        result.put(SecurityKeyInfo.SecurityKeyType.GEMALTO_PROX_DU, "Gemalto Prox DU");
+        result.put(SecurityKeyInfo.SecurityKeyType.ONLYKEY, "OnlyKey");
         return Collections.unmodifiableMap(result);
     }
 

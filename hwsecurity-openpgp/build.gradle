@@ -30,7 +30,6 @@ android {
     defaultConfig {
         minSdkVersion 14
         versionName rootProject.ext.hwSdkVersionName
-        vectorDrawables.useSupportLibrary = true
         consumerProguardFiles 'hwsecurity-openpgp.pro'
     }
 

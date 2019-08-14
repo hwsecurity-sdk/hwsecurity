@@ -43,6 +43,7 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Pair;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,6 +55,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.AttrRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -92,7 +94,7 @@ import de.cotech.hw.fido.FidoSecurityKey;
 import de.cotech.hw.fido.FidoSecurityKeyConnectionMode;
 import de.cotech.hw.fido.R;
 import de.cotech.hw.fido.exceptions.FidoWrongKeyHandleException;
-import de.cotech.hw.fido.internal.AnimatedVectorDrawableHelper;
+import de.cotech.hw.fido.internal.utils.AnimatedVectorDrawableHelper;
 import de.cotech.hw.util.NfcStatusObserver;
 import de.cotech.sweetspot.NfcSweetspotData;
 import de.cotech.hw.util.HwTimber;
@@ -248,7 +250,16 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setStyle(STYLE_NORMAL, R.style.HwSecurity_Fido_Dialog);
+        Bundle arguments = getArguments();
+        if (arguments == null) {
+            throw new IllegalStateException("Do not create SecurityKeyDialogFragment directly, use static .newInstance() methods!");
+        }
+        options = arguments.getParcelable(ARG_FIDO_OPTIONS);
+        if (options == null) {
+            throw new IllegalStateException("Do not create SecurityKeyDialogFragment directly, use static .newInstance() methods!");
+        }
+
+        setStyle(STYLE_NORMAL, options.getTheme());
 
         Context context = getContext();
         if (fidoRegisterCallback == null) {
@@ -328,7 +339,6 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         if (arguments == null) {
             throw new IllegalStateException("Do not create FidoDialogFragment directly, use static .newInstance() methods!");
         }
-        options = arguments.getParcelable(ARG_FIDO_OPTIONS);
         fidoRegisterRequest = arguments.getParcelable(ARG_FIDO_REGISTER_REQUEST);
         fidoAuthenticateRequest = arguments.getParcelable(ARG_FIDO_AUTHENTICATE_REQUEST);
 
@@ -344,8 +354,6 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         if (options.getPreventScreenshots()) {
             // prevent screenshots
             getDialog().getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-            // prevent clicks from being processed when view is obscured by other view (prevents clickjacking)
-            view.setFilterTouchesWhenObscured(true);
         }
 
         if (options.getTimeoutSeconds() != null) {
@@ -485,8 +493,8 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     }
 
     private void animateStart() {
-        imageNfc.setImageResource(R.drawable.nfc_start);
-        imageUsb.setImageResource(R.drawable.usb_start);
+        imageNfc.setImageResource(R.drawable.hwsecurity_nfc_start);
+        imageUsb.setImageResource(R.drawable.hwsecurity_usb_start);
         buttonCancel.setText(R.string.hwsecurity_cancel);
         textTitle.setText(getStartTitle());
         textDescription.setText(R.string.hwsecurity_description_start);
@@ -556,7 +564,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         });
 
         int colorFrom = getResources().getColor(R.color.hwSecurityWhite);
-        int colorTo = getResources().getColor(R.color.hwSecurityBlue);
+        int colorTo = resolveColorFromAttr(R.attr.hwSecuritySurfaceColor);
         ValueAnimator colorChange = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
         colorChange.setDuration(100);
         colorChange.addUpdateListener(animator -> {
@@ -631,7 +639,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
             }
         };
 
-        AnimatedVectorDrawableHelper.startAnimation(getActivity(), imageNfcFullscreen, R.drawable.nfc_handling, animationCallback);
+        AnimatedVectorDrawableHelper.startAnimation(getActivity(), imageNfcFullscreen, R.drawable.hwsecurity_nfc_handling, animationCallback);
     }
 
     private void fadeToNfcSweetSpot() {
@@ -641,7 +649,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
             return;
         }
 
-        int colorFrom = getResources().getColor(R.color.hwSecurityBlue);
+        int colorFrom = resolveColorFromAttr(R.attr.hwSecuritySurfaceColor);
         int colorTo = getResources().getColor(R.color.hwSecurityWhite);
         ValueAnimator colorChange = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
         colorChange.setDuration(150);
@@ -707,7 +715,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
             textError.setVisibility(View.GONE);
         });
 
-        AnimatedVectorDrawableHelper.startAndLoopAnimation(getActivity(), sweetspotIndicator, R.drawable.nfc_sweet_spot_a);
+        AnimatedVectorDrawableHelper.startAndLoopAnimation(getActivity(), sweetspotIndicator, R.drawable.hwsecurity_nfc_sweet_spot_a);
     }
 
     private void animateSelectUsb() {
@@ -720,7 +728,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
 
             @Override
             public void onTransitionEnd(@NonNull Transition transition) {
-                AnimatedVectorDrawableHelper.startAndLoopAnimation(getActivity(), imageUsb, R.drawable.usb_handling_a);
+                AnimatedVectorDrawableHelper.startAndLoopAnimation(getActivity(), imageUsb, R.drawable.hwsecurity_usb_handling_a);
             }
 
             @Override
@@ -758,7 +766,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
 
             @Override
             public void onTransitionEnd(@NonNull Transition transition) {
-                AnimatedVectorDrawableHelper.startAndLoopAnimation(getActivity(), imageUsb, R.drawable.usb_handling_b);
+                AnimatedVectorDrawableHelper.startAndLoopAnimation(getActivity(), imageUsb, R.drawable.hwsecurity_usb_handling_b);
             }
 
             @Override
@@ -789,7 +797,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     private void animateUsbPressButton() {
         TransitionManager.beginDelayedTransition(innerBottomSheet);
         textTitle.setText(R.string.hwsecurity_title_usb_button);
-        AnimatedVectorDrawableHelper.startAndLoopAnimation(getActivity(), imageUsb, R.drawable.usb_handling_b);
+        AnimatedVectorDrawableHelper.startAndLoopAnimation(getActivity(), imageUsb, R.drawable.hwsecurity_usb_handling_b);
     }
 
     private void animateError() {
@@ -807,7 +815,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         textError.setVisibility(View.VISIBLE);
         imageError.setVisibility(View.VISIBLE);
 
-        AnimatedVectorDrawableHelper.startAnimation(getActivity(), imageError, R.drawable.error);
+        AnimatedVectorDrawableHelper.startAnimation(getActivity(), imageError, R.drawable.hwsecurity_error);
     }
 
     @UiThread
@@ -921,6 +929,12 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
             }
             gotoState(stateBeforeError);
         }, TIME_DELAYED_STATE_CHANGE);
+    }
+
+    private int resolveColorFromAttr(@AttrRes int resId) {
+        TypedValue outValue = new TypedValue();
+        bottomSheet.getContext().getTheme().resolveAttribute(resId, outValue, true);
+        return outValue.data;
     }
 
 }

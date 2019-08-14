@@ -154,8 +154,10 @@ public class NfcConnectionDispatcher {
     public void ignoreNfcTag(Tag nfcTag) {
         if (VERSION.SDK_INT >= VERSION_CODES.N) {
             if (nfcAdapter != null) {
-                HwTimber.d("Debouncing NFC tag %s for %dms", Hex.encodeHexString(nfcTag.getId()), NFC_IGNORE_DEBOUNCE_MS);
-                nfcAdapter.ignore(nfcTag, NFC_IGNORE_DEBOUNCE_MS, null, null);
+                HwTimber.d("Ignoring NFC tag %s for %dms", Hex.encodeHexString(nfcTag.getId()), NFC_IGNORE_DEBOUNCE_MS);
+                nfcAdapter.ignore(nfcTag, NFC_IGNORE_DEBOUNCE_MS, () -> {
+                    HwTimber.d("No longer ignoring NFC tag");
+                }, null);
             }
         }
     }

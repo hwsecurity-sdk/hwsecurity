@@ -11,7 +11,7 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:visibility="gone"
-        app:srcCompat="@drawable/nfc_sweet_spot_a"
+        app:srcCompat="@drawable/hwsecurity_nfc_sweet_spot_a"
         tools:visibility="visible" />
 
     <TextView
@@ -77,7 +77,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/imageNfc"
         app:layout_constraintTop_toBottomOf="@+id/textUsb"
-        app:srcCompat="@drawable/usb_start"
+        app:srcCompat="@drawable/hwsecurity_usb_start"
         tools:visibility="visible" />
 
     <ImageView
@@ -92,7 +92,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textNfc"
-        app:srcCompat="@drawable/nfc_start"
+        app:srcCompat="@drawable/hwsecurity_nfc_start"
         tools:visibility="visible" />
 
     <TextView
@@ -108,7 +108,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textNfc"
-        app:srcCompat="@drawable/nfc_start"
+        app:srcCompat="@drawable/hwsecurity_nfc_start"
         tools:visibility="visible" />
 
     <com.google.android.material.button.MaterialButton
@@ -138,7 +138,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/nfc_handling"
+        app:srcCompat="@drawable/hwsecurity_nfc_handling"
         tools:visibility="visible" />
 
     <androidx.constraintlayout.widget.Guideline
@@ -196,7 +196,7 @@
         app:layout_constraintBottom_toTopOf="@+id/textError"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/error"
+        app:srcCompat="@drawable/hwsecurity_error"
         tools:visibility="visible" />
 
     <androidx.constraintlayout.widget.Guideline

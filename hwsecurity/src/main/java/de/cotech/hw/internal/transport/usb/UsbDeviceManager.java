@@ -172,7 +172,7 @@ public class UsbDeviceManager {
         if (!hasCcidInterface) {
             return false;
         }
-        return allowUntested || UsbSecurityKeyTypes.isSecurityKey(usbDevice.getVendorId(), usbDevice.getProductId());
+        return allowUntested || UsbSecurityKeyTypes.isTestedSecurityKey(usbDevice.getVendorId(), usbDevice.getProductId());
     }
 
     private class ManagedUsbDevice {

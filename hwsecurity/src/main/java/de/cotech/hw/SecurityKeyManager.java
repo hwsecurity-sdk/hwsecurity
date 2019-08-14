@@ -590,7 +590,8 @@ public class SecurityKeyManager {
         private void handleTransportRelease(T securityKey) {
             persistentSecurityKeys.remove(securityKey);
 
-            if (securityKey.transport instanceof NfcTransport) {
+            boolean isNfcTransport = securityKey.transport instanceof NfcTransport;
+            if (isNfcTransport && config.isIgnoreNfcTagAfterUse()) {
                 ignoreNfcTransport((NfcTransport) securityKey.transport);
             }
 
