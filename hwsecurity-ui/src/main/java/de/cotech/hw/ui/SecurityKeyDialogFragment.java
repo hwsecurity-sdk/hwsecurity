@@ -382,12 +382,35 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         gotoState(newState, true);
     }
 
+    private String getTitle() {
+        if (options.getTitle() != null) {
+            return options.getTitle();
+        }
+        switch (options.getPinMode()) {
+            case PIN_INPUT: {
+                return getString(R.string.hwsecurity_ui_title_login);
+            }
+            case NO_PIN_INPUT: {
+                return getString(R.string.hwsecurity_ui_title_add);
+            }
+            case RESET_PIN: {
+                return getString(R.string.hwsecurity_ui_title_reset_pin);
+            }
+            case SETUP: {
+                return getString(R.string.hwsecurity_ui_title_setup);
+            }
+            default: {
+                throw new IllegalArgumentException("unknown PinMode!");
+            }
+        }
+    }
+
     private void gotoState(State newState, boolean isTransportNfc) {
         switch (newState) {
             case NORMAL_ENTER_PIN: {
                 keypadPinInput.reset(options.getPinLength());
 
-                textViewTitle.setText(options.getTitle() != null ? options.getTitle() : getString(R.string.hwsecurity_ui_title_login));
+                textViewTitle.setText(getTitle());
                 textViewDescription.setText(R.string.hwsecurity_ui_description_enter_pin);
 
                 showHidePinInput(keyboardPreference.isKeyboardPreferred());
@@ -406,6 +429,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
                 SecurityKeyManager.getInstance().rediscoverConnectedSecurityKeys();
                 keypadPinInput.reset(options.getPinLength());
 
+                textViewTitle.setText(getTitle());
                 textViewDescription.setText(R.string.hwsecurity_ui_description_start);
 
                 TransitionManager.beginDelayedTransition(innerBottomSheet);
@@ -424,7 +448,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
                 break;
             }
             case NORMAL_SECURITY_KEY_HOLD: {
-                textViewTitle.setText(options.getTitle() != null ? options.getTitle() : getString(R.string.hwsecurity_ui_title_login));
+                textViewTitle.setText(getTitle());
                 textViewDescription.setText(isTransportNfc ? R.string.hwsecurity_ui_description_hold_nfc : R.string.hwsecurity_ui_description_hold_usb);
 
                 // no animation for speed!
@@ -548,7 +572,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
                 int pinLength = options.getPinLength() == null ? SETUP_DEFAULT_PIN_LENGTH : options.getPinLength();
                 keypadPinInput.reset(pinLength);
 
-                textViewTitle.setText(R.string.hwsecurity_ui_title_setup);
+                textViewTitle.setText(getTitle());
                 textViewDescription.setText(R.string.hwsecurity_ui_description_choose_pin);
 
                 keyboardPinInput.setVisibility(View.GONE);
@@ -571,7 +595,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
                 setupPuk.displayOnTextView(textPuk);
 
                 TransitionManager.beginDelayedTransition(innerBottomSheet);
-                textViewTitle.setText(R.string.hwsecurity_ui_title_setup);
+                textViewTitle.setText(getTitle());
                 textViewDescription.setText(R.string.hwsecurity_ui_description_puk);
                 keyboardPinInput.setVisibility(View.GONE);
                 keypadPinInput.setVisibility(View.GONE);
@@ -588,7 +612,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
             case SETUP_CONFIRM_WIPE: {
 
                 TransitionManager.beginDelayedTransition(innerBottomSheet);
-                textViewTitle.setText(R.string.hwsecurity_ui_title_setup);
+                textViewTitle.setText(getTitle());
                 textViewDescription.setText("");
                 keyboardPinInput.setVisibility(View.GONE);
                 keypadPinInput.setVisibility(View.GONE);

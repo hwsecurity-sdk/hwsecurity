@@ -10,6 +10,7 @@
     <string name="hwsecurity_ui_button_cancel">Cancel</string>
     <string name="hwsecurity_ui_button_reset">Reset PIN</string>
     <string name="hwsecurity_ui_title_login">Login with Security Key</string>
+    <string name="hwsecurity_ui_title_add">Add Security Key</string>
     <string name="hwsecurity_ui_description_enter_pin">Enter your PIN code.</string>
     <string name="hwsecurity_ui_description_start">"Just do it, or click for help."</string>
     <string name="hwsecurity_ui_description_hold_nfc">Hold Security Key against the back. Don\'t move it.</string>
