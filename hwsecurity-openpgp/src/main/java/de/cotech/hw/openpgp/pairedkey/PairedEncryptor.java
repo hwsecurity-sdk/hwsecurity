@@ -30,7 +30,6 @@ import java.util.Arrays;
 
 import de.cotech.hw.openpgp.storage.EncryptedSessionStorage;
 import de.cotech.hw.secrets.ByteSecret;
-import de.cotech.hw.openpgp.OpenPgpPairedDecryptor;
 import de.cotech.hw.openpgp.util.RsaEncryptionUtil;
 
 
@@ -44,13 +43,13 @@ import de.cotech.hw.openpgp.util.RsaEncryptionUtil;
  * <p>
  * The <code>encryptedSessionSecret</code> is typically stored in an
  * {@link EncryptedSessionStorage}, to be able to later restore the
- * <code>sessionSecret</code> using a {@link OpenPgpPairedDecryptor}.
+ * <code>sessionSecret</code> using a {@link PairedDecryptor}.
  * <p>
  * The <code>sessionSecret</code> can be used for symmetric encryption operations, e.g. to encrypt a database. Once
  * it has been deleted, it can only be restored from the <code>encryptedSessionSecret</code> when the paired security
  * key is connected.
  *
- * @see OpenPgpPairedDecryptor
+ * @see PairedDecryptor
  *
  */
 public class PairedEncryptor {

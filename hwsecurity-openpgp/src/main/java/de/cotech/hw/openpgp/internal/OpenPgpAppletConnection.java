@@ -57,7 +57,7 @@ import de.cotech.hw.internal.transport.SecurityKeyInfo.TransportType;
 import de.cotech.hw.internal.transport.Transport;
 import de.cotech.hw.openpgp.CardCapabilities;
 import de.cotech.hw.openpgp.OpenPgpCapabilities;
-import de.cotech.hw.openpgp.exceptions.OpenPgpCardBlockedException;
+import de.cotech.hw.openpgp.exceptions.OpenPgpLockedException;
 import de.cotech.hw.openpgp.exceptions.OpenPgpPinTooShortException;
 import de.cotech.hw.openpgp.exceptions.OpenPgpWrongPinException;
 import de.cotech.hw.openpgp.exceptions.SecurityKeyTerminatedException;
@@ -292,9 +292,14 @@ public class OpenPgpAppletConnection {
 
         switch (response.getSw()) {
             case OpenPgpWrongPinException.SW_WRONG_PIN:
-                throw new OpenPgpWrongPinException();
-            case OpenPgpCardBlockedException.SW_CARD_BLOCKED:
-                throw new OpenPgpCardBlockedException();
+            case OpenPgpWrongPinException.SW_WRONG_PIN_YKNEO_1:
+            case OpenPgpWrongPinException.SW_WRONG_PIN_YKNEO_2:
+                int pinRetriesLeft = getOpenPgpCapabilities().getPw1TriesLeft() - 1;
+                int pukRetriesLeft = getOpenPgpCapabilities().getPw3TriesLeft() - 1;
+                throw new OpenPgpWrongPinException(pinRetriesLeft, pukRetriesLeft);
+            case OpenPgpLockedException.SW_OPENPGP_LOCKED:
+            case OpenPgpLockedException.SW_OPENPGP_LOCKED_YKNEO:
+                throw new OpenPgpLockedException();
             case OpenPgpPinTooShortException.SW_WRONG_DATA:
             case OpenPgpPinTooShortException.SW_WRONG_REQUEST_LENGTH:
                 throw new OpenPgpPinTooShortException();
@@ -450,12 +455,13 @@ public class OpenPgpAppletConnection {
         isPw1ValidatedForOther = true;
     }
 
-    public void verifyAdminPin(ByteSecret adminPin) throws IOException {
+    public void verifyPuk(ByteSecret pukSecret) throws IOException {
         if (isPw3Validated) {
             return;
         }
 
-        CommandApdu verifyPw3Command = commandFactory.createVerifyPw3Command(adminPin.unsafeGetByteCopy());
+        byte[] puk = pukSecret.unsafeGetByteCopy();
+        CommandApdu verifyPw3Command = commandFactory.createVerifyPw3Command(puk);
         communicateOrThrow(verifyPw3Command);
 
         isPw3Validated = true;

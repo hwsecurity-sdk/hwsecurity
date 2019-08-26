@@ -27,15 +27,30 @@ package de.cotech.hw.openpgp.exceptions;
 
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
-import de.cotech.hw.exceptions.ConditionsNotSatisfiedException;
 import de.cotech.hw.exceptions.SecurityStatusNotSatisfiedException;
-
 
 public class OpenPgpWrongPinException extends SecurityStatusNotSatisfiedException {
     public static final int SW_WRONG_PIN = SW_SECURITY_STATUS_NOT_SATISFIED;
 
+    // older YubiKey NEO returns 63C2 or 63C1 (2 or 1 retries), reproduce with YubiKey NEO, SN 2624165
+    public static final int SW_WRONG_PIN_YKNEO_1 = 0x63C1;
+    public static final int SW_WRONG_PIN_YKNEO_2 = 0x63C2;
+
+    private int pinRetriesLeft;
+    private int pukRetriesLeft;
+
     @RestrictTo(Scope.LIBRARY_GROUP)
-    public OpenPgpWrongPinException() {
-        super("Security Key returned error, wrong PIN / command not allows / secure messaging incorrect");
+    public OpenPgpWrongPinException(int pinRetriesLeft, int pukRetriesLeft) {
+        super("Security Key returned error: wrong PIN/PUK (or: command not allowed / secure messaging incorrect)");
+        this.pinRetriesLeft = pinRetriesLeft;
+        this.pukRetriesLeft = pukRetriesLeft;
+    }
+
+    public int getPinRetriesLeft() {
+        return pinRetriesLeft;
+    }
+
+    public int getPukRetriesLeft() {
+        return pukRetriesLeft;
     }
 }

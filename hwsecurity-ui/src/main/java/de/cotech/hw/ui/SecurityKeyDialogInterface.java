@@ -44,6 +44,9 @@ public interface SecurityKeyDialogInterface {
     @AnyThread
     void postError(IOException exception);
 
+    @AnyThread
+    void postProgressMessage(String message);
+
     interface SecurityKeyDialogCallback<T extends SecurityKey> {
         /**
          * IOExceptions are handled by the SecurityKeyDialogFragment if thrown inside this callback.

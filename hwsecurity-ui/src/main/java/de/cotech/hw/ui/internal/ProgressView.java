@@ -22,31 +22,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.cotech.hw.secrets;
+package de.cotech.hw.ui.internal;
 
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.annotation.RestrictTo;
+import androidx.transition.TransitionManager;
+import de.cotech.hw.SecurityKeyManager;
+import de.cotech.hw.ui.R;
 
-/**
- * A provider of security key PINs.
- * <p>
- * Security keys are locked with a PIN, which authenticates all secret key operations.
- * An instance of this interface is required as a parameter for all such operations.
- *
- * @see StaticPinProvider
- */
-public interface PinProvider {
-    /**
-     * Returns a PIN for the security key identified by the given AID.
-     *
-     * The requirements for this PIN depend on the security key, but typically can be at least any sequence
-     * of six or more alphanumeric characters.
-     */
-    ByteSecret getPin(byte[] securityKeyAid);
+@RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+public class ProgressView {
 
-    /**
-     * Returns a PUK for the security key identified by the given AID.
-     *
-     * The requirements for this PUK depend on the security key, but typically can be at least any sequence
-     * of eight or more alphanumeric characters.
-     */
-    ByteSecret getPuk(byte[] securityKeyAid);
+    private View view;
+
+    private TextView progressText;
+
+    public ProgressView(@NonNull ViewGroup view) {
+        this.view = view;
+
+        progressText = view.findViewById(R.id.progressText);
+    }
+
+    public void setVisibility(int visibility) {
+        view.setVisibility(visibility);
+    }
+
+    public int getVisibility() {
+        return view.getVisibility();
+    }
+
+    public void setText(String message) {
+        progressText.setText(message);
+    }
+
 }

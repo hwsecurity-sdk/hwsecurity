@@ -22,19 +22,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.cotech.hw.openpgp.exceptions;
+package de.cotech.hw.exceptions;
 
 
-import androidx.annotation.RestrictTo;
-import androidx.annotation.RestrictTo.Scope;
-import de.cotech.hw.exceptions.AuthenticationMethodBlockedException;
-import de.cotech.hw.exceptions.SecurityStatusNotSatisfiedException;
+import java.io.IOException;
 
-public class OpenPgpCardBlockedException extends AuthenticationMethodBlockedException {
-    public static final int SW_CARD_BLOCKED = SW_AUTHENTICATION_METHOD_BLOCKED;
 
-    @RestrictTo(Scope.LIBRARY_GROUP)
-    public OpenPgpCardBlockedException() {
-        super("Security Key returned error, card blocked / the PIN/PUK has been entered 3 times wrong.");
+public class SecurityKeyLostException extends IOException {
+    public SecurityKeyLostException(Throwable cause) {
+        super("Security Key is no longer connected.", cause);
+    }
+
+    public SecurityKeyLostException() {
+        this(null);
     }
 }

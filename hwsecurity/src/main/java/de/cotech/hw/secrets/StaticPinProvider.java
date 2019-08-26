@@ -30,22 +30,38 @@ package de.cotech.hw.secrets;
  */
 public class StaticPinProvider implements PinProvider {
     private ByteSecret pin;
+    private ByteSecret puk;
 
     /**
-     * Returns an instance of StaticPinProvider.
+     * Returns an instance of StaticPinProvider with PIN set.
      *
      * @param pin the ByteSecret to statically return. Takes ownership of the passed ByteSecret.
      */
     public static StaticPinProvider getInstance(ByteSecret pin) {
-        return new StaticPinProvider(pin.copy());
+        return new StaticPinProvider(pin.copy(), null);
     }
 
-    private StaticPinProvider(ByteSecret pin) {
+    /**
+     * Returns an instance of StaticPinProvider with PIN and PUK set.
+     *
+     * @param pin the ByteSecret to statically return. Takes ownership of the passed ByteSecret.
+     */
+    public static StaticPinProvider getInstance(ByteSecret pin, ByteSecret puk) {
+        return new StaticPinProvider(pin.copy(), puk.copy());
+    }
+
+    private StaticPinProvider(ByteSecret pin, ByteSecret puk) {
         this.pin = pin;
+        this.puk = puk;
     }
 
     @Override
-    public ByteSecret getPin(byte[] securityKeyIdentifier) {
+    public ByteSecret getPin(byte[] securityKeyAid) {
         return pin.copy();
+    }
+
+    @Override
+    public ByteSecret getPuk(byte[] securityKeyAid) {
+        return puk.copy();
     }
 }

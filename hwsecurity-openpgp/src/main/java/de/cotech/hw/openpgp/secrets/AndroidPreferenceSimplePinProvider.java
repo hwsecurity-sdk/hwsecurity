@@ -44,7 +44,7 @@ public class AndroidPreferenceSimplePinProvider implements PinProvider {
     private static final String PREF_PAIRED_PIN = "paired_pin_";
     private static final int PREFS_MODE = Context.MODE_PRIVATE;
 
-    private final SecretGenerator secretGenerator;
+    private final ByteSecretGenerator secretGenerator;
 
     /**
      * Creates an instance of this class.
@@ -53,7 +53,7 @@ public class AndroidPreferenceSimplePinProvider implements PinProvider {
      */
     public static AndroidPreferenceSimplePinProvider getInstance(Context context, String prefsFilename) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(prefsFilename, PREFS_MODE);
-        SecretGenerator secretGenerator = SecretGenerator.getInstance();
+        ByteSecretGenerator secretGenerator = ByteSecretGenerator.getInstance();
 
         return new AndroidPreferenceSimplePinProvider(sharedPreferences, secretGenerator);
     }
@@ -68,7 +68,7 @@ public class AndroidPreferenceSimplePinProvider implements PinProvider {
     private final SharedPreferences sharedPreferences;
 
     private AndroidPreferenceSimplePinProvider(SharedPreferences sharedPreferences,
-                                               SecretGenerator secretGenerator) {
+                                               ByteSecretGenerator secretGenerator) {
         this.sharedPreferences = sharedPreferences;
         this.secretGenerator = secretGenerator;
     }
@@ -90,7 +90,14 @@ public class AndroidPreferenceSimplePinProvider implements PinProvider {
         return generatePin(securityKeyPrefName);
     }
 
-    /** Clears a paired PIN from the stored SharedPreferences. */
+    @Override
+    public ByteSecret getPuk(byte[] securityKeyAid) {
+        return null;
+    }
+
+    /**
+     * Clears a paired PIN from the stored SharedPreferences.
+     */
     @SuppressLint("ApplySharedPref") // definitely want to delete this info from storage asap
     public void clearPairedPin(byte[] securityKeyIdentifier) {
         String securityKeyPrefName = getSecurityKeyPrefNameForAid(securityKeyIdentifier);
@@ -104,8 +111,7 @@ public class AndroidPreferenceSimplePinProvider implements PinProvider {
     }
 
     private ByteSecret generatePin(String securityKeyPinKey) {
-        // TODO should this really be full bytes?
-        ByteSecret pairedPin = secretGenerator.createRandom(DEFAULT_PIN_LENGTH);
+        ByteSecret pairedPin = secretGenerator.createRandomNumeric(DEFAULT_PIN_LENGTH);
 
         String pairedPinHex = Hex.encodeHexString(pairedPin.unsafeGetByteCopy());
         sharedPreferences.edit().putString(securityKeyPinKey, pairedPinHex).apply();

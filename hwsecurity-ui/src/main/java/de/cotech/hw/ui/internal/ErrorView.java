@@ -24,49 +24,51 @@
 
 package de.cotech.hw.ui.internal;
 
-import android.content.Context;
 import android.graphics.drawable.Animatable;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
-
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.RestrictTo;
-
+import androidx.annotation.StringRes;
 import de.cotech.hw.ui.R;
 
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public class SmartcardFormFactor {
-    private Context context;
+public class ErrorView {
 
     private View view;
-    private ImageView smartcardAnimation;
 
-    public SmartcardFormFactor(@NonNull View view) {
-        this.context = view.getContext();
+    private TextView errorText;
+    private ImageView errorImage;
+
+    public ErrorView(@NonNull ViewGroup view) {
         this.view = view;
 
-        smartcardAnimation = view.findViewById(R.id.smartcardAnimation);
-
-        smartcardAnimation.setOnClickListener(v -> {
-                    Animatable animatable = (Animatable) smartcardAnimation.getDrawable();
-                    animatable.stop();
-                    AnimatedVectorDrawableHelper.startAnimation(smartcardAnimation, R.drawable.hwsecurity_smartcard_animation);
-                }
-        );
+        errorText = view.findViewById(R.id.errorText);
+        errorImage = view.findViewById(R.id.errorImage);
     }
 
     public void setVisibility(int visibility) {
         view.setVisibility(visibility);
         if (visibility == View.VISIBLE) {
-            AnimatedVectorDrawableHelper.startAnimation(smartcardAnimation, R.drawable.hwsecurity_smartcard_animation);
+            AnimatedVectorDrawableHelper.startAnimation(errorImage, R.drawable.hwsecurity_error);
         } else {
-            Animatable animatable = (Animatable) smartcardAnimation.getDrawable();
+            Animatable animatable = (Animatable) errorImage.getDrawable();
             animatable.stop();
         }
     }
 
     public int getVisibility() {
         return view.getVisibility();
+    }
+
+    public void setText(String message) {
+        errorText.setText(message);
+    }
+
+    public void setText(@StringRes int resid) {
+        errorText.setText(resid);
     }
 
 }

@@ -22,11 +22,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.cotech.hw.openpgp;
+package de.cotech.hw.openpgp.pairedkey;
 
 
 import java.io.IOException;
 
+import de.cotech.hw.openpgp.OpenPgpSecurityKey;
 import de.cotech.hw.secrets.ByteSecret;
 import de.cotech.hw.openpgp.internal.operations.PsoDecryptOp;
 import de.cotech.hw.openpgp.pairedkey.PairedEncryptor;
@@ -52,7 +53,7 @@ import de.cotech.hw.secrets.PinProvider;
  * @see PairedEncryptor
  *
  */
-public class OpenPgpPairedDecryptor {
+public class PairedDecryptor {
     private final OpenPgpSecurityKey openPgpSecurityKey;
     private final PinProvider pinProvider;
     private final PairedSecurityKey pairedSecurityKey;
@@ -61,7 +62,7 @@ public class OpenPgpPairedDecryptor {
      * Create an instance parametrized with a {@link OpenPgpSecurityKey}, {@link PinProvider}, and
      * {@link PairedSecurityKey}.
      */
-    public OpenPgpPairedDecryptor(OpenPgpSecurityKey openPgpSecurityKey, PinProvider pinProvider, PairedSecurityKey pairedSecurityKey) {
+    public PairedDecryptor(OpenPgpSecurityKey openPgpSecurityKey, PinProvider pinProvider, PairedSecurityKey pairedSecurityKey) {
         this.openPgpSecurityKey = openPgpSecurityKey;
         this.pinProvider = pinProvider;
         this.pairedSecurityKey = pairedSecurityKey;

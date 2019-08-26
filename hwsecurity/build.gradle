@@ -3,17 +3,14 @@ apply plugin: 'digital.wup.android-maven-publish'
 apply plugin: 'org.jetbrains.dokka-android'
 
 dependencies {
-    compileOnly 'androidx.annotation:annotation:1.0.0'
     implementation 'androidx.lifecycle:lifecycle-runtime:2.0.0'
+
+    compileOnly 'androidx.annotation:annotation:1.0.0'
 
     api 'com.google.auto.value:auto-value-annotations:1.6.2'
     annotationProcessor 'com.google.auto.value:auto-value:1.6.2'
     annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:0.2.6'
 
-    // Unit tests in the local JVM with Robolectric
-    // https://developer.android.com/training/testing/unit-testing/local-unit-tests.html
-    // http://robolectric.org/getting-started/
-    // http://www.vogella.com/tutorials/Robolectric/article.html
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.robolectric:robolectric:3.2.2'
     testImplementation 'org.mockito:mockito-core:2.18.0'
@@ -24,7 +21,6 @@ android {
 
     defaultConfig {
         minSdkVersion 14
-        versionCode rootProject.ext.hwSdkVersionCode
         versionName rootProject.ext.hwSdkVersionName
     }
 

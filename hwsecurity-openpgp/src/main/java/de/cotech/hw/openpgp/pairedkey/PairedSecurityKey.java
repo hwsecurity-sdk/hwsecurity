@@ -100,17 +100,25 @@ public class PairedSecurityKey implements Serializable {
     public byte[] getEncryptFingerprint() {
         return encryptFingerprint;
     }
-
-    /**
-     * Returns the fingerprint of the encryption key stored on the paired security key.
-     *
-     * This will typically be an RSA 2048 bit key. In the futue, this might be changed to internally use
-     * a P-256 ECC (elliptic curve cryptography) key if the security key supports it.
-     */
-    PublicKey getEncryptPublicKey() {
-        return encryptPublicKey;
+    public byte[] getSignFingerprint() {
+        return signFingerprint;
+    }
+    public byte[] getAuthFingerprint() {
+        return authFingerprint;
     }
 
+    /**
+     * Returns the encryption key stored on the paired security key.
+     *
+     * This will typically be an RSA 2048 bit key. In the future, this might be changed to internally use
+     * a P-256 ECC (elliptic curve cryptography) key if the security key supports it.
+     */
+    public PublicKey getEncryptPublicKey() {
+        return encryptPublicKey;
+    }
+    public PublicKey getSignPublicKey() {
+        return signPublicKey;
+    }
     public PublicKey getAuthPublicKey() {
         return authPublicKey;
     }

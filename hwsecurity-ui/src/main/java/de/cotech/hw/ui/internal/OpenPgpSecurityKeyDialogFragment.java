@@ -43,15 +43,21 @@ public class OpenPgpSecurityKeyDialogFragment extends SecurityKeyDialogFragment<
     public static final String ARG_OPENPGP_CONFIG = "de.cotech.hw.ui.ARG_OPENPGP_CONFIG";
 
     @Override
-    public void initConnectionMode(Bundle arguments) {
+    public void initSecurityKeyConnectionMode(Bundle arguments) {
         OpenPgpSecurityKeyConnectionModeConfig openpgpConfig = arguments.getParcelable(ARG_OPENPGP_CONFIG);
         SecurityKeyManager.getInstance().registerCallback(OpenPgpSecurityKeyConnectionMode.getInstance(openpgpConfig), this, this);
     }
 
     @Override
-    public void updatePinUsingPuk(SecurityKey securityKey, ByteSecret puk, ByteSecret newPin) throws IOException {
+    public void updateSecurityKeyPinUsingPuk(SecurityKey securityKey, ByteSecret puk, ByteSecret newPin) throws IOException {
         OpenPgpSecurityKey openPgpSecurityKey = (OpenPgpSecurityKey) securityKey;
         openPgpSecurityKey.updatePinUsingPuk(puk, newPin);
+    }
+
+    @Override
+    public boolean isSecurityKeyEmpty(SecurityKey securityKey) throws IOException {
+        OpenPgpSecurityKey openPgpSecurityKey = (OpenPgpSecurityKey) securityKey;
+        return openPgpSecurityKey.isSecurityKeyEmpty();
     }
 
 }

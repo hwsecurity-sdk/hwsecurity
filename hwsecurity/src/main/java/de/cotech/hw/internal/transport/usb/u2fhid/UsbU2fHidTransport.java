@@ -42,7 +42,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 
-import de.cotech.hw.exceptions.TransportGoneException;
+import de.cotech.hw.exceptions.SecurityKeyLostException;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.internal.transport.SecurityKeyInfo.SecurityKeyType;
@@ -166,7 +166,7 @@ public class UsbU2fHidTransport implements Transport {
     @Override
     public ResponseApdu transceive(CommandApdu commandApdu) throws IOException {
         if (released) {
-            throw new TransportGoneException();
+            throw new SecurityKeyLostException();
         }
 
         try {
@@ -174,7 +174,7 @@ public class UsbU2fHidTransport implements Transport {
         } catch (UsbTransportException e) {
             if (!UsbUtils.isDeviceStillConnected(usbManager, usbDevice)) {
                 release();
-                throw new TransportGoneException(e);
+                throw new SecurityKeyLostException(e);
             }
             throw e;
         }

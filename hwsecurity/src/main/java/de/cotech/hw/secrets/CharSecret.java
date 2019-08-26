@@ -40,10 +40,13 @@ import android.text.Editable;
  * keep secrets in memory as short a time as possible.
  *
  * @see ByteSecret
+ * @deprecated Please use ByteSecret
  */
+@Deprecated
 public class CharSecret {
     private CharBuffer secret;
 
+    @Deprecated
     @NonNull
     public static CharSecret fromEditableAndClear(Editable editable) {
         /* According to http://stackoverflow.com/a/15844273 EditText is not using String internally
@@ -59,6 +62,7 @@ public class CharSecret {
         return new CharSecret(secretCopy);
     }
 
+    @Deprecated
     @NonNull
     public static CharSecret fromCharArrayTakeOwnership(char[] secret) {
         if (secret == null) {
@@ -67,6 +71,7 @@ public class CharSecret {
         return new CharSecret(CharBuffer.wrap(secret));
     }
 
+    @Deprecated
     @NonNull
     public static CharSecret fromCharArrayAndClear(char[] secret) {
         CharBuffer secretCopy = ByteBuffer.allocateDirect(secret.length * 2).asCharBuffer();
@@ -75,6 +80,7 @@ public class CharSecret {
         return new CharSecret(secretCopy);
     }
 
+    @Deprecated
     @NonNull
     public static CharSecret unsafeFromString(String secret) {
         CharBuffer secretCopy = CharBuffer.allocate(secret.length());
@@ -82,6 +88,7 @@ public class CharSecret {
         return new CharSecret(secretCopy);
     }
 
+    @Deprecated
     @NonNull
     public static CharSecret moveFromCharSecret(CharSecret charSecret) {
         try {
@@ -91,11 +98,13 @@ public class CharSecret {
         }
     }
 
+    @Deprecated
     private CharSecret(CharBuffer secret) {
         this.secret = secret;
         secret.clear();
     }
 
+    @Deprecated
     public char[] unsafeGetCharCopy() {
         if (secret == null) {
             throw new IllegalStateException("Secret has been cleared up before this call!");
@@ -107,6 +116,7 @@ public class CharSecret {
         return result;
     }
 
+    @Deprecated
     public char[] getCharCopyAndClear() {
         try {
             return unsafeGetCharCopy();
@@ -115,6 +125,7 @@ public class CharSecret {
         }
     }
 
+    @Deprecated
     public boolean isEmpty() {
         if (secret == null) {
             throw new IllegalStateException("Secret has been cleared up before this call!");
@@ -122,6 +133,7 @@ public class CharSecret {
         return (length() == 0);
     }
 
+    @Deprecated
     public int length() {
         if (secret == null) {
             throw new IllegalStateException("Secret has been cleared up before this call!");
@@ -129,6 +141,7 @@ public class CharSecret {
         return secret.capacity();
     }
 
+    @Deprecated
     public void removeFromMemory() {
         if (secret == null) {
             return;
@@ -140,12 +153,14 @@ public class CharSecret {
         secret = null;
     }
 
+    @Deprecated
     @Override
     public void finalize() throws Throwable {
         removeFromMemory();
         super.finalize();
     }
 
+    @Deprecated
     public CharSecret copy() {
         return CharSecret.fromCharArrayTakeOwnership(unsafeGetCharCopy());
     }

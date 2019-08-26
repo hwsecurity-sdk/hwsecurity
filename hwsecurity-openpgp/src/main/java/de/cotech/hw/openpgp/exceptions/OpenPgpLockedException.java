@@ -22,31 +22,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.cotech.hw.secrets;
+package de.cotech.hw.openpgp.exceptions;
 
 
-/**
- * A provider of security key PINs.
- * <p>
- * Security keys are locked with a PIN, which authenticates all secret key operations.
- * An instance of this interface is required as a parameter for all such operations.
- *
- * @see StaticPinProvider
- */
-public interface PinProvider {
-    /**
-     * Returns a PIN for the security key identified by the given AID.
-     *
-     * The requirements for this PIN depend on the security key, but typically can be at least any sequence
-     * of six or more alphanumeric characters.
-     */
-    ByteSecret getPin(byte[] securityKeyAid);
+import androidx.annotation.RestrictTo;
+import androidx.annotation.RestrictTo.Scope;
+import de.cotech.hw.exceptions.AuthenticationMethodBlockedException;
 
-    /**
-     * Returns a PUK for the security key identified by the given AID.
-     *
-     * The requirements for this PUK depend on the security key, but typically can be at least any sequence
-     * of eight or more alphanumeric characters.
-     */
-    ByteSecret getPuk(byte[] securityKeyAid);
+public class OpenPgpLockedException extends AuthenticationMethodBlockedException {
+    public static final int SW_OPENPGP_LOCKED = SW_AUTHENTICATION_METHOD_BLOCKED;
+
+    // older YubiKey NEO returns 63C0 (0 retries), reproduce with YubiKey NEO, SN 2624165
+    public static final int SW_OPENPGP_LOCKED_YKNEO = 0x63C0;
+
+    @RestrictTo(Scope.LIBRARY_GROUP)
+    public OpenPgpLockedException() {
+        super("Security Key returned error: PIN/PUK locked, an incorrect PIN/PUK has been entered 3 times.");
+    }
 }

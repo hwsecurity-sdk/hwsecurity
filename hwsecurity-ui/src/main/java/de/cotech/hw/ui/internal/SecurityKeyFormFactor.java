@@ -179,7 +179,7 @@ public class SecurityKeyFormFactor {
 
                     @Override
                     public void onAnimationEnd(Animator animation) {
-                        AnimatedVectorDrawableHelper.startAndLoopAnimation(context, imageNfcFullscreen, R.drawable.hwsecurity_nfc_handling);
+                        AnimatedVectorDrawableHelper.startAndLoopAnimation(imageNfcFullscreen, R.drawable.hwsecurity_nfc_handling);
                     }
 
                     @Override
@@ -259,7 +259,7 @@ public class SecurityKeyFormFactor {
 
             @Override
             public void onTransitionEnd(@NonNull Transition transition) {
-                AnimatedVectorDrawableHelper.startAndLoopAnimation(context, imageUsb, R.drawable.hwsecurity_usb_handling_a);
+                AnimatedVectorDrawableHelper.startAndLoopAnimation(imageUsb, R.drawable.hwsecurity_usb_handling_a);
             }
 
             @Override

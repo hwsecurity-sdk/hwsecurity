@@ -77,7 +77,7 @@ public abstract class FidoDialogOptions implements Parcelable {
          * This sets the content of the window as 'secure', preventing it from appearing in screenshots,
          * screen recordings or from being viewed on non-secure displays.
          * <p>
-         * Default: false (because FIDO U2F requires no PIN input)
+         * Default: false (because FIDO U2F does not require PIN input)
          */
         public abstract Builder setPreventScreenshots(boolean preventScreenshots);
 

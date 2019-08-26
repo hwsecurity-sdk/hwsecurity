@@ -45,7 +45,7 @@ import de.cotech.hw.util.HwTimber;
 public class NfcTagManager {
     private static final long MONITOR_SLEEP_INTERVAL = 250;
     private static final int MONITOR_PING_DELAY = 750;
-    private static final int MONITOR_TIMEOUT_DELAY = 1500;
+    private static final int MONITOR_TIMEOUT_DELAY = 20000;
 
     private final OnDiscoveredNfcTagListener callback;
     private final Handler callbackHandler;

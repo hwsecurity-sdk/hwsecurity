@@ -24,6 +24,7 @@
 
 package de.cotech.hw.openpgp.exceptions;
 
+
 import java.io.IOException;
 
 public class OpenPgpPublicKeyUnavailableException extends IOException {

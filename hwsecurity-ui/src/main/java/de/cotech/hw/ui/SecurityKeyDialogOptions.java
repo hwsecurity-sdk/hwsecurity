@@ -39,8 +39,8 @@ public abstract class SecurityKeyDialogOptions implements Parcelable {
     public enum PinMode {
         PIN_INPUT,
         NO_PIN_INPUT,
-//        FIRST_TIME_PIN, // TODO: new flow for key generation: choose user PIN, PUK is generated and shown!
-//        RESET_PIN, // TODO: directly go to reset pin flow
+        RESET_PIN,
+        SETUP
     }
 
     public enum FormFactor {
@@ -85,7 +85,7 @@ public abstract class SecurityKeyDialogOptions implements Parcelable {
         /**
          * Title shown inside the dialog
          * <p>
-         * Default: "Login with Security Key"
+         * Default: For PinMode.PIN_INPUT: "Login with Security Key"
          */
         public abstract Builder setTitle(String title);
 

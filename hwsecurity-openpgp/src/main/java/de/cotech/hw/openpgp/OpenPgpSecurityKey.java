@@ -76,7 +76,7 @@ import de.cotech.hw.util.HwTimber;
 
 
 public class OpenPgpSecurityKey extends SecurityKey {
-    private static final ByteSecret DEFAULT_ADMIN_PIN = ByteSecret.unsafeFromString("12345678");
+    private static final ByteSecret DEFAULT_PUK = ByteSecret.unsafeFromString("12345678");
 
     public final OpenPgpAppletConnection openPgpAppletConnection;
 
@@ -104,7 +104,9 @@ public class OpenPgpSecurityKey extends SecurityKey {
      */
     @AnyThread
     public boolean isSecurityKeyEmpty() {
-        return !openPgpAppletConnection.getOpenPgpCapabilities().hasEncryptKey();
+        return !openPgpAppletConnection.getOpenPgpCapabilities().hasSignKey()
+                && !openPgpAppletConnection.getOpenPgpCapabilities().hasEncryptKey()
+                && !openPgpAppletConnection.getOpenPgpCapabilities().hasAuthKey();
     }
 
     /**
@@ -112,9 +114,9 @@ public class OpenPgpSecurityKey extends SecurityKey {
      */
     @WorkerThread
     @RestrictTo(Scope.LIBRARY_GROUP)
-    public void updatePinPukUsingDefaultPuk(ByteSecret newPin, ByteSecret newPuk) throws IOException {
+    public void updatePinAndPukUsingDefaultPuk(ByteSecret newPin, ByteSecret newPuk) throws IOException {
         ModifyPinOp modifyPinOp = ModifyPinOp.create(openPgpAppletConnection);
-        modifyPinOp.modifyPw1andPw3Pins(DEFAULT_ADMIN_PIN, newPin, newPuk);
+        modifyPinOp.modifyPw1AndPw3(DEFAULT_PUK, newPin, newPuk);
     }
 
     /**
@@ -122,9 +124,9 @@ public class OpenPgpSecurityKey extends SecurityKey {
      */
     @WorkerThread
     @RestrictTo(Scope.LIBRARY_GROUP)
-    public void updatePinUsingPuk(ByteSecret puk, ByteSecret newPin) throws IOException {
+    public void updatePinUsingPuk(ByteSecret currentPuk, ByteSecret newPin) throws IOException {
         ModifyPinOp modifyPinOp = ModifyPinOp.create(openPgpAppletConnection);
-        modifyPinOp.modifyPw1Pin(puk, newPin);
+        modifyPinOp.modifyPw1Pin(currentPuk, newPin);
     }
 
     /**
@@ -142,19 +144,17 @@ public class OpenPgpSecurityKey extends SecurityKey {
     public void wipeAndVerify() throws IOException {
         ResetAndWipeOp resetAndWipe = ResetAndWipeOp.create(openPgpAppletConnection);
         resetAndWipe.resetAndWipeSecurityKey();
-        openPgpAppletConnection.verifyAdminPin(DEFAULT_ADMIN_PIN);
+        openPgpAppletConnection.verifyPuk(DEFAULT_PUK);
     }
 
     @WorkerThread
-    private boolean verifyAdminPinIfPossible() throws IOException {
-        boolean encryptFpIsEmpty = !openPgpAppletConnection.getOpenPgpCapabilities().hasEncryptKey();
-        if (encryptFpIsEmpty) {
+    private boolean isInFactoryDefaultState() throws IOException {
+        if (isSecurityKeyEmpty()) {
             try {
-                // make one attempt at entering the default admin pin. if that fails, wipe the card
-                openPgpAppletConnection.verifyAdminPin(DEFAULT_ADMIN_PIN);
+                // make one attempt at entering the default PUK
+                openPgpAppletConnection.verifyPuk(DEFAULT_PUK);
                 return true;
             } catch (SecurityKeyException e) {
-                // ignore, and wipe security key instead
                 return false;
             }
         } else {
@@ -180,7 +180,8 @@ public class OpenPgpSecurityKey extends SecurityKey {
     @WorkerThread
     public PairedSecurityKey setupPairedKey(PinProvider pinProvider) throws IOException {
         ByteSecret pairedPin = pinProvider.getPin(getOpenPgpInstanceAid());
-        return setupPairedKey(pairedPin, pairedPin);
+        ByteSecret pairedPuk = pinProvider.getPuk(getOpenPgpInstanceAid());
+        return setupPairedKey(pairedPin, pairedPuk);
     }
 
     @WorkerThread
@@ -190,8 +191,8 @@ public class OpenPgpSecurityKey extends SecurityKey {
 
     @WorkerThread
     public PairedSecurityKey setupPairedKey(ByteSecret newPin, ByteSecret newPuk, boolean encryptionOnly) throws IOException {
-        boolean verifySuccessful = verifyAdminPinIfPossible();
-        if (!verifySuccessful) {
+        boolean isInFactoryDefaultState = isInFactoryDefaultState();
+        if (!isInFactoryDefaultState) {
             wipeAndVerify();
         }
 
@@ -213,7 +214,7 @@ public class OpenPgpSecurityKey extends SecurityKey {
                 KeyPair encryptionKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
                 byte[] encryptFingerprint = changeKeyRsaOp.changeKey(KeyType.ENCRYPT, encryptionKeyPair, timestamp);
 
-                updatePinPukUsingDefaultPuk(newPin, newPuk);
+                updatePinAndPukUsingDefaultPuk(newPin, newPuk);
 
                 openPgpAppletConnection.refreshConnectionCapabilities();
 
@@ -229,7 +230,7 @@ public class OpenPgpSecurityKey extends SecurityKey {
                 byte[] encryptFingerprint = changeKeyRsaOp.changeKey(KeyType.ENCRYPT, encryptionKeyPair, timestamp);
                 byte[] signFingerprint = changeKeyRsaOp.changeKey(KeyType.SIGN, signKeyPair, timestamp);
                 byte[] authFingerprint = changeKeyRsaOp.changeKey(KeyType.AUTH, authKeyPair, timestamp);
-                updatePinPukUsingDefaultPuk(newPin, newPuk);
+                updatePinAndPukUsingDefaultPuk(newPin, newPuk);
 
                 openPgpAppletConnection.refreshConnectionCapabilities();
 

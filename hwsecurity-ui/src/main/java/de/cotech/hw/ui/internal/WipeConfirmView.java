@@ -24,45 +24,49 @@
 
 package de.cotech.hw.ui.internal;
 
-import android.content.Context;
-import android.graphics.drawable.Animatable;
 import android.view.View;
-import android.widget.ImageView;
-
+import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.RestrictTo;
-
+import androidx.transition.TransitionManager;
+import de.cotech.hw.SecurityKeyManager;
 import de.cotech.hw.ui.R;
 
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public class SmartcardFormFactor {
-    private Context context;
+public class WipeConfirmView {
 
     private View view;
-    private ImageView smartcardAnimation;
 
-    public SmartcardFormFactor(@NonNull View view) {
-        this.context = view.getContext();
+    private boolean wipeConfirmed = false;
+
+    public boolean isWipeConfirmed() {
+        return wipeConfirmed;
+    }
+
+    public WipeConfirmView(@NonNull ViewGroup view) {
         this.view = view;
 
-        smartcardAnimation = view.findViewById(R.id.smartcardAnimation);
+        TextView textUseAgain = view.findViewById(R.id.textUseAgain);
 
-        smartcardAnimation.setOnClickListener(v -> {
-                    Animatable animatable = (Animatable) smartcardAnimation.getDrawable();
-                    animatable.stop();
-                    AnimatedVectorDrawableHelper.startAnimation(smartcardAnimation, R.drawable.hwsecurity_smartcard_animation);
-                }
-        );
+        CheckBox checkboxWipe = view.findViewById(R.id.checkBoxWipe);
+        checkboxWipe.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                wipeConfirmed = true;
+                TransitionManager.beginDelayedTransition(view);
+                textUseAgain.setVisibility(View.VISIBLE);
+                SecurityKeyManager.getInstance().rediscoverConnectedSecurityKeys();
+            } else {
+                wipeConfirmed = false;
+                TransitionManager.beginDelayedTransition(view);
+                textUseAgain.setVisibility(View.INVISIBLE);
+            }
+        });
     }
 
     public void setVisibility(int visibility) {
         view.setVisibility(visibility);
-        if (visibility == View.VISIBLE) {
-            AnimatedVectorDrawableHelper.startAnimation(smartcardAnimation, R.drawable.hwsecurity_smartcard_animation);
-        } else {
-            Animatable animatable = (Animatable) smartcardAnimation.getDrawable();
-            animatable.stop();
-        }
     }
 
     public int getVisibility() {

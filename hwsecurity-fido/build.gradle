@@ -30,7 +30,6 @@ android {
 
     defaultConfig {
         minSdkVersion 14
-        versionCode rootProject.ext.hwSdkVersionCode
         versionName rootProject.ext.hwSdkVersionName
         vectorDrawables.useSupportLibrary = true
     }

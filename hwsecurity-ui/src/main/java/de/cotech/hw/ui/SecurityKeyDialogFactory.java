@@ -28,9 +28,9 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import de.cotech.hw.openpgp.OpenPgpSecurityKey;
 import de.cotech.hw.openpgp.OpenPgpSecurityKeyConnectionModeConfig;
-//import de.cotech.hw.piv.PivSecurityKey;
+// import de.cotech.hw.piv.PivSecurityKey;
 import de.cotech.hw.ui.internal.OpenPgpSecurityKeyDialogFragment;
-//import de.cotech.hw.ui.internal.PivSecurityKeyDialogFragment;
+// import de.cotech.hw.ui.internal.PivSecurityKeyDialogFragment;
 
 public class SecurityKeyDialogFactory {
 

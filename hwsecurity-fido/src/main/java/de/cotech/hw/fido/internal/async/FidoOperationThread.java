@@ -36,7 +36,8 @@ import androidx.annotation.WorkerThread;
 import androidx.lifecycle.Lifecycle.Event;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
-import de.cotech.hw.exceptions.TransportGoneException;
+
+import de.cotech.hw.exceptions.SecurityKeyLostException;
 import de.cotech.hw.fido.exceptions.FidoPresenceRequiredException;
 import de.cotech.hw.fido.internal.FidoU2fAppletConnection;
 import de.cotech.hw.util.HwTimber;
@@ -84,7 +85,7 @@ abstract class FidoOperationThread<T> extends Thread implements LifecycleObserve
             } catch (InterruptedException e) {
                 HwTimber.e("Fido operation was interrupted");
                 break;
-            } catch (TransportGoneException e) {
+            } catch (SecurityKeyLostException e) {
                 HwTimber.e("Transport gone during fido operation");
                 break;
             } catch (FidoPresenceRequiredException e) {

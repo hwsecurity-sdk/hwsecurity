@@ -26,6 +26,7 @@ package de.cotech.hw.secrets;
 
 
 import android.text.Editable;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import java.nio.ByteBuffer;
@@ -39,29 +40,46 @@ import java.util.Arrays;
  * <p>
  * This class wraps a ByteBuffer, and attempts to ensure that its memory is overwritten when the object is freed, to
  * keep secrets in memory as short a time as possible.
- *
- * @see CharSecret
  */
 public class ByteSecret {
     private ByteBuffer secret;
 
     @NonNull
     public static ByteSecret fromEditableAsUtf8AndClear(Editable editable) {
-        /* According to http://stackoverflow.com/a/15844273 EditText is not using String internally
-         * but char[]. Thus, we can get the char[] directly from it. */
-        int pl = editable.length();
-        char[] chars = new char[pl];
-        editable.getChars(0, pl, chars, 0);
+        /* EditText is not using String internally but char[].
+        Thus, we can get the char[] directly from it. */
+        int editableLength = editable.length();
+        char[] chars = new char[editableLength];
+        editable.getChars(0, editableLength, chars, 0);
+        editable.clear();
 
-        CharBuffer charBuffer = CharBuffer.wrap(chars);
-        ByteBuffer encodedBuffer = Charset.forName("UTF-8").encode(charBuffer);
-        ByteBuffer secretCopy = ByteBuffer.allocateDirect(chars.length);
-        // get only the actual used length
-        secretCopy.put(encodedBuffer);
-
+        ByteBuffer secretCopy = fromCharArrayToByteBufferAsUtf8(chars);
         Arrays.fill(chars, '\u0000');
 
         return new ByteSecret(secretCopy);
+    }
+
+    @NonNull
+    public static ByteSecret fromCharArrayAsUtf8TakeOwnership(char[] chars) {
+        if (chars == null) {
+            throw new IllegalStateException("Secret has been cleared up before this call!");
+        }
+        ByteBuffer secretCopy = fromCharArrayToByteBufferAsUtf8(chars);
+        Arrays.fill(chars, '\u0000');
+        return new ByteSecret(secretCopy);
+    }
+
+    /**
+     * Internal helper method to take a char array and encode it using UTF-8 in a ByteBuffer.
+     */
+    private static ByteBuffer fromCharArrayToByteBufferAsUtf8(char[] chars) {
+        CharBuffer charBuffer = CharBuffer.wrap(chars);
+        ByteBuffer encodedBuffer = Charset.forName("UTF-8").encode(charBuffer);
+        // get only the actual used length
+        ByteBuffer secretCopy = ByteBuffer.allocateDirect(chars.length);
+        secretCopy.put(encodedBuffer);
+
+        return secretCopy;
     }
 
     @NonNull
@@ -104,6 +122,11 @@ public class ByteSecret {
     private ByteSecret(ByteBuffer secret) {
         this.secret = secret;
         secret.clear();
+    }
+
+    public void displayOnTextView(TextView textView) {
+        CharBuffer charBuffer = Charset.forName("UTF-8").decode(secret);
+        textView.setText(charBuffer.array(), 0, charBuffer.length());
     }
 
     public byte[] unsafeGetByteCopy() {

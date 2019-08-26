@@ -24,14 +24,12 @@
 
 package de.cotech.hw.ui.internal;
 
-import android.content.Context;
 import android.graphics.drawable.Animatable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.ImageView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.RestrictTo;
 import androidx.core.view.ViewCompat;
@@ -41,13 +39,13 @@ import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat;
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 public class AnimatedVectorDrawableHelper {
 
-    public static void startAnimation(Context context, ImageView imageView, int resId) {
-        startAnimation(context, imageView, resId, null);
+    public static void startAnimation(ImageView imageView, int resId) {
+        startAnimation(imageView, resId, null);
     }
 
-    public static void startAnimation(Context context, ImageView imageView, int resId, Animatable2Compat.AnimationCallback animationCallback) {
+    public static void startAnimation(ImageView imageView, int resId, Animatable2Compat.AnimationCallback animationCallback) {
         if (Build.VERSION.SDK_INT <= 24) {
-            AnimatedVectorDrawableCompat avdCompat = setAndStartAnimatedVectorDrawableSdk24(context, imageView, resId);
+            AnimatedVectorDrawableCompat avdCompat = setAndStartAnimatedVectorDrawableSdk24(imageView, resId);
             if (animationCallback != null) {
                 avdCompat.registerAnimationCallback(animationCallback);
             }
@@ -60,7 +58,7 @@ public class AnimatedVectorDrawableHelper {
         }
     }
 
-    public static void startAndLoopAnimation(Context context, ImageView imageView, int resId) {
+    public static void startAndLoopAnimation(ImageView imageView, int resId) {
         Animatable2Compat.AnimationCallback animationCallback = new Animatable2Compat.AnimationCallback() {
             @NonNull
             private final Handler fHandler = new Handler(Looper.getMainLooper());
@@ -73,7 +71,7 @@ public class AnimatedVectorDrawableHelper {
 
                 fHandler.post(() -> {
                     if (Build.VERSION.SDK_INT <= 24) {
-                        AnimatedVectorDrawableCompat avdCompat = setAndStartAnimatedVectorDrawableSdk24(context, imageView, resId);
+                        AnimatedVectorDrawableCompat avdCompat = setAndStartAnimatedVectorDrawableSdk24(imageView, resId);
                         avdCompat.registerAnimationCallback(this);
                     } else {
                         ((Animatable) drawable).start();
@@ -83,7 +81,7 @@ public class AnimatedVectorDrawableHelper {
         };
 
         if (Build.VERSION.SDK_INT <= 24) {
-            AnimatedVectorDrawableCompat avdCompat = setAndStartAnimatedVectorDrawableSdk24(context, imageView, resId);
+            AnimatedVectorDrawableCompat avdCompat = setAndStartAnimatedVectorDrawableSdk24(imageView, resId);
             avdCompat.registerAnimationCallback(animationCallback);
         } else {
             imageView.setImageResource(resId);
@@ -93,8 +91,8 @@ public class AnimatedVectorDrawableHelper {
         }
     }
 
-    private static AnimatedVectorDrawableCompat setAndStartAnimatedVectorDrawableSdk24(Context context, ImageView imageView, int resId) {
-        AnimatedVectorDrawableCompat avdCompat = AnimatedVectorDrawableCompat.create(context, resId);
+    private static AnimatedVectorDrawableCompat setAndStartAnimatedVectorDrawableSdk24(ImageView imageView, int resId) {
+        AnimatedVectorDrawableCompat avdCompat = AnimatedVectorDrawableCompat.create(imageView.getContext(), resId);
 
         // on SDK <= 24, the alphaFill values are not resetted properly to their initial state
         // The states of AnimatedVectorDrawables are stored centrally per resource.

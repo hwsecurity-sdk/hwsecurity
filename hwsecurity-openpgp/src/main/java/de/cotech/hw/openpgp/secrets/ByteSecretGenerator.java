@@ -25,36 +25,29 @@
 package de.cotech.hw.openpgp.secrets;
 
 
-import java.security.SecureRandom;
-import java.util.Arrays;
-
 import androidx.annotation.NonNull;
-
+import de.cotech.hw.secrets.ByteSecret;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
 import org.bouncycastle.crypto.params.HKDFParameters;
 
-import de.cotech.hw.secrets.ByteSecret;
-import de.cotech.hw.secrets.CharSecret;
+import java.security.SecureRandom;
+import java.util.Arrays;
 
 
 /**
- * A generator for {@link ByteSecret} and {@link CharSecret} instances.
- *
- * @deprecated use {@link ByteSecretGenerator}
+ * A generator for {@link ByteSecret} instances.
  */
-@Deprecated
-public class SecretGenerator {
+public class ByteSecretGenerator {
     private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 
-    @Deprecated
-    public static SecretGenerator getInstance() {
-        return new SecretGenerator();
+    public static ByteSecretGenerator getInstance() {
+        return new ByteSecretGenerator();
     }
 
     private SecureRandom random = new SecureRandom();
 
-    private SecretGenerator() {
+    private ByteSecretGenerator() {
     }
 
     /**
@@ -62,7 +55,6 @@ public class SecretGenerator {
      * <p>
      * The contained entropy will be about 8 bits to the power of numBytes.
      */
-    @Deprecated
     @NonNull
     public ByteSecret createRandom(int numBytes) {
         byte[] secret = new byte[numBytes];
@@ -71,40 +63,38 @@ public class SecretGenerator {
     }
 
     /**
-     * Creates a random alphanumeric CharSecret of the given length.
+     * Creates a random alphanumeric ByteSecret of the given length.
      * <p>
      * The contained entropy will be about 6 bits to the power of numChars.
      */
-    @Deprecated
     @NonNull
-    public CharSecret createRandomAlphaNumeric(int numChars) {
+    public ByteSecret createRandomAlphaNumeric(int numChars) {
         char[] secret = new char[numChars];
         for (int i = 0; i < numChars; i++) {
             secret[i] = ALPHABET.charAt(random.nextInt(ALPHABET.length()));
         }
-        return CharSecret.fromCharArrayTakeOwnership(secret);
+        return ByteSecret.fromCharArrayAsUtf8TakeOwnership(secret);
     }
 
     /**
-     * Creates a random numeric CharSecret of the given length.
+     * Creates a random numeric ByteSecret of the given length.
      * <p>
      * The contained entropy will be about 3.3 bits to the power of numChars.
      */
-    @Deprecated
     @NonNull
-    public CharSecret createRandomNumeric(int numChars) {
+    public ByteSecret createRandomNumeric(int numChars) {
         char[] secret = new char[numChars];
         for (int i = 0; i < numChars; i++) {
             secret[i] = Character.forDigit(random.nextInt(10), 10);
         }
-        return CharSecret.fromCharArrayTakeOwnership(secret);
+        return ByteSecret.fromCharArrayAsUtf8TakeOwnership(secret);
     }
 
     /**
      * Derives a ByteSecret using SHA256, compatible to RFC 5869
      */
     @Deprecated
-    public CharSecret deriveWithSaltAndConsume(ByteSecret secret, String salt, int length) {
+    public ByteSecret deriveWithSaltAndConsume(ByteSecret secret, String salt, int length) {
         byte[] secretBytes = null;
         try {
             secretBytes = secret.getByteCopyAndClear();
@@ -117,37 +107,21 @@ public class SecretGenerator {
             byte[] derivedSecret = new byte[length];
             kDF1BytesGenerator.generateBytes(derivedSecret, 0, length);
 
-            char[] charSecret = byteSecretToCharSecretAndConsume(derivedSecret);
-            return CharSecret.fromCharArrayTakeOwnership(charSecret);
+            return ByteSecret.fromByteArrayAndClear(derivedSecret);
         } finally {
             zeroArrayQuietly(secretBytes);
         }
     }
 
-    @Deprecated
     private void zeroArrayQuietly(byte[] secretBytes) {
         if (secretBytes != null) {
             Arrays.fill(secretBytes, (byte) 0);
         }
     }
 
-    @Deprecated
     private void zeroArrayQuietly(char[] secretChars) {
         if (secretChars != null) {
             Arrays.fill(secretChars, '\0');
-        }
-    }
-
-    @Deprecated
-    private char[] byteSecretToCharSecretAndConsume(byte[] secretBytes) {
-        try {
-            char[] result = new char[secretBytes.length];
-            for (int i = 0; i < result.length; i++) {
-                result[i] = (char) secretBytes[i];
-            }
-            return result;
-        } finally {
-            zeroArrayQuietly(secretBytes);
         }
     }
 

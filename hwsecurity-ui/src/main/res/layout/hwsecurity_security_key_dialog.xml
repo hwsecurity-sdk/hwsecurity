@@ -26,25 +26,6 @@
         tools:text="Title" />
 
     <TextView
-        android:id="@+id/errorText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginBottom="8dp"
-        android:gravity="center"
-        android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        android:textColor="@color/hwSecurityRed"
-        android:textSize="16sp"
-        app:fontFamily="sans-serif-medium"
-        app:layout_constraintBottom_toTopOf="@id/guidelineForceHeight"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:text="Title" />
-
-    <TextView
         android:id="@+id/textDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -124,41 +105,48 @@
         app:layout_constraintTop_toBottomOf="@+id/textDescription"
         tools:visibility="visible" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guidelineForceHeight"
-        android:layout_width="wrap_content"
+    <include
+        android:id="@+id/includeShowPuk"
+        layout="@layout/hwsecurity_security_key_show_puk"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_begin="370dp" />
-
-    <ImageView
-        android:id="@+id/errorImage"
-        android:layout_width="174dp"
-        android:layout_height="168dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginBottom="8dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/errorText"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
-        app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/hwsecurity_error"
-        tools:visibility="visible" />
-
-    <ProgressBar
-        android:id="@+id/securityKeyProgressBar"
-        style="?android:attr/progressBarStyle"
-        android:layout_width="192dp"
-        android:layout_height="192dp"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
-        android:layout_marginBottom="8dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textDescription"
+        tools:visibility="visible" />
+
+    <include
+        android:id="@+id/includeConfirmWipe"
+        layout="@layout/hwsecurity_security_key_confirm_wipe"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textDescription"
+        tools:visibility="visible" />
+
+    <include
+        android:id="@+id/includeProgress"
+        layout="@layout/hwsecurity_security_key_progress"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/guidelineForceHeight"
         app:layout_constraintEnd_toEndOf="parent"
@@ -166,29 +154,53 @@
         app:layout_constraintTop_toBottomOf="@+id/textDescription"
         tools:visibility="visible" />
 
+    <include
+        android:id="@+id/includeError"
+        layout="@layout/hwsecurity_security_key_error"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/guidelineForceHeight"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textDescription"
+        tools:visibility="visible" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidelineForceHeight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="370dp" />
+
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/buttonCancel"
+        android:id="@+id/buttonNegative"
         style="@style/HwSecurity.Dialog.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
-        android:text="@string/hwsecurity_ui_cancel"
+        android:text="@string/hwsecurity_ui_button_cancel"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/guidelineForceHeight" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/buttonResetPin"
+        android:id="@+id/buttonPositive"
         style="@style/HwSecurity.Dialog.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
-        android:text="@string/hwsecurity_ui_reset_pin"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/guidelineForceHeight" />
+        app:layout_constraintTop_toTopOf="@+id/guidelineForceHeight"
+        tools:text="Positive Button" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonKeyboardSwitch"
@@ -202,8 +214,8 @@
         android:visibility="gone"
         app:icon="@drawable/hwsecurity_ic_keyboard_alphabetical"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/buttonResetPin"
-        app:layout_constraintStart_toEndOf="@+id/buttonCancel"
+        app:layout_constraintEnd_toStartOf="@+id/buttonPositive"
+        app:layout_constraintStart_toEndOf="@+id/buttonNegative"
         app:layout_constraintTop_toTopOf="@+id/guidelineForceHeight"
         tools:visibility="visible" />
 

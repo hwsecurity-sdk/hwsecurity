@@ -38,6 +38,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 import androidx.annotation.WorkerThread;
+import de.cotech.hw.exceptions.SecurityKeyLostException;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.internal.transport.SecurityKeyInfo;
@@ -82,7 +83,7 @@ public class NfcTransport implements Transport {
     @Override
     public ResponseApdu transceive(final CommandApdu commandApdu) throws IOException {
         if (!isConnected()) {
-            throw new IOException("Transport is no longer available!");
+            throw new SecurityKeyLostException();
         }
         synchronized (connectionLock) {
             try {
@@ -107,6 +108,8 @@ public class NfcTransport implements Transport {
                     isTransceivingChain = true;
                 }
                 return responseApdu;
+            } catch (TagLostException e) {
+                throw new SecurityKeyLostException();
             } finally {
                 lastTransceiveTime = System.currentTimeMillis();
                 isTransceiving = false;
@@ -179,7 +182,7 @@ public class NfcTransport implements Transport {
 
     @Override
     public boolean isConnected() {
-        return mIsoDep != null && mIsoDep.isConnected() && !isReleased();
+        return mIsoDep != null && mIsoDep.isConnected();
     }
 
     @Override

@@ -30,26 +30,23 @@ import de.cotech.hw.exceptions.WrongDataException;
 import de.cotech.hw.exceptions.WrongRequestLengthException;
 
 public class OpenPgpPinTooShortException extends SecurityKeyException {
-	/*
-	 * Used in
-	 * - ykneo-openpgp >= 1.0.11
-	 * https://github.com/Yubico/ykneo-openpgp/commit/b49ce8241917e7c087a4dab7b2c755420ff4500f
-	 * - YubiKey 5C
-	 */
-	public static final int SW_WRONG_DATA = WrongDataException.SW_WRONG_DATA;
+    /*
+     * Used in
+     * - ykneo-openpgp >= 1.0.11
+     * https://github.com/Yubico/ykneo-openpgp/commit/b49ce8241917e7c087a4dab7b2c755420ff4500f
+     * - YubiKey 5C
+     */
+    public static final int SW_WRONG_DATA = WrongDataException.SW_WRONG_DATA;
 
-	/*
-	 * Used in
-	 * - ykneo-openpgp < 1.0.10
-	 * - SmartPGP
-	 */
-	public static final int SW_WRONG_REQUEST_LENGTH = WrongRequestLengthException.SW_WRONG_REQUEST_LENGTH;
+    /*
+     * Used in
+     * - ykneo-openpgp < 1.0.10
+     * - SmartPGP
+     */
+    public static final int SW_WRONG_REQUEST_LENGTH = WrongRequestLengthException.SW_WRONG_REQUEST_LENGTH;
 
-	public OpenPgpPinTooShortException() {
-		super("OpenPgpPinTooShortException", 0);
-	}
+    public OpenPgpPinTooShortException() {
+        super("Security Key returned error: PIN too short.", 0);
+    }
 
-	public OpenPgpPinTooShortException(String longErrorMessage) {
-		super(longErrorMessage, "OpenPgpPinTooShortException", 0);
-	}
 }

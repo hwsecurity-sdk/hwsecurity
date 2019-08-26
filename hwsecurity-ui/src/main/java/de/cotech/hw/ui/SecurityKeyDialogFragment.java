@@ -28,19 +28,20 @@ package de.cotech.hw.ui;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.nfc.TagLostException;
 import android.os.Bundle;
-import android.view.*;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.*;
+
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.Guideline;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
@@ -48,25 +49,29 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.transition.TransitionManager;
+
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.button.MaterialButton;
+
+import java.io.IOException;
+import java.util.Objects;
+
 import de.cotech.hw.SecurityKey;
 import de.cotech.hw.SecurityKeyCallback;
 import de.cotech.hw.SecurityKeyException;
 import de.cotech.hw.SecurityKeyManager;
-import de.cotech.hw.openpgp.exceptions.OpenPgpCardBlockedException;
+import de.cotech.hw.exceptions.SecurityKeyLostException;
+import de.cotech.hw.openpgp.exceptions.OpenPgpLockedException;
 import de.cotech.hw.openpgp.exceptions.OpenPgpPinTooShortException;
 import de.cotech.hw.openpgp.exceptions.OpenPgpPublicKeyUnavailableException;
 import de.cotech.hw.openpgp.exceptions.OpenPgpWrongPinException;
+import de.cotech.hw.openpgp.secrets.ByteSecretGenerator;
 import de.cotech.hw.secrets.ByteSecret;
 import de.cotech.hw.secrets.StaticPinProvider;
 import de.cotech.hw.ui.internal.*;
 import de.cotech.hw.util.HwTimber;
-
-import java.io.IOException;
-import java.util.Objects;
 
 /**
  * This dialog shows helpful animations and handles all the PIN/PUK input for you.
@@ -82,30 +87,34 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
 
     private static final long TIME_DELAYED_STATE_CHANGE = 3000;
 
-    private static final String PREFERENCES_NAME = "hwsecurity_ui_preferences";
-    private static final String PREFERENCES_KEY_KEYBOARD_PREFERRED = "keyboard_preferred";
+    private static final int SETUP_DEFAULT_PIN_LENGTH = 6;
+    private static final int SETUP_DEFAULT_PUK_LENGTH = 8;
+
+    static {
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    }
 
     private SecurityKeyDialogOptions options;
 
     private SecurityKeyDialogInterface.SecurityKeyDialogCallback callback;
+
+    private KeyboardPreference keyboardPreference;
 
     private CoordinatorLayout coordinator;
     private FrameLayout bottomSheet;
     private ConstraintLayout innerBottomSheet;
     private TextView textViewTitle;
     private TextView textViewDescription;
-    private ProgressBar smartcardProgress;
-    private ImageView errorImage;
-    private TextView errorText;
 
-    private MaterialButton buttonCancel;
-    private MaterialButton buttonResetPin;
+    private MaterialButton buttonNegative;
+    private MaterialButton buttonPositive;
     private MaterialButton buttonKeyboardSwitch;
 
     private StaticPinProvider staticPinProvider;
 
     private ByteSecret resetNewPinSecret;
     private ByteSecret resetPukSecret;
+    private ByteSecret setupPinSecret;
 
     private SecurityKeyFormFactor securityKeyFormFactor;
     private SmartcardFormFactor smartcardFormFactor;
@@ -115,23 +124,36 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
 
     private Guideline guidelineForceHeight;
 
+    private ProgressView progressView;
+    private ErrorView errorView;
+
+    private View includeShowPuk;
+    private WipeConfirmView wipeConfirmView;
+    private TextView textPuk;
+    private CheckBox checkboxPuk;
+
     private enum State {
         NORMAL_ENTER_PIN,
-        NORMAL_SMARTCARD,
-        NORMAL_SMARTCARD_HOLD,
+        NORMAL_SECURITY_KEY,
+        NORMAL_SECURITY_KEY_HOLD,
         NORMAL_ERROR,
-        RESET_ENTER_PUK,
-        RESET_ENTER_NEW_PIN,
-        RESET_SMARTCARD,
-        RESET_SUCCESS,
-        RESET_ERROR
+        RESET_PIN_ENTER_PUK,
+        RESET_PIN_ENTER_NEW_PIN,
+        RESET_PIN_SECURITY_KEY,
+        RESET_PIN_SUCCESS,
+        RESET_PIN_ERROR,
+        SETUP_CHOOSE_PIN,
+        SETUP_SHOW_PUK,
+        SETUP_CONFIRM_WIPE,
     }
 
     private State currentState;
 
-    abstract public void initConnectionMode(Bundle arguments);
+    abstract public void initSecurityKeyConnectionMode(Bundle arguments);
 
-    abstract public void updatePinUsingPuk(SecurityKey securityKey, ByteSecret puk, ByteSecret newPin) throws IOException;
+    abstract public void updateSecurityKeyPinUsingPuk(SecurityKey securityKey, ByteSecret puk, ByteSecret newPin) throws IOException;
+
+    abstract public boolean isSecurityKeyEmpty(SecurityKey securityKey) throws IOException;
 
     public void setSecurityKeyDialogCallback(SecurityKeyDialogInterface.SecurityKeyDialogCallback callback) {
         this.callback = callback;
@@ -182,7 +204,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
 
         setStyle(STYLE_NORMAL, options.getTheme());
 
-        initConnectionMode(arguments);
+        initSecurityKeyConnectionMode(arguments);
 
         Context context = getContext();
         if (callback == null) {
@@ -199,6 +221,8 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
             }
             throw new IllegalStateException("Activity must implement SecurityKeyDialogInterface.SecurityKeyDialogCallback!");
         }
+
+        keyboardPreference = new KeyboardPreference(context);
     }
 
     @Nullable
@@ -234,20 +258,26 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         }
 
         innerBottomSheet = view.findViewById(R.id.hwSecurityDialogBottomSheet);
-        buttonCancel = view.findViewById(R.id.buttonCancel);
-        buttonResetPin = view.findViewById(R.id.buttonResetPin);
+        buttonNegative = view.findViewById(R.id.buttonNegative);
+        buttonPositive = view.findViewById(R.id.buttonPositive);
         buttonKeyboardSwitch = view.findViewById(R.id.buttonKeyboardSwitch);
 
         textViewTitle = view.findViewById(R.id.textTitle);
         textViewDescription = view.findViewById(R.id.textDescription);
-        smartcardProgress = view.findViewById(R.id.securityKeyProgressBar);
-        errorImage = view.findViewById(R.id.errorImage);
-        errorText = view.findViewById(R.id.errorText);
         guidelineForceHeight = view.findViewById(R.id.guidelineForceHeight);
+        includeShowPuk = view.findViewById(R.id.includeShowPuk);
+        textPuk = view.findViewById(R.id.textPuk);
+        checkboxPuk = view.findViewById(R.id.checkBoxPuk);
+        checkboxPuk.setOnCheckedChangeListener((buttonView, isChecked) -> gotoState(State.NORMAL_SECURITY_KEY));
 
-        buttonCancel.setOnClickListener(v -> cancel());
-        buttonResetPin.setOnClickListener(v -> gotoState(State.RESET_ENTER_PUK));
-        buttonKeyboardSwitch.setOnClickListener(v -> showHidePinInput(!isKeyboardPreferred()));
+        buttonNegative.setOnClickListener(v -> cancel());
+        buttonPositive.setOnClickListener(v -> gotoState(State.RESET_PIN_ENTER_PUK));
+        buttonKeyboardSwitch.setOnClickListener(v -> showHidePinInput(!keyboardPreference.isKeyboardPreferred()));
+
+        wipeConfirmView = new WipeConfirmView(view.findViewById(R.id.includeConfirmWipe));
+
+        progressView = new ProgressView(view.findViewById(R.id.includeProgress));
+        errorView = new ErrorView(view.findViewById(R.id.includeError));
 
         keypadPinInput = new KeypadPinInput(view.findViewById(R.id.includeKeypadInput));
         keypadPinInput.reset(options.getPinLength());
@@ -265,7 +295,15 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
                 break;
             }
             case NO_PIN_INPUT: {
-                gotoState(State.NORMAL_SMARTCARD);
+                gotoState(State.NORMAL_SECURITY_KEY);
+                break;
+            }
+            case RESET_PIN: {
+                gotoState(State.RESET_PIN_ENTER_PUK);
+                break;
+            }
+            case SETUP: {
+                gotoState(State.SETUP_CHOOSE_PIN);
                 break;
             }
             default: {
@@ -274,40 +312,19 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         }
     }
 
-    private void showHidePinInput(boolean isKeyboardPreferred) {
-        if (isKeyboardPreferred) {
+    private void showHidePinInput(boolean showKeyboard) {
+        if (showKeyboard) {
             keyboardPinInput.setVisibility(View.VISIBLE);
             keypadPinInput.setVisibility(View.GONE);
             buttonKeyboardSwitch.setIcon(getResources().getDrawable(R.drawable.hwsecurity_ic_keyboard_numeric));
             keyboardPinInput.openKeyboard();
-            setIsKeyboardPreferred(true);
+            keyboardPreference.setIsKeyboardPreferred(true);
         } else {
             keyboardPinInput.setVisibility(View.GONE);
             keypadPinInput.setVisibility(View.VISIBLE);
             buttonKeyboardSwitch.setIcon(getResources().getDrawable(R.drawable.hwsecurity_ic_keyboard_alphabetical));
-            setIsKeyboardPreferred(false);
+            keyboardPreference.setIsKeyboardPreferred(false);
         }
-    }
-
-    private boolean isKeyboardPreferred() {
-        @SuppressWarnings("ConstantConditions")
-        SharedPreferences preferences = getContext().getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
-        if (preferences == null) {
-            return false;
-        }
-        return preferences.getBoolean(PREFERENCES_KEY_KEYBOARD_PREFERRED, false);
-    }
-
-    private void setIsKeyboardPreferred(boolean isKeyboardPreferred) {
-        @SuppressWarnings("ConstantConditions")
-        SharedPreferences preferences = getContext().getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
-        if (preferences == null) {
-            return;
-        }
-
-        preferences.edit()
-                .putBoolean(PREFERENCES_KEY_KEYBOARD_PREFERRED, isKeyboardPreferred)
-                .apply();
     }
 
     @Override
@@ -336,17 +353,22 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         switch (currentState) {
             case NORMAL_ENTER_PIN: {
                 staticPinProvider = StaticPinProvider.getInstance(pinSecret);
-                gotoState(State.NORMAL_SMARTCARD);
+                gotoState(State.NORMAL_SECURITY_KEY);
                 break;
             }
-            case RESET_ENTER_PUK: {
+            case RESET_PIN_ENTER_PUK: {
                 resetPukSecret = pinSecret;
-                gotoState(State.RESET_ENTER_NEW_PIN);
+                gotoState(State.RESET_PIN_ENTER_NEW_PIN);
                 break;
             }
-            case RESET_ENTER_NEW_PIN: {
+            case RESET_PIN_ENTER_NEW_PIN: {
                 resetNewPinSecret = pinSecret;
-                gotoState(State.RESET_SMARTCARD);
+                gotoState(State.RESET_PIN_SECURITY_KEY);
+                break;
+            }
+            case SETUP_CHOOSE_PIN: {
+                setupPinSecret = pinSecret;
+                gotoState(State.SETUP_SHOW_PUK);
                 break;
             }
             default: {
@@ -357,64 +379,70 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
     }
 
     private void gotoState(State newState) {
+        gotoState(newState, true);
+    }
+
+    private void gotoState(State newState, boolean isTransportNfc) {
         switch (newState) {
             case NORMAL_ENTER_PIN: {
                 keypadPinInput.reset(options.getPinLength());
-                textViewTitle.setText((options.getTitle() != null) ? options.getTitle() : getString(R.string.hwsecurity_ui_title));
+
+                textViewTitle.setText(options.getTitle() != null ? options.getTitle() : getString(R.string.hwsecurity_ui_title_login));
                 textViewDescription.setText(R.string.hwsecurity_ui_description_enter_pin);
 
-                showHidePinInput(isKeyboardPreferred());
+                showHidePinInput(keyboardPreference.isKeyboardPreferred());
                 buttonKeyboardSwitch.setVisibility(options.getAllowKeyboard() ? View.VISIBLE : View.GONE);
-                buttonResetPin.setVisibility(options.getShowReset() ? View.VISIBLE : View.GONE);
+                buttonPositive.setText(R.string.hwsecurity_ui_button_reset);
+                buttonPositive.setVisibility(options.getShowReset() ? View.VISIBLE : View.GONE);
                 smartcardFormFactor.setVisibility(View.GONE);
                 securityKeyFormFactor.setVisibility(View.GONE);
-                smartcardProgress.setVisibility(View.GONE);
-                errorImage.setVisibility(View.GONE);
-                errorText.setVisibility(View.GONE);
+                includeShowPuk.setVisibility(View.GONE);
+                wipeConfirmView.setVisibility(View.GONE);
+                progressView.setVisibility(View.GONE);
+                errorView.setVisibility(View.GONE);
                 break;
             }
-            case NORMAL_SMARTCARD: {
+            case NORMAL_SECURITY_KEY: {
                 SecurityKeyManager.getInstance().rediscoverConnectedSecurityKeys();
-
                 keypadPinInput.reset(options.getPinLength());
-                textViewTitle.setText((options.getTitle() != null) ? options.getTitle() : getString(R.string.hwsecurity_ui_title));
-                textViewDescription.setText(R.string.hwsecurity_ui_description_smartcard);
+
+                textViewDescription.setText(R.string.hwsecurity_ui_description_start);
 
                 TransitionManager.beginDelayedTransition(innerBottomSheet);
                 keypadPinInput.setVisibility(View.GONE);
                 keyboardPinInput.setVisibility(View.GONE);
                 buttonKeyboardSwitch.setVisibility(View.GONE);
-                buttonResetPin.setVisibility(View.GONE);
+                buttonPositive.setVisibility(View.GONE);
                 boolean isSmartcardFormFactor = options.getFormFactor() == SecurityKeyDialogOptions.FormFactor.SMART_CARD;
                 boolean isSecurityKeyFormFactor = options.getFormFactor() == SecurityKeyDialogOptions.FormFactor.SECURITY_KEY;
                 smartcardFormFactor.setVisibility(isSmartcardFormFactor ? View.VISIBLE : View.GONE);
                 securityKeyFormFactor.setVisibility(isSecurityKeyFormFactor ? View.VISIBLE : View.GONE);
-                smartcardProgress.setVisibility(View.GONE);
-                errorImage.setVisibility(View.GONE);
-                errorText.setVisibility(View.GONE);
-                if (isSmartcardFormFactor) {
-                    smartcardFormFactor.startSmartcardAnimation();
-                }
+                includeShowPuk.setVisibility(View.GONE);
+                wipeConfirmView.setVisibility(View.GONE);
+                progressView.setVisibility(View.GONE);
+                errorView.setVisibility(View.GONE);
                 break;
             }
-            case NORMAL_SMARTCARD_HOLD: {
-                textViewTitle.setText((options.getTitle() != null) ? options.getTitle() : getString(R.string.hwsecurity_ui_title));
-                textViewDescription.setText(R.string.hwsecurity_ui_description_hold_nfc);
+            case NORMAL_SECURITY_KEY_HOLD: {
+                textViewTitle.setText(options.getTitle() != null ? options.getTitle() : getString(R.string.hwsecurity_ui_title_login));
+                textViewDescription.setText(isTransportNfc ? R.string.hwsecurity_ui_description_hold_nfc : R.string.hwsecurity_ui_description_hold_usb);
 
-                TransitionManager.beginDelayedTransition(innerBottomSheet);
+                // no animation for speed!
                 keypadPinInput.setVisibility(View.GONE);
                 keyboardPinInput.setVisibility(View.GONE);
                 buttonKeyboardSwitch.setVisibility(View.GONE);
-                buttonResetPin.setVisibility(View.GONE);
+                buttonPositive.setVisibility(View.GONE);
                 smartcardFormFactor.setVisibility(View.GONE);
                 securityKeyFormFactor.setVisibility(View.GONE);
-                smartcardProgress.setVisibility(View.VISIBLE);
-                errorImage.setVisibility(View.GONE);
-                errorText.setVisibility(View.GONE);
+                includeShowPuk.setVisibility(View.GONE);
+                wipeConfirmView.setVisibility(View.GONE);
+                progressView.setVisibility(View.VISIBLE);
+                errorView.setVisibility(View.GONE);
                 break;
             }
-            case RESET_ENTER_PUK: {
+            case RESET_PIN_ENTER_PUK: {
                 keypadPinInput.reset(options.getPukLength());
+
                 textViewTitle.setText(R.string.hwsecurity_ui_title_reset_pin);
                 textViewDescription.setText(R.string.hwsecurity_ui_description_enter_puk);
 
@@ -422,16 +450,18 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
                 keypadPinInput.setVisibility(View.VISIBLE);
                 keyboardPinInput.setVisibility(View.GONE);
                 buttonKeyboardSwitch.setVisibility(View.GONE);
-                buttonResetPin.setVisibility(View.GONE);
+                buttonPositive.setVisibility(View.GONE);
                 smartcardFormFactor.setVisibility(View.GONE);
                 securityKeyFormFactor.setVisibility(View.GONE);
-                smartcardProgress.setVisibility(View.GONE);
-                errorImage.setVisibility(View.GONE);
-                errorText.setVisibility(View.GONE);
+                includeShowPuk.setVisibility(View.GONE);
+                wipeConfirmView.setVisibility(View.GONE);
+                progressView.setVisibility(View.GONE);
+                errorView.setVisibility(View.GONE);
                 break;
             }
-            case RESET_ENTER_NEW_PIN: {
+            case RESET_PIN_ENTER_NEW_PIN: {
                 keypadPinInput.reset(options.getPinLength());
+
                 textViewTitle.setText(R.string.hwsecurity_ui_title_reset_pin);
                 textViewDescription.setText(R.string.hwsecurity_ui_description_enter_new_pin);
 
@@ -439,15 +469,16 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
                 keypadPinInput.setVisibility(View.VISIBLE);
                 keyboardPinInput.setVisibility(View.GONE);
                 buttonKeyboardSwitch.setVisibility(View.GONE);
-                buttonResetPin.setVisibility(View.GONE);
+                buttonPositive.setVisibility(View.GONE);
                 smartcardFormFactor.setVisibility(View.GONE);
                 securityKeyFormFactor.setVisibility(View.GONE);
-                smartcardProgress.setVisibility(View.GONE);
-                errorImage.setVisibility(View.GONE);
-                errorText.setVisibility(View.GONE);
+                includeShowPuk.setVisibility(View.GONE);
+                wipeConfirmView.setVisibility(View.GONE);
+                progressView.setVisibility(View.GONE);
+                errorView.setVisibility(View.GONE);
                 break;
             }
-            case RESET_SMARTCARD: {
+            case RESET_PIN_SECURITY_KEY: {
                 SecurityKeyManager.getInstance().rediscoverConnectedSecurityKeys();
 
                 textViewTitle.setText(R.string.hwsecurity_ui_title_reset_pin);
@@ -457,20 +488,18 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
                 keypadPinInput.setVisibility(View.GONE);
                 keyboardPinInput.setVisibility(View.GONE);
                 buttonKeyboardSwitch.setVisibility(View.GONE);
-                buttonResetPin.setVisibility(View.GONE);
+                buttonPositive.setVisibility(View.GONE);
                 boolean isSmartcardFormFactor = options.getFormFactor() == SecurityKeyDialogOptions.FormFactor.SMART_CARD;
                 boolean isSecurityKeyFormFactor = options.getFormFactor() == SecurityKeyDialogOptions.FormFactor.SECURITY_KEY;
                 smartcardFormFactor.setVisibility(isSmartcardFormFactor ? View.VISIBLE : View.GONE);
                 securityKeyFormFactor.setVisibility(isSecurityKeyFormFactor ? View.VISIBLE : View.GONE);
-                smartcardProgress.setVisibility(View.GONE);
-                errorImage.setVisibility(View.GONE);
-                errorText.setVisibility(View.GONE);
-                if (isSmartcardFormFactor) {
-                    smartcardFormFactor.startSmartcardAnimation();
-                }
+                includeShowPuk.setVisibility(View.GONE);
+                wipeConfirmView.setVisibility(View.GONE);
+                progressView.setVisibility(View.GONE);
+                errorView.setVisibility(View.GONE);
                 break;
             }
-            case RESET_SUCCESS: {
+            case RESET_PIN_SUCCESS: {
                 textViewTitle.setText(R.string.hwsecurity_ui_title_reset_pin);
                 textViewDescription.setText("");
 
@@ -478,12 +507,13 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
                 keypadPinInput.setVisibility(View.GONE);
                 keyboardPinInput.setVisibility(View.GONE);
                 buttonKeyboardSwitch.setVisibility(View.GONE);
-                buttonResetPin.setVisibility(View.GONE);
+                buttonPositive.setVisibility(View.GONE);
                 smartcardFormFactor.setVisibility(View.GONE);
                 securityKeyFormFactor.setVisibility(View.GONE);
-                smartcardProgress.setVisibility(View.GONE);
-                errorImage.setVisibility(View.GONE);
-                errorText.setVisibility(View.VISIBLE);
+                includeShowPuk.setVisibility(View.GONE);
+                wipeConfirmView.setVisibility(View.GONE);
+                progressView.setVisibility(View.GONE);
+                errorView.setVisibility(View.GONE);
                 break;
             }
             case NORMAL_ERROR: {
@@ -491,35 +521,89 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
                 keypadPinInput.setVisibility(View.GONE);
                 keyboardPinInput.setVisibility(View.GONE);
                 buttonKeyboardSwitch.setVisibility(View.GONE);
-                buttonResetPin.setVisibility(View.GONE);
+                buttonPositive.setVisibility(View.GONE);
                 smartcardFormFactor.setVisibility(View.GONE);
                 securityKeyFormFactor.setVisibility(View.GONE);
-                smartcardProgress.setVisibility(View.GONE);
-                errorImage.setVisibility(View.VISIBLE);
-                errorText.setVisibility(View.VISIBLE);
-                animateError();
+                includeShowPuk.setVisibility(View.GONE);
+                wipeConfirmView.setVisibility(View.GONE);
+                progressView.setVisibility(View.GONE);
+                errorView.setVisibility(View.VISIBLE);
                 break;
             }
-            case RESET_ERROR: {
+            case RESET_PIN_ERROR: {
                 TransitionManager.beginDelayedTransition(innerBottomSheet);
                 keypadPinInput.setVisibility(View.GONE);
                 keyboardPinInput.setVisibility(View.GONE);
                 buttonKeyboardSwitch.setVisibility(View.GONE);
-                buttonResetPin.setVisibility(View.GONE);
+                buttonPositive.setVisibility(View.GONE);
                 smartcardFormFactor.setVisibility(View.GONE);
                 securityKeyFormFactor.setVisibility(View.GONE);
-                smartcardProgress.setVisibility(View.GONE);
-                errorImage.setVisibility(View.VISIBLE);
-                errorText.setVisibility(View.VISIBLE);
-                animateError();
+                includeShowPuk.setVisibility(View.GONE);
+                wipeConfirmView.setVisibility(View.GONE);
+                progressView.setVisibility(View.GONE);
+                errorView.setVisibility(View.VISIBLE);
+                break;
+            }
+            case SETUP_CHOOSE_PIN: {
+                int pinLength = options.getPinLength() == null ? SETUP_DEFAULT_PIN_LENGTH : options.getPinLength();
+                keypadPinInput.reset(pinLength);
+
+                textViewTitle.setText(R.string.hwsecurity_ui_title_setup);
+                textViewDescription.setText(R.string.hwsecurity_ui_description_choose_pin);
+
+                keyboardPinInput.setVisibility(View.GONE);
+                keypadPinInput.setVisibility(View.VISIBLE);
+                buttonKeyboardSwitch.setVisibility(View.GONE);
+                buttonPositive.setVisibility(View.GONE);
+                smartcardFormFactor.setVisibility(View.GONE);
+                securityKeyFormFactor.setVisibility(View.GONE);
+                includeShowPuk.setVisibility(View.GONE);
+                wipeConfirmView.setVisibility(View.GONE);
+                progressView.setVisibility(View.GONE);
+                errorView.setVisibility(View.GONE);
+                break;
+            }
+            case SETUP_SHOW_PUK: {
+                int pukLength = options.getPukLength() == null ? SETUP_DEFAULT_PUK_LENGTH : options.getPukLength();
+                ByteSecret setupPuk = ByteSecretGenerator.getInstance().createRandomNumeric(pukLength);
+                staticPinProvider = StaticPinProvider.getInstance(setupPinSecret, setupPuk);
+
+                setupPuk.displayOnTextView(textPuk);
+
+                TransitionManager.beginDelayedTransition(innerBottomSheet);
+                textViewTitle.setText(R.string.hwsecurity_ui_title_setup);
+                textViewDescription.setText(R.string.hwsecurity_ui_description_puk);
+                keyboardPinInput.setVisibility(View.GONE);
+                keypadPinInput.setVisibility(View.GONE);
+                buttonKeyboardSwitch.setVisibility(View.GONE);
+                buttonPositive.setVisibility(View.GONE);
+                smartcardFormFactor.setVisibility(View.GONE);
+                securityKeyFormFactor.setVisibility(View.GONE);
+                includeShowPuk.setVisibility(View.VISIBLE);
+                wipeConfirmView.setVisibility(View.GONE);
+                progressView.setVisibility(View.GONE);
+                errorView.setVisibility(View.GONE);
+                break;
+            }
+            case SETUP_CONFIRM_WIPE: {
+
+                TransitionManager.beginDelayedTransition(innerBottomSheet);
+                textViewTitle.setText(R.string.hwsecurity_ui_title_setup);
+                textViewDescription.setText("");
+                keyboardPinInput.setVisibility(View.GONE);
+                keypadPinInput.setVisibility(View.GONE);
+                buttonKeyboardSwitch.setVisibility(View.GONE);
+                buttonPositive.setVisibility(View.GONE);
+                smartcardFormFactor.setVisibility(View.GONE);
+                securityKeyFormFactor.setVisibility(View.GONE);
+                includeShowPuk.setVisibility(View.GONE);
+                wipeConfirmView.setVisibility(View.VISIBLE);
+                progressView.setVisibility(View.GONE);
+                errorView.setVisibility(View.GONE);
                 break;
             }
         }
         currentState = newState;
-    }
-
-    private void animateError() {
-        AnimatedVectorDrawableHelper.startAnimation(getActivity(), errorImage, R.drawable.hwsecurity_error);
     }
 
     @UiThread
@@ -528,29 +612,49 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         HwTimber.d("SecurityKeyDialogFragment -> onSecurityKeyDiscovered");
 
         switch (currentState) {
-            case NORMAL_SMARTCARD:
-            case NORMAL_SMARTCARD_HOLD: {
-                gotoState(State.NORMAL_SMARTCARD_HOLD);
+            case SETUP_CONFIRM_WIPE:
+            case NORMAL_SECURITY_KEY:
+            case NORMAL_SECURITY_KEY_HOLD: {
+                gotoState(State.NORMAL_SECURITY_KEY_HOLD, securityKey.isTransportNfc());
+
+                boolean isSetupMode = options.getPinMode() == SecurityKeyDialogOptions.PinMode.SETUP;
+                boolean isWipedConfirmed = wipeConfirmView.isWipeConfirmed();
+                if (isSetupMode && !isWipedConfirmed) {
+                    try {
+                        if (!isSecurityKeyEmpty(securityKey)) {
+                            gotoState(State.SETUP_CONFIRM_WIPE);
+                            return;
+                        }
+                    } catch (IOException e) {
+                        handleError(e);
+                        return;
+                    }
+                }
 
                 try {
                     callback.onSecurityKeyDialogDiscovered(this, securityKey, staticPinProvider);
                 } catch (IOException e) {
                     handleError(e);
+                    return;
                 }
                 break;
             }
-            case RESET_SMARTCARD: {
+            case RESET_PIN_SECURITY_KEY: {
                 new Thread(() -> {
                     try {
-                        updatePinUsingPuk(securityKey, resetPukSecret, resetNewPinSecret);
+                        updateSecurityKeyPinUsingPuk(securityKey, resetPukSecret, resetNewPinSecret);
 
-                        errorText.post(() -> errorText.setText(R.string.hwsecurity_ui_changed_pin));
-                        innerBottomSheet.post(() -> gotoState(State.RESET_SUCCESS));
+                        innerBottomSheet.post(() -> Toast.makeText(getContext(), R.string.hwsecurity_ui_changed_pin, Toast.LENGTH_LONG).show());
+                        innerBottomSheet.post(() -> gotoState(State.RESET_PIN_SUCCESS));
                         innerBottomSheet.postDelayed(() -> {
                             if (!isAdded()) {
                                 return;
                             }
-                            gotoState(State.NORMAL_ENTER_PIN);
+                            if (options.getPinMode() == SecurityKeyDialogOptions.PinMode.RESET_PIN) {
+                                dismiss();
+                            } else {
+                                gotoState(State.NORMAL_ENTER_PIN);
+                            }
                         }, TIME_DELAYED_STATE_CHANGE);
                     } catch (IOException e) {
                         innerBottomSheet.post(() -> handleError(e));
@@ -576,8 +680,18 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
 
     @AnyThread
     @Override
+    public void postProgressMessage(String message) {
+        bottomSheet.post(() -> handleProgressMessage(message));
+    }
+
+    @AnyThread
+    @Override
     public void postError(IOException exception) {
         bottomSheet.post(() -> handleError(exception));
+    }
+
+    private void handleProgressMessage(String message) {
+        progressView.setText(message);
     }
 
     @UiThread
@@ -586,54 +700,54 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         HwTimber.d(exception);
 
         switch (currentState) {
-            case NORMAL_SMARTCARD:
-            case NORMAL_SMARTCARD_HOLD: {
+            case NORMAL_SECURITY_KEY:
+            case NORMAL_SECURITY_KEY_HOLD: {
                 try {
                     throw exception;
-                } catch (OpenPgpCardBlockedException e) {
-                    errorText.setText(R.string.hwsecurity_ui_error_no_pin_tries);
+                } catch (OpenPgpLockedException e) {
+                    errorView.setText(R.string.hwsecurity_ui_error_no_pin_tries);
                     gotoState(State.NORMAL_ERROR);
                 } catch (OpenPgpWrongPinException e) {
-                    gotoErrorStateAndDelayedState(getString(R.string.hwsecurity_ui_error_wrong_pin), State.NORMAL_ERROR, State.NORMAL_ENTER_PIN);
+                    gotoErrorStateAndDelayedState(getString(R.string.hwsecurity_ui_error_wrong_pin, e.getPinRetriesLeft()), State.NORMAL_ERROR, State.NORMAL_ENTER_PIN);
                 } catch (OpenPgpPinTooShortException e) {
                     gotoErrorStateAndDelayedState(getString(R.string.hwsecurity_ui_error_too_short_pin), State.NORMAL_ERROR, State.NORMAL_ENTER_PIN);
                 } catch (OpenPgpPublicKeyUnavailableException e) {
-                    gotoErrorStateAndDelayedState(getString(R.string.hwsecurity_ui_error_no_pubkey), State.NORMAL_ERROR, State.NORMAL_SMARTCARD);
+                    gotoErrorStateAndDelayedState(getString(R.string.hwsecurity_ui_error_no_pubkey), State.NORMAL_ERROR, State.NORMAL_SECURITY_KEY);
                 } catch (SecurityKeyException e) {
-                    gotoErrorStateAndDelayedState(exception.getMessage(), State.NORMAL_ERROR, State.NORMAL_SMARTCARD);
-                } catch (TagLostException e) {
-//				gotoErrorStateAndDelayedState(getString(R.string.hwsecurity_error_lost_tag), State.NORMAL_ERROR, State.NORMAL_SMARTCARD);
+                    gotoErrorStateAndDelayedState(exception.getMessage(), State.NORMAL_ERROR, State.NORMAL_SECURITY_KEY);
+                } catch (SecurityKeyLostException e) {
+                    gotoState(State.NORMAL_SECURITY_KEY);
                 } catch (IOException e) {
-                    gotoErrorStateAndDelayedState(exception.getMessage(), State.NORMAL_ERROR, State.NORMAL_SMARTCARD);
+                    gotoErrorStateAndDelayedState(exception.getMessage(), State.NORMAL_ERROR, State.NORMAL_SECURITY_KEY);
                 }
                 break;
             }
-            case RESET_SMARTCARD: {
+            case RESET_PIN_SECURITY_KEY: {
                 try {
                     throw exception;
-                } catch (OpenPgpCardBlockedException e) {
-                    errorText.setText(R.string.hwsecurity_ui_error_no_puk_tries);
-                    gotoState(State.RESET_ERROR);
+                } catch (OpenPgpLockedException e) {
+                    errorView.setText(R.string.hwsecurity_ui_error_no_puk_tries);
+                    gotoState(State.RESET_PIN_ERROR);
                 } catch (OpenPgpWrongPinException e) {
-                    gotoErrorStateAndDelayedState(getString(R.string.hwsecurity_ui_error_wrong_puk), State.RESET_ERROR, State.RESET_ENTER_PUK);
+                    gotoErrorStateAndDelayedState(getString(R.string.hwsecurity_ui_error_wrong_puk, e.getPukRetriesLeft()), State.RESET_PIN_ERROR, State.RESET_PIN_ENTER_PUK);
                 } catch (OpenPgpPinTooShortException e) {
-                    gotoErrorStateAndDelayedState(getString(R.string.hwsecurity_ui_error_wrong_puk), State.RESET_ERROR, State.RESET_ENTER_PUK);
+                    gotoErrorStateAndDelayedState(getString(R.string.hwsecurity_ui_error_too_short_puk), State.RESET_PIN_ERROR, State.RESET_PIN_ENTER_PUK);
                 } catch (SecurityKeyException e) {
-                    gotoErrorStateAndDelayedState(exception.getMessage(), State.RESET_ERROR, State.RESET_SMARTCARD);
-                } catch (TagLostException e) {
-//				gotoErrorStateAndDelayedState(getString(R.string.hwsecurity_error_lost_tag), State.RESET_ERROR, State.RESET_SMARTCARD);
+                    gotoErrorStateAndDelayedState(exception.getMessage(), State.RESET_PIN_ERROR, State.RESET_PIN_SECURITY_KEY);
+                } catch (SecurityKeyLostException e) {
+                    // TODO
                 } catch (IOException e) {
-                    gotoErrorStateAndDelayedState(exception.getMessage(), State.RESET_ERROR, State.RESET_SMARTCARD);
+                    gotoErrorStateAndDelayedState(exception.getMessage(), State.RESET_PIN_ERROR, State.RESET_PIN_SECURITY_KEY);
                 }
                 break;
             }
             default:
-                HwTimber.d("handleError called in State other than NORMAL_SMARTCARD, NORMAL_SMARTCARD_HOLD or RESET_SMARTCARD.");
+                HwTimber.d("handleError called in State other than NORMAL_SECURITY_KEY, NORMAL_SECURITY_KEY_HOLD or RESET_PIN_SECURITY_KEY.");
         }
     }
 
     private void gotoErrorStateAndDelayedState(String text, State errorState, State delayedState) {
-        errorText.setText(text);
+        errorView.setText(text);
         gotoState(errorState);
         bottomSheet.postDelayed(() -> {
             if (!isAdded()) {

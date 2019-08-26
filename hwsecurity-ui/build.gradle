@@ -5,10 +5,10 @@ apply plugin: 'org.jetbrains.dokka-android'
 dependencies {
     if (rootProject.ext.has("hwSdkIncludeAsSubmodule") && rootProject.hwSdkIncludeAsSubmodule) {
         compileOnly project(':hwsecurity:hwsecurity-openpgp')
-        //compileOnly project(':hwsecurity:hwsecurity-piv')
+//         compileOnly project(':hwsecurity:hwsecurity-piv')
     } else {
         compileOnly project(':hwsecurity-openpgp')
-        //compileOnly project(':hwsecurity-piv')
+//         compileOnly project(':hwsecurity-piv')
     }
 
     implementation 'de.cotech:nfc-sweetspot:1.1'
