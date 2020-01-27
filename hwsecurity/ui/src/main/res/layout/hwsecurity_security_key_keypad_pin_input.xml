@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
+
+    <LinearLayout
+        android:id="@+id/pinCirclesLayout"
+        android:layout_width="0dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:layout_marginBottom="8dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toTopOf="@+id/keypadButtonNo2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/keypadButtonNo1"
+        style="@style/HwSecurity.Dialog.PinButton"
+        android:text="1"
+        app:layout_constraintBottom_toTopOf="@+id/keypadButtonNo4"
+        app:layout_constraintEnd_toStartOf="@+id/keypadButtonNo2"
+        tools:ignore="HardcodedText" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/keypadButtonNo2"
+        style="@style/HwSecurity.Dialog.PinButton"
+        android:text="2"
+        app:layout_constraintBottom_toTopOf="@+id/keypadButtonNo5"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        tools:ignore="HardcodedText" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/keypadButtonNo3"
+        style="@style/HwSecurity.Dialog.PinButton"
+        android:text="3"
+        app:layout_constraintBottom_toTopOf="@+id/keypadButtonNo6"
+        app:layout_constraintStart_toEndOf="@+id/keypadButtonNo2"
+        tools:ignore="HardcodedText" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/keypadButtonNo4"
+        style="@style/HwSecurity.Dialog.PinButton"
+        android:text="4"
+        app:layout_constraintBottom_toTopOf="@+id/keypadButtonNo7"
+        app:layout_constraintEnd_toStartOf="@+id/keypadButtonNo5"
+        tools:ignore="HardcodedText" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/keypadButtonNo5"
+        style="@style/HwSecurity.Dialog.PinButton"
+        android:text="5"
+        app:layout_constraintBottom_toTopOf="@+id/keypadButtonNo8"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/keypadButtonNo2"
+        tools:ignore="HardcodedText" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/keypadButtonNo6"
+        style="@style/HwSecurity.Dialog.PinButton"
+        android:text="6"
+        app:layout_constraintBottom_toTopOf="@+id/keypadButtonNo9"
+        app:layout_constraintStart_toEndOf="@+id/keypadButtonNo5"
+        tools:ignore="HardcodedText" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/keypadButtonNo7"
+        style="@style/HwSecurity.Dialog.PinButton"
+        android:text="7"
+        app:layout_constraintBottom_toTopOf="@+id/keypadButtonDelete"
+        app:layout_constraintEnd_toStartOf="@+id/keypadButtonNo8"
+        tools:ignore="HardcodedText" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/keypadButtonDelete"
+        style="@style/HwSecurity.Dialog.PinButton.Icon"
+        app:icon="@drawable/hwsecurity_ic_backspace_outline"
+        app:layout_constraintBottom_toBottomOf="@+id/keypadButtonNo0"
+        app:layout_constraintEnd_toStartOf="@+id/keypadButtonNo0" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/keypadButtonNo8"
+        style="@style/HwSecurity.Dialog.PinButton"
+        android:text="8"
+        app:layout_constraintBottom_toTopOf="@+id/keypadButtonNo0"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/keypadButtonNo5"
+        tools:ignore="HardcodedText" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/keypadButtonNo9"
+        style="@style/HwSecurity.Dialog.PinButton"
+        android:text="9"
+        app:layout_constraintBottom_toTopOf="@+id/keypadButtonConfirm"
+        app:layout_constraintStart_toEndOf="@+id/keypadButtonNo8"
+        tools:ignore="HardcodedText" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/keypadButtonNo0"
+        style="@style/HwSecurity.Dialog.PinButton"
+        android:text="0"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/keypadButtonNo8"
+        tools:ignore="HardcodedText" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/keypadButtonConfirm"
+        style="@style/HwSecurity.Dialog.PinButton.Icon"
+        app:icon="@drawable/hwsecurity_ic_check"
+        app:layout_constraintBottom_toBottomOf="@+id/keypadButtonNo0"
+        app:layout_constraintStart_toEndOf="@+id/keypadButtonNo0" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

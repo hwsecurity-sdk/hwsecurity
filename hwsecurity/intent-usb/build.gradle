@@ -1,0 +1,75 @@
+apply plugin: 'com.android.library'
+apply plugin: 'digital.wup.android-maven-publish'
+
+dependencies {
+    api project(':hwsecurity:core')
+}
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion 14
+        versionName rootProject.ext.hwSdkVersionName
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    // Do not abort build if lint finds errors
+    lintOptions {
+        abortOnError false
+    }
+}
+
+publishing {
+    publications {
+        mavenAar(MavenPublication) {
+            groupId = 'de.cotech'
+            artifactId = 'hwsecurity-intent-usb'
+            version = android.defaultConfig.versionName
+
+            from components.android
+
+            pom {
+                url = 'https://hwsecurity.dev'
+                licenses {
+                    license {
+                        name = 'Commercial'
+                        url = 'https://hwsecurity.dev/sales/'
+                        distribution = 'repo'
+                    }
+                    license {
+                        name = 'GNU General Public License, version 3'
+                        url = 'https://www.gnu.org/licenses/gpl-3.0.txt'
+                    }
+                }
+                organization {
+                    name = 'Confidential Technologies GmbH'
+                    url = 'https://www.cotech.de'
+                }
+            }
+        }
+    }
+    /*
+     * To upload release, create file gradle.properties in ~/.gradle/ with this content:
+     *
+     * cotechMavenName=xxx
+     * cotechMavenPassword=xxx
+     */
+    if (project.hasProperty('cotechMavenName') && project.hasProperty('cotechMavenPassword')) {
+        println "Found cotechMavenName, cotechMavenPassword in gradle.properties!"
+
+        repositories {
+            maven {
+                credentials {
+                    username cotechMavenName
+                    password cotechMavenPassword
+                }
+                url = "https://maven.cotech.de"
+            }
+        }
+    }
+}

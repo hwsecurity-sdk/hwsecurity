@@ -16,6 +16,10 @@ This includes the following artifacts of the SDK (cf. [overview of all artifacts
 | de.cotech:hwsecurity-intent-nfc    | 14      |          |
 | de.cotech:hwsecurity-intent-usb    | 14      |          |
 | de.cotech:hwsecurity-fido          | 14      | 19       |
+| de.cotech:hwsecurity-openpgp       | 14      |          |
+| de.cotech:hwsecurity-piv           | 14      |          |
+| de.cotech:hwsecurity-ui            | 14      | 19       |
+| de.cotech:hwsecurity-ssh           | 14      |          |
 
 ## Contributing
 
