@@ -25,12 +25,12 @@ This includes the following artifacts of the SDK (cf. [overview of all artifacts
 
 Hardware Security SDK is an open source project and we are very happy to accept community contributions.
 
+We will ask you to sign our [CLA](https://cla-assistant.io/cotechde/hwsecurity) before your pull request can be merged.
+
 ## Licensing
 
 You can use our SDK under the terms of the GNU General Public license version 3 or later.
 
 A commercial license can be purchased on [hwsecurity.dev/sales](https://hwsecurity.dev/sales/).
 
-Buying such a license is mandatory as soon as you develop commercial
-activities involving this program without disclosing the source code
-of your own applications.
+Buying such a license is mandatory as soon as you develop commercial activities involving this program without disclosing the source code of your own applications.
