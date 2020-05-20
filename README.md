@@ -6,7 +6,7 @@ Code examples and documentation can be found on our [developer page](https://hws
 
 ## Open Source Release
 
-This repository contains all parts of the Hardware Security SDK that have been released as open source and are required to implement FIDO U2F support in an app.
+This repository contains all parts of the Hardware Security SDK that have been released as open source.
 
 This includes the following artifacts of the SDK (cf. [overview of all artifacts](https://hwsecurity.dev/docs/sdk/#sdk-artifacts)):
 
@@ -20,6 +20,11 @@ This includes the following artifacts of the SDK (cf. [overview of all artifacts
 | de.cotech:hwsecurity-piv           | 14      |          |
 | de.cotech:hwsecurity-ui            | 14      | 19       |
 | de.cotech:hwsecurity-ssh           | 14      |          |
+
+## Notice
+
+This open source release does not reflect the newest version of the SDK.
+Some parts are currently not released as GPLv3, such as FIDO2 support.
 
 ## Contributing
 
