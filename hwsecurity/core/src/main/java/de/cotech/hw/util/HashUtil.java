@@ -34,8 +34,10 @@ public class HashUtil {
     private HashUtil() { }
 
     public static byte[] sha256(String data) {
-        byte[] dataBytes = data.getBytes(Charset.forName("UTF-8"));
+        return sha256(data.getBytes(Charset.forName("UTF-8")));
+    }
 
+    public static byte[] sha256(byte[] dataBytes) {
         try {
             return MessageDigest.getInstance("SHA-256").digest(dataBytes);
         } catch (final NoSuchAlgorithmException e) {

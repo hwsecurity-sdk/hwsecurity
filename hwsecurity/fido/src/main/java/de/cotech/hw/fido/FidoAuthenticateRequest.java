@@ -69,6 +69,10 @@ public abstract class FidoAuthenticateRequest implements Parcelable {
         return clientData.toString();
     }
 
+    public byte[] getClientDataBytes() {
+        return getClientData().getBytes();
+    }
+
     public static FidoAuthenticateRequest create(String appId, String facetId, String challenge, byte[] keyHandle) {
         return new AutoValue_FidoAuthenticateRequest(appId, facetId, challenge, Collections.singletonList(keyHandle), null);
     }

@@ -65,7 +65,7 @@ public class FidoSecurityKey extends SecurityKey {
     @WorkerThread
     public FidoRegisterResponse register(FidoRegisterRequest fidoRegisterRequest)
             throws IOException {
-        byte[] challengeParam = HashUtil.sha256(fidoRegisterRequest.getClientData());
+        byte[] challengeParam = HashUtil.sha256(fidoRegisterRequest.getClientDataBytes());
         byte[] applicationParam = HashUtil.sha256(fidoRegisterRequest.getAppId());
 
         RegisterOp registerOp = RegisterOp.create(fidoU2fAppletConnection);
@@ -92,7 +92,7 @@ public class FidoSecurityKey extends SecurityKey {
     @WorkerThread
     public FidoAuthenticateResponse authenticate(FidoAuthenticateRequest authenticateRequest)
             throws IOException {
-        byte[] challengeParam = HashUtil.sha256(authenticateRequest.getClientData());
+        byte[] challengeParam = HashUtil.sha256(authenticateRequest.getClientDataBytes());
         byte[] applicationParam = HashUtil.sha256(authenticateRequest.getAppId());
 
         AuthenticateOp authenticateOp = AuthenticateOp.create(fidoU2fAppletConnection);

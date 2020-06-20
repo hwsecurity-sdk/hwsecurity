@@ -71,7 +71,7 @@ public class FidoAuthenticateOperationThread extends FidoOperationThread<FidoAut
     @WorkerThread
     void prepareOperation() {
         authenticateOp = AuthenticateOp.create(fidoU2fAppletConnection);
-        challengeParam = HashUtil.sha256(authenticateRequest.getClientData());
+        challengeParam = HashUtil.sha256(authenticateRequest.getClientDataBytes());
         applicationParam = HashUtil.sha256(authenticateRequest.getAppId());
 
         HwTimber.d("challenge param: %s", Hex.encodeHexString(challengeParam));

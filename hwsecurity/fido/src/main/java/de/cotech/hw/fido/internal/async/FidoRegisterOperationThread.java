@@ -64,7 +64,7 @@ public class FidoRegisterOperationThread extends FidoOperationThread<FidoRegiste
     @WorkerThread
     void prepareOperation() {
         registerOp = RegisterOp.create(fidoU2fAppletConnection);
-        challengeParam = HashUtil.sha256(registerRequest.getClientData());
+        challengeParam = HashUtil.sha256(registerRequest.getClientDataBytes());
         applicationParam = HashUtil.sha256(registerRequest.getAppId());
 
         HwTimber.d("challenge param: %s", Hex.encodeHexString(challengeParam));

@@ -65,6 +65,10 @@ public abstract class FidoRegisterRequest implements Parcelable {
         return clientData.toString();
     }
 
+    public byte[] getClientDataBytes() {
+        return getClientData().getBytes();
+    }
+
     public static FidoRegisterRequest create(String appId, String facetId, String challenge) {
         return new AutoValue_FidoRegisterRequest(appId, facetId, challenge, null);
     }
