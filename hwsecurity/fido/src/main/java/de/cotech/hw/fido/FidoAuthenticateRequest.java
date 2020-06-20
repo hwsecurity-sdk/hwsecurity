@@ -25,6 +25,7 @@
 package de.cotech.hw.fido;
 
 
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 
@@ -70,7 +71,7 @@ public abstract class FidoAuthenticateRequest implements Parcelable {
     }
 
     public byte[] getClientDataBytes() {
-        return getClientData().getBytes();
+        return getClientData().getBytes(Charset.forName("UTF-8"));
     }
 
     public static FidoAuthenticateRequest create(String appId, String facetId, String challenge, byte[] keyHandle) {

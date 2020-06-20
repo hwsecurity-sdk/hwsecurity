@@ -24,6 +24,7 @@
 
 package de.cotech.hw.fido;
 
+import java.nio.charset.Charset;
 
 import android.os.Parcelable;
 
@@ -66,7 +67,7 @@ public abstract class FidoRegisterRequest implements Parcelable {
     }
 
     public byte[] getClientDataBytes() {
-        return getClientData().getBytes();
+        return getClientData().getBytes(Charset.forName("UTF-8"));
     }
 
     public static FidoRegisterRequest create(String appId, String facetId, String challenge) {
