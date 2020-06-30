@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -31,6 +31,7 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
+
 import de.cotech.hw.internal.iso7816.CommandApdu;
 
 
@@ -41,12 +42,6 @@ import de.cotech.hw.internal.iso7816.CommandApdu;
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class FidoU2fCommandApduFactory {
     private static final FidoCommandApduDescriber DESCRIBER = new FidoCommandApduDescriber();
-
-    // ISO/IEC 7816-4
-    private static final int MAX_APDU_NC = 255;
-    private static final int MAX_APDU_NC_EXT = 65535;
-    private static final int MAX_APDU_NE = 256;
-    private static final int MAX_APDU_NE_EXT = 65536;
 
     private static final int MASK_CLA_CHAINING = 1 << 4;
 
@@ -85,9 +80,10 @@ public class FidoU2fCommandApduFactory {
     }
 
     // ISO/IEC 7816-4
+    // SELECT command always as short APDU
     @NonNull
     public CommandApdu createSelectFileCommand(byte[] fileAid) {
-        return CommandApdu.create(CLA, INS_SELECT_FILE, P1_SELECT_FILE, P2_EMPTY, fileAid, MAX_APDU_NE).withDescriber(DESCRIBER);
+        return CommandApdu.create(CLA, INS_SELECT_FILE, P1_SELECT_FILE, P2_EMPTY, fileAid, CommandApdu.MAX_APDU_NE_SHORT).withDescriber(DESCRIBER);
     }
 
     // GET RESPONSE ISO/IEC 7816-4 par.7.6.1
@@ -98,26 +94,20 @@ public class FidoU2fCommandApduFactory {
 
     // ISO/IEC 7816-4
     @NonNull
-    public CommandApdu createShortApdu(CommandApdu apdu) {
-        int ne = Math.min(apdu.getNe(), MAX_APDU_NE);
-        return CommandApdu.create(apdu.getCLA(), apdu.getINS(), apdu.getP1(), apdu.getP2(), apdu.getData(), ne).withDescriber(DESCRIBER);
-    }
-
-    // ISO/IEC 7816-4
-    @NonNull
     public List<CommandApdu> createChainedApdus(CommandApdu apdu) {
         ArrayList<CommandApdu> result = new ArrayList<>();
 
         int offset = 0;
         byte[] data = apdu.getData();
         while (offset < data.length) {
-            int curLen = Math.min(MAX_APDU_NC, data.length - offset);
+            int curLen = Math.min(CommandApdu.MAX_APDU_NC_SHORT, data.length - offset);
             boolean last = offset + curLen >= data.length;
             int cla = apdu.getCLA() + (last ? 0 : MASK_CLA_CHAINING);
 
             CommandApdu cmd;
             if (last) {
-                int ne = Math.min(apdu.getNe(), MAX_APDU_NE);
+                // TODO: Check this!
+                int ne = Math.min(apdu.getNe(), CommandApdu.MAX_APDU_NE_SHORT);
                 cmd = CommandApdu.create(cla, apdu.getINS(), apdu.getP1(), apdu.getP2(), data, offset, curLen, ne, DESCRIBER);
             } else {
                 cmd = CommandApdu.create(cla, apdu.getINS(), apdu.getP1(), apdu.getP2(), data, offset, curLen, 0, DESCRIBER);
@@ -130,11 +120,8 @@ public class FidoU2fCommandApduFactory {
         return result;
     }
 
-    public boolean isSuitableForShortApdu(CommandApdu apdu) {
-        return apdu.getData().length <= MAX_APDU_NC;
+    public boolean isSuitableForSingleShortApdu(CommandApdu apdu) {
+        return apdu.getNc() <= CommandApdu.MAX_APDU_NC_SHORT;
     }
 
-    public boolean isSuitableForExtendedApdu(CommandApdu commandApdu) {
-        return commandApdu.getCLA() == CLA && commandApdu.getINS() != INS_SELECT_FILE;
-    }
 }

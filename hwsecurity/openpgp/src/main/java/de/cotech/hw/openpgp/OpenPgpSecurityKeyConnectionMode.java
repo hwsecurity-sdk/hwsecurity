@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -65,8 +65,8 @@ public class OpenPgpSecurityKeyConnectionMode extends SecurityKeyConnectionMode<
     @WorkerThread
     public OpenPgpSecurityKey establishSecurityKeyConnection(SecurityKeyManagerConfig securityKeyManagerConfig,
                                                              Transport transport) throws IOException {
-        if (transport.getTransportType() == SecurityKeyInfo.TransportType.USB_U2FHID) {
-            HwTimber.d("USB U2FHID is available but not supported by OPENPGP.");
+        if (transport.getTransportType() == SecurityKeyInfo.TransportType.USB_CTAPHID) {
+            HwTimber.d("USB CTAPHID is available but not supported by OPENPGP.");
             return null;
         }
 
@@ -79,7 +79,7 @@ public class OpenPgpSecurityKeyConnectionMode extends SecurityKeyConnectionMode<
 
     @Override
     protected boolean isRelevantTransport(Transport transport) {
-        return transport.getTransportType() != SecurityKeyInfo.TransportType.USB_U2FHID;
+        return transport.getTransportType() != SecurityKeyInfo.TransportType.USB_CTAPHID;
     }
 
     @Override

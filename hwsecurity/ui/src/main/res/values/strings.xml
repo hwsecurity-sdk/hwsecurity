@@ -1,38 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hwsecurity_ui_error_wrong_pin">Wrong PIN code, you have %d remaining attempts.</string>
-    <string name="hwsecurity_ui_error_too_short_pin">PIN code too short!</string>
-    <string name="hwsecurity_ui_error_no_pin_tries">You have entered an incorrect PIN code 3 times!\nYou must reset the PIN to use the Security Key again.</string>
-    <string name="hwsecurity_ui_error_wrong_puk">Wrong PUK code, you have %d remaining attempts.</string>
-    <string name="hwsecurity_ui_error_too_short_puk">PUK code too short!</string>
-    <string name="hwsecurity_ui_error_no_puk_tries">You have entered an incorrect PUK code 3 times!\nThis Security Key is deactivated. Generate new keys to reset it.</string>
-    <string name="hwsecurity_ui_error_no_pubkey">No cryptographic key on this Security Key!</string>
+
     <string name="hwsecurity_ui_button_cancel">Cancel</string>
     <string name="hwsecurity_ui_button_reset">Reset PIN</string>
     <string name="hwsecurity_ui_title_login">Login with Security Key</string>
     <string name="hwsecurity_ui_title_add">Add Security Key</string>
-    <string name="hwsecurity_ui_description_enter_pin">Enter your PIN code.</string>
+    <string name="hwsecurity_ui_description_enter_pin">Enter your PIN.</string>
     <string name="hwsecurity_ui_description_start">"Just do it, or click for help."</string>
     <string name="hwsecurity_ui_description_hold_nfc">Hold Security Key against the back. Don\'t move it.</string>
     <string name="hwsecurity_ui_description_hold_usb">Keep Security Key inserted. Don\'t remove it.</string>
-    <string name="hwsecurity_ui_title_reset_pin">Reset PIN Code</string>
-    <string name="hwsecurity_ui_description_enter_puk">Enter the PUK code (not PIN!)</string>
-    <string name="hwsecurity_ui_description_enter_new_pin">Enter your new favorite PIN code</string>
-    <string name="hwsecurity_ui_changed_pin">PIN code has been changed!</string>
-    <string name="hwsecurity_start_nfc">NFC help</string>
-    <string name="hwsecurity_start_usb">USB help</string>
-    <string name="hwsecurity_title_usb_selected">Insert your Security Key into the USB port.</string>
-    <string name="hwsecurity_title_nfc_fullscreen">Hold the Security Key at the back of your smartphone at the NFC spot.</string>
-    <string name="hwsecurity_nfc_disabled">NFC is disabled. You can enable it in Android\'s NFC settings.</string>
-    <string name="hwsecurity_nfc_disabled_button">NFC Settings</string>
-    <string name="hwsecurity_nfc_settings_toast">Please activate NFC and press Back to return to the app.</string>
-    <string name="hwsecurity_ui_description_choose_pin">Choose a PIN code that protects your Security Key.</string>
+    <string name="hwsecurity_ui_title_reset_pin">Reset PIN</string>
+    <string name="hwsecurity_ui_description_enter_puk">Enter the PUK (not PIN!)</string>
+    <string name="hwsecurity_ui_description_enter_new_pin">Enter your new favorite PIN</string>
+    <string name="hwsecurity_ui_changed_pin">PIN has been changed!</string>
+    <string name="hwsecurity_ui_start_nfc">NFC help</string>
+    <string name="hwsecurity_ui_start_usb">USB help</string>
+    <string name="hwsecurity_ui_title_usb_selected">Insert your Security Key into the USB port.</string>
+    <string name="hwsecurity_ui_title_nfc_fullscreen">Hold the Security Key at the back of your smartphone at the NFC spot.</string>
+    <string name="hwsecurity_ui_nfc_disabled">NFC is disabled. You can enable it in Android\'s NFC settings.</string>
+    <string name="hwsecurity_ui_nfc_disabled_button">NFC Settings</string>
+    <string name="hwsecurity_ui_nfc_settings_toast">Please activate NFC and press Back to return to the app.</string>
+    <string name="hwsecurity_ui_description_choose_pin">Choose a PIN that protects your Security Key.</string>
     <string name="hwsecurity_ui_title_setup">Setup your Security Key</string>
-    <string name="hwsecurity_ui_description_puk">Please write down the PUK code and store it in a safe place.</string>
-    <string name="hwsecurity_ui_checkbox_puk">I have written down this PUK code.\nWithout it, I will be unable to reset the PIN code.</string>
+    <string name="hwsecurity_ui_description_puk">Please write down the PUK and store it in a safe place.</string>
+    <string name="hwsecurity_ui_checkbox_puk">I have written down this PUK.\nWithout it, I will be unable to reset the PIN.</string>
     <string name="hwsecurity_ui_puk">Your PUK:</string>
     <string name="hwsecurity_ui_checkbox_wipe">Replace existing keys</string>
     <string name="hwsecurity_ui_confirm_wipe">Your Security Key is not empty.</string>
     <string name="hwsecurity_ui_connect_again">Again, hold Security key against the back.\nDon\'t move it.</string>
+    <string name="hwsecurity_ui_title_usb_button">Tap the button or golden disc.</string>
+
+    <!-- used by fido and fido2 -->
+    <string name="hwsecurity_fido_title_default_register">Register your Security Key</string>
+    <string name="hwsecurity_fido_title_default_authenticate">Login with your Security Key</string>
+    <string name="hwsecurity_fido_title_default_register_app_id">Register your Security Key for\n%s</string>
+    <string name="hwsecurity_fido_title_default_authenticate_app_id">Login with your Security Key to\n%s</string>
+    <string name="hwsecurity_fido_error_wrong_security_key">Wrong Security Key used.</string>
+    <string name="hwsecurity_fido_error_timeout">Timeout. Please try again!</string>
+    <string name="hwsecurity_fido_button_pin_skip">No PIN</string>
+    <string name="hwsecurity_fido_error_wrong_pin">Wrong PIN, you have %d remaining attempts.</string>
+    <string name="hwsecurity_fido_error_pin_required">Enter the PIN for this Security Key.</string>
+    <string name="hwsecurity_fido_error_blocked">You must reset the Security Key to use it again.</string>
+    <string name="hwsecurity_fido_error_pin_not_supported">Website requests PIN protection, but this Security Key does not support it.</string>
+    <string name="hwsecurity_fido_error_pin_too_short">PIN must be at least 4 digits long.</string>
+    <string name="hwsecurity_fido_error_pin_not_set">Website requests PIN protection. Set a PIN by using your Security Key with your desktop computer.</string>
+    <string name="hwsecurity_fido_error_internal">Internal error: %1$s</string>
 
 </resources>

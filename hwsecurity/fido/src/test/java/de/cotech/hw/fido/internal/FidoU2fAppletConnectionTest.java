@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -41,7 +41,8 @@ import org.junit.Test;
 @SuppressWarnings("WeakerAccess")
 public class FidoU2fAppletConnectionTest {
     static final CommandApdu PING_APDU = CommandApdu.create(0x00, 0xc0, 0x00, 0x00);
-    static final CommandApdu PING_APDU_EXTENDED = CommandApdu.create(0x00, 0xc0, 0x00, 0x00).withNe(65536);
+    static final CommandApdu PING_APDU_SHORT = CommandApdu.create(0x00, 0xc0, 0x00, 0x00).withShortApduNe();
+    static final CommandApdu PING_APDU_EXTENDED = CommandApdu.create(0x00, 0xc0, 0x00, 0x00).withExtendedApduNe();
 
     FidoU2fAppletConnection connection;
     FakeTransport transport;
@@ -60,8 +61,9 @@ public class FidoU2fAppletConnectionTest {
 
     @Test(expected = WrongRequestLengthException.class)
     public void communicateOrThrow_wrongLength() throws Exception {
+        // On wrong length, we try again with short APDU encoding
         transport.expect(PING_APDU_EXTENDED, ResponseApduUtils.createError(0x6700));
-        transport.expect(PING_APDU, ResponseApduUtils.createError(0x6700));
+        transport.expect(PING_APDU_SHORT, ResponseApduUtils.createError(0x6700));
         connection.communicateOrThrow(PING_APDU);
     }
 

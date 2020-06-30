@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -34,6 +34,7 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
+
 import de.cotech.hw.SecurityKeyException;
 import de.cotech.hw.exceptions.*;
 import de.cotech.hw.fido.exceptions.FidoPresenceRequiredException;
@@ -89,7 +90,7 @@ public class FidoU2fAppletConnection {
 
     private void connectToDevice() throws IOException {
         try {
-            if (transport.getTransportType() == TransportType.USB_U2FHID) {
+            if (transport.getTransportType() == TransportType.USB_CTAPHID) {
                 HwTimber.d("Using USB U2F HID as a transport. No need to select AID.");
                 byte[] versionBytes = readVersion();
                 checkVersionOrThrow(versionBytes);
@@ -145,20 +146,6 @@ public class FidoU2fAppletConnection {
 
     // region communication
 
-    // ISO/IEC 7816-4
-    private ResponseApdu communicate(CommandApdu commandApdu) throws IOException {
-        ResponseApdu lastResponse;
-
-        lastResponse = sendWithChaining(commandApdu);
-        if (lastResponse.getSw1() == RESPONSE_SW1_INCORRECT_LENGTH && lastResponse.getSw2() != 0) {
-            commandApdu = commandApdu.withNe(lastResponse.getSw2());
-            lastResponse = sendWithChaining(commandApdu);
-        }
-        lastResponse = readChainedResponseIfAvailable(lastResponse);
-
-        return lastResponse;
-    }
-
     // see "FIDO U2F Raw Message Formats", Section 3.3 Status Codes
     // https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-raw-message-formats-v1.2-ps-20170411.html
     public ResponseApdu communicateOrThrow(CommandApdu commandApdu) throws IOException {
@@ -187,41 +174,54 @@ public class FidoU2fAppletConnection {
     }
 
     // ISO/IEC 7816-4
+    private ResponseApdu communicate(CommandApdu commandApdu) throws IOException {
+        ResponseApdu lastResponse;
+
+        lastResponse = sendWithChaining(commandApdu);
+        if (lastResponse.getSw1() == RESPONSE_SW1_INCORRECT_LENGTH && lastResponse.getSw2() != 0) {
+            commandApdu = commandApdu.withNe(lastResponse.getSw2());
+            lastResponse = sendWithChaining(commandApdu);
+        }
+        lastResponse = readChainedResponseIfAvailable(lastResponse);
+
+        return lastResponse;
+    }
+
     @NonNull
     private ResponseApdu sendWithChaining(CommandApdu commandApdu) throws IOException {
-        /* We use an Lc of 65536 to enforce extended length APDUs for the register and authenticate commands.
+        /* U2F Spec:
+         * "If the request was encoded using extended length APDU encoding,
+         * the authenticator MUST respond using the extended length APDU response format."
          *
-         * This forces APDU case 4e in CommandApdu:
-         * apdu[apdu.length - 2] = 0;
-         * apdu[apdu.length - 1] = 0;
+         * "If the request was encoded using short APDU encoding,
+         * the authenticator MUST respond using ISO 7816-4 APDU chaining."
          *
-         * see also:
-         * https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-hid-protocol-v1.2-ps-20170411.html
-         * https://docs.oracle.com/javacard/3.0.5/prognotes/extended_apdu_format.htm
+         * https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-nfc-protocol-v1.2-ps-20170411.html
          *
-         * Note:
+         * In the best case, extended length is supported by device and authenticator, so we don't need to
+         * parse chained APDUs coming from the authenticator.
+         *
          * We do *not* check for `transport.isExtendedLengthSupported()` here! There are phones (including
-         * the Nexus 5X) that return "false" to this, but some Security Keys (like Yubikey Neo) still
+         * the Nexus 5X, Nexus 6P) that return "false" to this, but some Security Keys (like Yubikey Neo) still
          * require us to send extended APDUs. So what we do is, send an extended APDU, and if that doesn't
          * work, fall back to a short one.
          */
-        if (commandFactory.isSuitableForExtendedApdu(commandApdu)) {
-            CommandApdu extendedLengthApdu = commandApdu.withNe(65536);
-            ResponseApdu response = transport.transceive(extendedLengthApdu);
-            if (response.getSw() != WrongRequestLengthException.SW_WRONG_REQUEST_LENGTH) {
-                return response;
-            } else {
-                HwTimber.d("Received WRONG_REQUEST_LENGTH error. Retrying with compatibility workaround");
-            }
+        if (!transport.isExtendedLengthSupported()) {
+            HwTimber.w("Transport protocol does not support extended length. Probably an old device with NFC, such as Nexus 5X, Nexus 6P. We still try sending extended length!");
         }
 
-        if (commandFactory.isSuitableForShortApdu(commandApdu)) {
-            CommandApdu shortApdu = commandFactory.createShortApdu(commandApdu);
-            return transport.transceive(shortApdu);
+        ResponseApdu response = transport.transceive(commandApdu.withExtendedApduNe());
+        if (response.getSw() != WrongRequestLengthException.SW_WRONG_REQUEST_LENGTH) {
+            return response;
+        } else {
+            HwTimber.d("Received WRONG_REQUEST_LENGTH error. Retrying with short APDU Ne.");
+        }
+
+        if (commandFactory.isSuitableForSingleShortApdu(commandApdu)) {
+            return transport.transceive(commandApdu.withShortApduNe());
         }
 
         ResponseApdu lastResponse = null;
-
         List<CommandApdu> chainedApdus = commandFactory.createChainedApdus(commandApdu);
         for (int i = 0, totalCommands = chainedApdus.size(); i < totalCommands; i++) {
             CommandApdu chainedApdu = chainedApdus.get(i);

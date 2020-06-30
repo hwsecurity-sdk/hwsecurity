@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -31,7 +31,7 @@ import androidx.annotation.StyleRes;
 
 import com.google.auto.value.AutoValue;
 
-import de.cotech.hw.fido.R;
+import de.cotech.hw.ui.R;
 
 @AutoValue
 public abstract class FidoDialogOptions implements Parcelable {
@@ -47,11 +47,14 @@ public abstract class FidoDialogOptions implements Parcelable {
     @StyleRes
     public abstract int getTheme();
 
+    public abstract boolean getShowSdkLogo();
+
     // default values
     public static Builder builder() {
         return new AutoValue_FidoDialogOptions.Builder()
                 .setPreventScreenshots(false)
-                .setTheme(R.style.HwSecurity_Fido_Dialog);
+                .setShowSdkLogo(false)
+                .setTheme(R.style.HwSecurity_Dialog);
     }
 
     @AutoValue.Builder
@@ -84,7 +87,7 @@ public abstract class FidoDialogOptions implements Parcelable {
         /**
          * Set your own custom theme for the dialog to change colors:
          * <pre>{@code
-         * <style name="MyCustomDialog" parent="HwSecurity.Fido.Dialog">
+         * <style name="MyCustomDialog" parent="HwSecurity.Dialog">
          *     <item name="hwSecurityButtonColor">@color/hwSecurityDarkBlue</item>
          *     <item name="hwSecuritySurfaceColor">@color/hwSecurityBlue</item>
          *     <item name="hwSecurityErrorColor">@color/hwSecurityRed</item>
@@ -92,6 +95,13 @@ public abstract class FidoDialogOptions implements Parcelable {
          * }</pre>
          */
         public abstract Builder setTheme(@StyleRes int theme);
+
+        /**
+         * Shows the Hardware Security SDK Logo with a clickable link
+         * <p>
+         * Default: false
+         */
+        public abstract Builder setShowSdkLogo(boolean showLogo);
 
         public abstract FidoDialogOptions build();
     }

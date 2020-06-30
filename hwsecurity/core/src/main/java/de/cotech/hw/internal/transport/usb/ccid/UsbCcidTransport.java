@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -38,7 +38,7 @@ import java.io.IOException;
 import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
-import de.cotech.hw.exceptions.SecurityKeyLostException;
+import de.cotech.hw.exceptions.SecurityKeyDisconnectedException;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.internal.transport.SecurityKeyInfo.SecurityKeyType;
@@ -152,7 +152,7 @@ public class UsbCcidTransport implements Transport {
     @Override
     public ResponseApdu transceive(CommandApdu commandApdu) throws IOException {
         if (released) {
-            throw new SecurityKeyLostException();
+            throw new SecurityKeyDisconnectedException();
         }
         byte[] rawCommand = commandApdu.toBytes();
         if (enableDebugLogging) {
@@ -171,7 +171,7 @@ public class UsbCcidTransport implements Transport {
         } catch (UsbTransportException e) {
             if (!UsbUtils.isDeviceStillConnected(usbManager, usbDevice)) {
                 release();
-                throw new SecurityKeyLostException(e);
+                throw new SecurityKeyDisconnectedException(e);
             }
             throw e;
         }

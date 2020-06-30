@@ -2,37 +2,21 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/hwSecurityFidoBottomSheet"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <ImageView
-        android:id="@+id/imageNfcSweetspot"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:visibility="gone"
-        app:srcCompat="@drawable/hwsecurity_nfc_sweet_spot_a"
-        tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/textNfcFullscreen"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="32dp"
-        android:gravity="center"
-        android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        android:textColor="@android:color/black"
-        android:textSize="16sp"
-        android:visibility="invisible"
-        app:fontFamily="sans-serif-medium"
+    <ImageButton
+        android:id="@+id/buttonSdk"
+        android:layout_width="72dp"
+        android:layout_height="42dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="?selectableItemBackgroundBorderless"
+        android:scaleType="fitCenter"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:text="Description"
-        tools:visibility="visible" />
+        app:srcCompat="@drawable/hwsecurity_sdk_url_logo" />
 
     <ImageView
         android:id="@+id/imageUsb"
@@ -40,6 +24,7 @@
         android:layout_height="0dp"
         android:layout_marginTop="48dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginBottom="48dp"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -55,6 +40,7 @@
         android:layout_height="0dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="48dp"
+        android:layout_marginBottom="48dp"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/imageUsb"
@@ -71,7 +57,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="24dp"
         android:gravity="center"
-        android:text="@string/hwsecurity_nfc_disabled"
+        android:text="@string/hwsecurity_ui_nfc_disabled"
         android:visibility="gone"
         app:layout_constraintEnd_toStartOf="@+id/imageUsb"
         app:layout_constraintHorizontal_bias="0.5"
@@ -87,7 +73,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="@string/hwsecurity_nfc_disabled_button"
+        android:layout_marginBottom="48dp"
+        android:text="@string/hwsecurity_ui_nfc_disabled_button"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/imageUsb"
@@ -96,25 +83,11 @@
         app:layout_constraintTop_toBottomOf="@+id/textNfcDisabled"
         tools:visibility="visible" />
 
-    <ImageView
-        android:id="@+id/imageNfcFullscreen"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="24dp"
-        android:alpha="0"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/hwsecurity_nfc_handling"
-        tools:visibility="visible" />
-
     <TextView
         android:id="@+id/textUsb"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/hwsecurity_start_usb"
+        android:text="@string/hwsecurity_ui_start_usb"
         app:layout_constraintBottom_toTopOf="@+id/imageUsb"
         app:layout_constraintEnd_toEndOf="@+id/imageUsb"
         app:layout_constraintStart_toStartOf="@+id/imageUsb" />
@@ -123,7 +96,7 @@
         android:id="@+id/textNfc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/hwsecurity_start_nfc"
+        android:text="@string/hwsecurity_ui_start_nfc"
         app:layout_constraintBottom_toTopOf="@+id/imageNfc"
         app:layout_constraintEnd_toEndOf="@+id/imageNfc"
         app:layout_constraintStart_toStartOf="@+id/imageNfc" />

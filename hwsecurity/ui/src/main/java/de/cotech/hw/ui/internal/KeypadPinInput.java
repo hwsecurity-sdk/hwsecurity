@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -209,7 +209,7 @@ public class KeypadPinInput extends PinInput {
         }
         if (pinPosition == getPinMaxLength()) {
             if (fixedLength) {
-                callback.onPinEntered(getPin());
+                callback.onPinEntered(getPinAndClear());
             } else {
                 setNumberButtonsEnabled(false);
             }
@@ -229,10 +229,6 @@ public class KeypadPinInput extends PinInput {
         while (pinPosition > 0) {
             deletePinNumber();
         }
-    }
-
-    private void confirmPin() {
-        callback.onPinEntered(getPin());
     }
 
     private void addPinCircle() {
@@ -277,8 +273,16 @@ public class KeypadPinInput extends PinInput {
         return Math.round(pixels);
     }
 
+    private ByteSecret getPinAndClear() {
+        if (pinPosition == 0) {
+            return null;
+        } else {
+            return ByteSecret.fromByteArrayAndClear(pin, pinPosition);
+        }
+    }
+
     @Override
-    public ByteSecret getPin() {
-        return ByteSecret.fromByteArrayAndClear(pin, pinPosition);
+    public void confirmPin() {
+        callback.onPinEntered(getPinAndClear());
     }
 }

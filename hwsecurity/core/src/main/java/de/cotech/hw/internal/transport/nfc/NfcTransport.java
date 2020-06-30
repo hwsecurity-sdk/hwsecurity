@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -38,7 +38,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 import androidx.annotation.WorkerThread;
-import de.cotech.hw.exceptions.SecurityKeyLostException;
+import de.cotech.hw.exceptions.SecurityKeyDisconnectedException;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.internal.transport.SecurityKeyInfo;
@@ -83,7 +83,7 @@ public class NfcTransport implements Transport {
     @Override
     public ResponseApdu transceive(final CommandApdu commandApdu) throws IOException {
         if (!isConnected()) {
-            throw new SecurityKeyLostException();
+            throw new SecurityKeyDisconnectedException();
         }
         synchronized (connectionLock) {
             try {
@@ -109,7 +109,7 @@ public class NfcTransport implements Transport {
                 }
                 return responseApdu;
             } catch (TagLostException e) {
-                throw new SecurityKeyLostException();
+                throw new SecurityKeyDisconnectedException();
             } finally {
                 lastTransceiveTime = System.currentTimeMillis();
                 isTransceiving = false;

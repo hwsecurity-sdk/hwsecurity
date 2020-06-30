@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -31,7 +31,9 @@ import java.util.Arrays;
 import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
+
 import com.google.auto.value.AutoValue;
+
 import de.cotech.hw.util.Hex;
 
 
@@ -42,6 +44,23 @@ import de.cotech.hw.util.Hex;
 @AutoValue
 @RestrictTo(Scope.LIBRARY_GROUP)
 public abstract class CommandApdu {
+    public static final int MAX_APDU_NC_SHORT = 255;
+    public static final int MAX_APDU_NC_EXTENDED = 65535;
+    public static final int MAX_APDU_NE_SHORT = 256;
+    public static final int MAX_APDU_NE_EXTENDED = 65536;
+
+    /**
+     * Default Ne (expected response data length) is 0.
+     * This means that the response should return NO DATA
+     * (responses will be the result code only, such as "0x9000").
+     * <p>
+     * Javacards will probably still return data as they don't comply with ISO/IEC 7816-4 in this case.
+     * <p>
+     * Result: Command's Le value is absent
+     */
+    public static final int DEFAULT_APDU_NE_ZERO = 0;
+
+
     public abstract int getCLA();
     public abstract int getINS();
     public abstract int getP1();
@@ -64,7 +83,7 @@ public abstract class CommandApdu {
     }
 
     public static CommandApdu create(int cla, int ins, int p1, int p2) {
-        return create(cla, ins, p1, p2, null, 0, 0, 0, null);
+        return create(cla, ins, p1, p2, null, 0, 0, DEFAULT_APDU_NE_ZERO, null);
     }
 
     public static CommandApdu create(int cla, int ins, int p1, int p2, int ne) {
@@ -72,11 +91,11 @@ public abstract class CommandApdu {
     }
 
     public static CommandApdu create(int cla, int ins, int p1, int p2, byte[] data) {
-        return create(cla, ins, p1, p2, data, 0, data.length, 0, null);
+        return create(cla, ins, p1, p2, data, 0, data.length, DEFAULT_APDU_NE_ZERO, null);
     }
 
     public static CommandApdu create(int cla, int ins, int p1, int p2, byte[] data, int dataOffset, int dataLength) {
-        return create(cla, ins, p1, p2, data, dataOffset, dataLength, 0, null);
+        return create(cla, ins, p1, p2, data, dataOffset, dataLength, DEFAULT_APDU_NE_ZERO, null);
     }
 
     public static CommandApdu create(int cla, int ins, int p1, int p2, byte[] data, int ne, CommandApduDescriber describer) {
@@ -89,10 +108,10 @@ public abstract class CommandApdu {
 
     public static CommandApdu create(
             int cla, int ins, int p1, int p2, byte[] data, int dataOffset, int dataLength, int ne, CommandApduDescriber describer) {
-        if (ne < 0) {
+        if (ne < DEFAULT_APDU_NE_ZERO) {
             throw new IllegalArgumentException("ne must not be negative");
         }
-        if (ne > 65536) {
+        if (ne > MAX_APDU_NE_EXTENDED) {
             throw new IllegalArgumentException("ne is too large");
         }
         if (data != null) {
@@ -106,6 +125,45 @@ public abstract class CommandApdu {
 
     public CommandApdu withNe(int ne) {
         return create(getCLA(), getINS(), getP1(), getP2(), getData(), ne, getDescriber());
+    }
+
+    /**
+     * Set Ne (expected response data length) so that the response returns all bytes
+     * within the limit of 256.
+     * <p>
+     * Only sets Ne if default of 0 has no changed.
+     * <p>
+     * Result: Command's Le value is set to 0x00
+     */
+    public CommandApdu withShortApduNe() {
+        if (getNe() == DEFAULT_APDU_NE_ZERO) {
+            return withNe(MAX_APDU_NE_SHORT);
+        } else {
+            return this;
+        }
+    }
+
+    /**
+     * Set Ne (expected response data length) so that the response returns all bytes
+     * within the limit of 65536.
+     * <p>
+     * Only sets Ne if default of 0 has no changed.
+     * <p>
+     * Result: Command's Le value is set to 0x0000
+     */
+    public CommandApdu withExtendedApduNe() {
+        if (getNe() == DEFAULT_APDU_NE_ZERO) {
+            return withNe(MAX_APDU_NE_EXTENDED);
+        } else {
+            return this;
+        }
+    }
+
+    /**
+     * Override Ne to 65536
+     */
+    public CommandApdu forceExtendedApduNe() {
+        return withNe(MAX_APDU_NE_EXTENDED);
     }
 
     public CommandApdu withDescriber(CommandApduDescriber describer) {
@@ -129,6 +187,8 @@ public abstract class CommandApdu {
      * <p>
      * LE, LE1, LE2 may be 0x00.
      * LC must not be 0x00 and LC1|LC2 must not be 0x00|0x00
+     * <p>
+     * see https://docs.oracle.com/javacard/3.0.5/prognotes/extended-apdu-nominal-cases.htm
      */
     public static CommandApdu fromBytes(byte[] apdu) throws IOException {
         if (apdu.length < 4) {

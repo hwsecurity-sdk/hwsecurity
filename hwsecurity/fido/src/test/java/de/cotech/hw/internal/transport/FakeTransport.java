@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -89,7 +89,7 @@ public class FakeTransport implements Transport {
 
     @Override
     public TransportType getTransportType() {
-        return TransportType.USB_U2FHID;
+        return TransportType.USB_CTAPHID;
     }
 
     @Nullable
@@ -108,7 +108,7 @@ public class FakeTransport implements Transport {
     }
 
     public void expect(String commandBytesHex, String responseBytesHex) throws IOException {
-        expectCommands.add(CommandApdu.fromBytes(Hex.decodeHexOrFail(commandBytesHex)).withNe(65536));
+        expectCommands.add(CommandApdu.fromBytes(Hex.decodeHexOrFail(commandBytesHex)).withExtendedApduNe());
         expectResponses.add(ResponseApdu.fromBytes(Hex.decodeHexOrFail(responseBytesHex)));
     }
 

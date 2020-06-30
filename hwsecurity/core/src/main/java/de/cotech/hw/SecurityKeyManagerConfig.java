@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -25,10 +25,14 @@
 package de.cotech.hw;
 
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import android.app.Activity;
 import android.app.Application;
 
 import androidx.annotation.Nullable;
-
 import com.google.auto.value.AutoValue;
 import de.cotech.hw.internal.dispatch.UsbIntentDispatchActivity;
 import de.cotech.hw.util.HwTimber;
@@ -50,11 +54,13 @@ public abstract class SecurityKeyManagerConfig {
     @Nullable
     public abstract HwTimber.Tree getLoggingTree();
 
-    public abstract boolean isEnableNfcTagMonitoring();
+    public abstract boolean isEnablePersistentNfcConnection();
 
     public abstract boolean isIgnoreNfcTagAfterUse();
 
     public abstract boolean isDisableNfcDiscoverySound();
+
+    public abstract List<Class<? extends Activity>> getExcludedActivityClasses();
 
     static SecurityKeyManagerConfig getDefaultConfig() {
         return new Builder()
@@ -70,9 +76,10 @@ public abstract class SecurityKeyManagerConfig {
         private boolean isAllowUntestedUsbDevices = false;
         private boolean isEnableDebugLogging = false;
         private HwTimber.Tree loggingTree = null;
-        private boolean isEnableNfcTagMonitoring = false;
+        private boolean isEnablePersistentNfcConnection = false;
         private boolean isIgnoreNfcTagAfterUse = false;
         private boolean isDisableNfcDiscoverySound = false;
+        private ArrayList<Class<? extends Activity>> excludedActivityClasses = new ArrayList<>();
 
         /**
          * This setting controls USB permission request behavior.
@@ -156,8 +163,8 @@ public abstract class SecurityKeyManagerConfig {
          * Enable this setting if you need to retrieve NFC Security Keys via
          * {@link SecurityKeyManager#getConnectedPersistentSecurityKeys()}.
          */
-        public Builder setEnableNfcTagMonitoring(boolean isEnableNfcTagMonitoring) {
-            this.isEnableNfcTagMonitoring = isEnableNfcTagMonitoring;
+        public Builder setEnablePersistentNfcConnection(boolean isEnablePersistentNfcConnection) {
+            this.isEnablePersistentNfcConnection = isEnablePersistentNfcConnection;
             return this;
         }
 
@@ -185,6 +192,29 @@ public abstract class SecurityKeyManagerConfig {
         }
 
         /**
+         * Add an Activity to the list of excluded Activities.
+         * <p>
+         * This adds a specific Activity to an exclusion list, making it exempt from the lifecycle
+         * management by SecurityKeyManager. This effectively disables all features of the hwsecurity
+         * SDK while this Activity is in the foreground. This is useful for Activities that manage
+         * their own NFC or USB connections, for example by enabling NFC reader mode via
+         * {@link android.nfc.NfcAdapter#enableReaderMode}, or yielding processing to a
+         * {@link android.nfc.cardemulation.HostApduService}.
+         * <p>
+         * A call to the {@link SecurityKeyManager#registerCallback} method for an Activity that has
+         * been excluded in this way will result in an {@link IllegalArgumentException}.
+         *
+         * <pre>{@code
+         * new SecurityKeyManagerConfig.Builder()
+         *   .addExcludedActivityClass(MyCustomNfcActivity.class)
+         * }</pre>
+         */
+        public Builder addExcludedActivityClass(Class<? extends Activity> clazz) {
+            this.excludedActivityClasses.add(clazz);
+            return this;
+        }
+
+        /**
          * Constructs a SecurityKeyManagerConfig from the Builder.
          */
         public SecurityKeyManagerConfig build() {
@@ -193,9 +223,10 @@ public abstract class SecurityKeyManagerConfig {
                     isAllowUntestedUsbDevices,
                     isEnableDebugLogging,
                     loggingTree,
-                    isEnableNfcTagMonitoring,
+                    isEnablePersistentNfcConnection,
                     isIgnoreNfcTagAfterUse,
-                    isDisableNfcDiscoverySound
+                    isDisableNfcDiscoverySound,
+                    Collections.unmodifiableList(excludedActivityClasses)
             );
         }
     }

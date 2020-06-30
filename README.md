@@ -16,6 +16,7 @@ This includes the following artifacts of the SDK (cf. [overview of all artifacts
 | de.cotech:hwsecurity-intent-nfc    | 14      |          |
 | de.cotech:hwsecurity-intent-usb    | 14      |          |
 | de.cotech:hwsecurity-fido          | 14      | 19       |
+| de.cotech:hwsecurity-fido2         | 14      | 19       |
 | de.cotech:hwsecurity-openpgp       | 14      |          |
 | de.cotech:hwsecurity-piv           | 14      |          |
 | de.cotech:hwsecurity-ui            | 14      | 19       |
@@ -24,7 +25,7 @@ This includes the following artifacts of the SDK (cf. [overview of all artifacts
 ## Notice
 
 This open source release does not reflect the newest version of the SDK.
-Some parts are currently not released as GPLv3, such as FIDO2 support.
+Some parts are currently not released as GPLv3.
 
 ## Contributing
 

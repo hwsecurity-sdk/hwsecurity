@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -28,7 +28,9 @@ package de.cotech.hw.openpgp.internal;
 import androidx.annotation.NonNull;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
+
 import de.cotech.hw.internal.iso7816.CommandApdu;
+
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -42,11 +44,7 @@ public class OpenPgpCommandApduFactory {
 
     // The spec allows 255, but for compatibility with non-compliant security keys we use 254 here
     // See https://github.com/open-keychain/open-keychain/issues/2049
-    private static final int MAX_APDU_NC = 254;
-    private static final int MAX_APDU_NC_EXT = 65535;
-
-    private static final int MAX_APDU_NE = 256;
-    private static final int MAX_APDU_NE_EXT = 65536;
+    private static final int MAX_APDU_NC_SHORT_OPENPGP_WORKAROUND = CommandApdu.MAX_APDU_NC_SHORT - 1;
 
     private static final int CLA = 0x00;
     private static final int MASK_CLA_CHAINING = 1 << 4;
@@ -110,28 +108,16 @@ public class OpenPgpCommandApduFactory {
         return CommandApdu.create(CLA, INS_VERIFY, P1_EMPTY, P2_VERIFY_PW1_OTHER, pin).withDescriber(DESCRIBER);
     }
 
-    // ISO/IEC 7816-4
-    @NonNull
-    public CommandApdu createSelectFileCommand(byte[] fileAid) {
-        return CommandApdu.create(CLA, INS_SELECT_FILE, P1_SELECT_FILE, P2_EMPTY, fileAid).withDescriber(DESCRIBER);
-    }
-
     @NonNull
     public CommandApdu createGetDataCommand(int p1, int p2) {
-        return CommandApdu.create(CLA, INS_GET_DATA, p1, p2, MAX_APDU_NE_EXT).withDescriber(DESCRIBER);
+        return CommandApdu.create(CLA, INS_GET_DATA, p1, p2, CommandApdu.MAX_APDU_NE_EXTENDED).withDescriber(DESCRIBER);
     }
 
     @NonNull
     public CommandApdu createGetDataCommand(int dataObject) {
         int p1 = (dataObject & 0xFF00) >> 8;
         int p2 = dataObject & 0xFF;
-        return CommandApdu.create(CLA, INS_GET_DATA, p1, p2, MAX_APDU_NE_EXT).withDescriber(DESCRIBER);
-    }
-
-    // ISO/IEC 7816-4 par.7.6.1
-    @NonNull
-    public CommandApdu createGetResponseCommand(int lastResponseSw2) {
-        return CommandApdu.create(CLA, INS_GET_RESPONSE, P1_EMPTY, P2_EMPTY, lastResponseSw2).withDescriber(DESCRIBER);
+        return CommandApdu.create(CLA, INS_GET_DATA, p1, p2, CommandApdu.MAX_APDU_NE_EXTENDED).withDescriber(DESCRIBER);
     }
 
     @NonNull
@@ -150,7 +136,7 @@ public class OpenPgpCommandApduFactory {
     @NonNull
     public CommandApdu createComputeDigitalSignatureCommand(byte[] data) {
         return CommandApdu.create(CLA, INS_PERFORM_SECURITY_OPERATION, P1_PSO_COMPUTE_DIGITAL_SIGNATURE,
-                P2_PSO_COMPUTE_DIGITAL_SIGNATURE, data, MAX_APDU_NE_EXT).withDescriber(DESCRIBER);
+                P2_PSO_COMPUTE_DIGITAL_SIGNATURE, data, CommandApdu.MAX_APDU_NE_EXTENDED).withDescriber(DESCRIBER);
     }
 
     @NonNull
@@ -194,31 +180,31 @@ public class OpenPgpCommandApduFactory {
     @NonNull
     public CommandApdu createInternalAuthForSecureMessagingCommand(byte[] authData) {
         return CommandApdu.create(CLA, INS_INTERNAL_AUTHENTICATE, P1_INTERNAL_AUTH_SECURE_MESSAGING, P2_EMPTY, authData,
-                MAX_APDU_NE_EXT).withDescriber(DESCRIBER);
+                CommandApdu.MAX_APDU_NE_EXTENDED).withDescriber(DESCRIBER);
     }
 
     @NonNull
     public CommandApdu createInternalAuthCommand(byte[] authData) {
-        return CommandApdu.create(CLA, INS_INTERNAL_AUTHENTICATE, P1_EMPTY, P2_EMPTY, authData, MAX_APDU_NE_EXT).withDescriber(DESCRIBER);
+        return CommandApdu.create(CLA, INS_INTERNAL_AUTHENTICATE, P1_EMPTY, P2_EMPTY, authData, CommandApdu.MAX_APDU_NE_EXTENDED).withDescriber(DESCRIBER);
     }
 
     @NonNull
     public CommandApdu createGenerateKeyCommand(int slot) {
         return CommandApdu.create(CLA, INS_GENERATE_RETRIEVE_ASYMMETRIC_KEY,
-                P1_GAKP_GENERATE, P2_EMPTY, new byte[] { (byte) slot, 0x00 }, MAX_APDU_NE_EXT).withDescriber(DESCRIBER);
+                P1_GAKP_GENERATE, P2_EMPTY, new byte[]{(byte) slot, 0x00}, CommandApdu.MAX_APDU_NE_EXTENDED).withDescriber(DESCRIBER);
     }
 
     @NonNull
     public CommandApdu createRetrievePublicKey(int slot) {
         return CommandApdu.create(CLA, INS_GENERATE_RETRIEVE_ASYMMETRIC_KEY,
-                P1_GAKP_READ_PUBKEY_TEMPLATE, P2_EMPTY, new byte[] { (byte) slot, 0x00 }, MAX_APDU_NE_EXT).withDescriber(DESCRIBER);
+                P1_GAKP_READ_PUBKEY_TEMPLATE, P2_EMPTY, new byte[]{(byte) slot, 0x00}, CommandApdu.MAX_APDU_NE_EXTENDED).withDescriber(DESCRIBER);
     }
 
     @NonNull
     public CommandApdu createRetrieveSecureMessagingPublicKeyCommand() {
         // see https://github.com/ANSSI-FR/SmartPGP/blob/master/secure_messaging/smartpgp_sm.pdf
         return CommandApdu.create(CLA, INS_GENERATE_RETRIEVE_ASYMMETRIC_KEY, P1_GAKP_READ_PUBKEY_TEMPLATE, P2_EMPTY,
-                CRT_GAKP_SECURE_MESSAGING, MAX_APDU_NE_EXT).withDescriber(DESCRIBER);
+                CRT_GAKP_SECURE_MESSAGING, CommandApdu.MAX_APDU_NE_EXTENDED).withDescriber(DESCRIBER);
     }
 
     @NonNull
@@ -250,10 +236,23 @@ public class OpenPgpCommandApduFactory {
     }
 
     // ISO/IEC 7816-4
+    // SELECT command always as short APDU
+    @NonNull
+    public CommandApdu createSelectFileCommand(byte[] fileAid) {
+        return CommandApdu.create(CLA, INS_SELECT_FILE, P1_SELECT_FILE, P2_EMPTY, fileAid, CommandApdu.MAX_APDU_NE_SHORT).withDescriber(DESCRIBER);
+    }
+
+    // ISO/IEC 7816-4 par.7.6.1
+    @NonNull
+    public CommandApdu createGetResponseCommand(int lastResponseSw2) {
+        return CommandApdu.create(CLA, INS_GET_RESPONSE, P1_EMPTY, P2_EMPTY, lastResponseSw2).withDescriber(DESCRIBER);
+    }
+
+    // ISO/IEC 7816-4
     @NonNull
     public CommandApdu createShortApdu(CommandApdu apdu) {
-        int ne = Math.min(apdu.getNe(), MAX_APDU_NE);
-        return CommandApdu.create(apdu.getCLA(), apdu.getINS(), apdu.getP1(), apdu.getP2(), apdu.getData(), ne).withDescriber(DESCRIBER);
+        int ne = Math.min(apdu.getNe(), CommandApdu.MAX_APDU_NE_SHORT);
+        return apdu.withNe(ne);
     }
 
     // ISO/IEC 7816-4
@@ -264,13 +263,13 @@ public class OpenPgpCommandApduFactory {
         int offset = 0;
         byte[] data = apdu.getData();
         while (offset < data.length) {
-            int curLen = Math.min(MAX_APDU_NC, data.length - offset);
+            int curLen = Math.min(MAX_APDU_NC_SHORT_OPENPGP_WORKAROUND, data.length - offset);
             boolean last = offset + curLen >= data.length;
             int cla = apdu.getCLA() + (last ? 0 : MASK_CLA_CHAINING);
 
             CommandApdu cmd;
             if (last) {
-                int ne = Math.min(apdu.getNe(), MAX_APDU_NE);
+                int ne = Math.min(apdu.getNe(), CommandApdu.MAX_APDU_NE_SHORT);
                 cmd = CommandApdu.create(cla, apdu.getINS(), apdu.getP1(), apdu.getP2(), data, offset, curLen, ne, DESCRIBER);
             } else {
                 cmd = CommandApdu.create(cla, apdu.getINS(), apdu.getP1(), apdu.getP2(), data, offset, curLen, 0, DESCRIBER);
@@ -284,6 +283,6 @@ public class OpenPgpCommandApduFactory {
     }
 
     public boolean isSuitableForShortApdu(CommandApdu apdu) {
-        return apdu.getData().length <= MAX_APDU_NC;
+        return apdu.getNc() <= MAX_APDU_NC_SHORT_OPENPGP_WORKAROUND;
     }
 }

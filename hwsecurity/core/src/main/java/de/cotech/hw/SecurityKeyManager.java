@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -206,7 +206,7 @@ public class SecurityKeyManager {
                 callbackHandlerWorker, config.isAllowUntestedUsbDevices(), config.isEnableDebugLogging());
         nfcTagManager = NfcTagManager.createInstance(
                 this::transportConnectAndDeliverOrPostponeOrFail,
-                callbackHandlerWorker, config.isEnableDebugLogging(), config.isEnableNfcTagMonitoring());
+                callbackHandlerWorker, config.isEnableDebugLogging(), config.isEnablePersistentNfcConnection());
         application.registerActivityLifecycleCallbacks(activityLifecycleCallbacks);
 
         installCotechProviderIfAvailable();
@@ -241,6 +241,12 @@ public class SecurityKeyManager {
 
         private void bindToActivity(Activity activity) {
             if (isUsbDispatchActivity(activity)) {
+                return;
+            }
+            if (config.getExcludedActivityClasses().contains(activity.getClass())) {
+                HwTimber.d(
+                        "Activity with class %s is excluded, skipping SecurityKeyManager lifecycle initialization.",
+                        activity.getClass().getSimpleName());
                 return;
             }
             if (activity == boundActivity) {
@@ -401,11 +407,19 @@ public class SecurityKeyManager {
 
     /**
      * Registers a callback for when a security key is discovered.
+     *
+     * @throws IllegalArgumentException if LifecycleOwner is an excluded class, see {@link SecurityKeyManagerConfig.Builder#addExcludedActivityClass}.
      */
     public <T extends SecurityKey> void registerCallback(SecurityKeyConnectionMode<T> mode,
             LifecycleOwner lifecycleOwner, SecurityKeyCallback<T> callback) {
         if (config == null) {
             throw new IllegalStateException("SecurityKeyManager must be initialized in your Application class!");
+        }
+        if (config.getExcludedActivityClasses().contains(lifecycleOwner.getClass())) {
+            throw new IllegalArgumentException(
+                    "Cannot registerCallback for Activity with excluded class " +
+                            lifecycleOwner.getClass().getSimpleName() + ". " +
+                            "This is a programming error, check your SecurityKeyManagerConfig.");
         }
         RegisteredConnectionMode<T> registeredConnectionMode = new RegisteredConnectionMode<>(mode, callback, false);
         lifecycleOwner.getLifecycle().addObserver(registeredConnectionMode);

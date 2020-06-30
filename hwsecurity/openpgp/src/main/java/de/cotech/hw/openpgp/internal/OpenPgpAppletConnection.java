@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -294,8 +294,10 @@ public class OpenPgpAppletConnection {
             case OpenPgpWrongPinException.SW_WRONG_PIN:
             case OpenPgpWrongPinException.SW_WRONG_PIN_YKNEO_1:
             case OpenPgpWrongPinException.SW_WRONG_PIN_YKNEO_2:
-                int pinRetriesLeft = getOpenPgpCapabilities().getPw1TriesLeft() - 1;
-                int pukRetriesLeft = getOpenPgpCapabilities().getPw3TriesLeft() - 1;
+                // get current number of retries (capabilities must be refreshed for USB!)
+                refreshConnectionCapabilities();
+                int pinRetriesLeft = getOpenPgpCapabilities().getPw1TriesLeft();
+                int pukRetriesLeft = getOpenPgpCapabilities().getPw3TriesLeft();
                 throw new OpenPgpWrongPinException(pinRetriesLeft, pukRetriesLeft);
             case OpenPgpLockedException.SW_OPENPGP_LOCKED:
             case OpenPgpLockedException.SW_OPENPGP_LOCKED_YKNEO:

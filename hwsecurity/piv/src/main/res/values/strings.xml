@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="hwsecurity_piv_error_wrong_pin">Wrong PIN, you have %d remaining attempts.</string>
+    <string name="hwsecurity_piv_error_wrong_puk">Wrong PUK, you have %d remaining attempts.</string>
+    <string name="hwsecurity_piv_error_internal">Internal error: %1$s</string>
+
+</resources>

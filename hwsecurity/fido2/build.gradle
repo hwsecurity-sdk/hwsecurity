@@ -1,0 +1,105 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+apply plugin: 'org.jetbrains.dokka-android'
+
+dependencies {
+    api project(':hwsecurity:core')
+    api project(':hwsecurity:ui')
+
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.google.android.material:material:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+
+    api 'com.google.auto.value:auto-value-annotations:1.6.2'
+    annotationProcessor 'com.google.auto.value:auto-value:1.6.2'
+    annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:0.2.6'
+
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.robolectric:robolectric:3.8'
+    testImplementation 'org.mockito:mockito-core:2.18.0'
+}
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion 14
+        versionName rootProject.ext.hwSdkVersionName
+        vectorDrawables.useSupportLibrary = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    // Do not abort build if lint finds errors
+    lintOptions {
+        abortOnError false
+    }
+}
+
+// https://developer.android.com/studio/build/maven-publish-plugin
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+
+                groupId = 'de.cotech'
+                artifactId = 'hwsecurity-fido2'
+                version = android.defaultConfig.versionName
+
+                pom {
+                    url = 'https://hwsecurity.dev'
+                    licenses {
+                        license {
+                            name = 'Commercial'
+                            url = 'https://hwsecurity.dev/sales/'
+                            distribution = 'repo'
+                        }
+                        license {
+                            name = 'GNU General Public License, version 3'
+                            url = 'https://www.gnu.org/licenses/gpl-3.0.txt'
+                        }
+                    }
+                    organization {
+                        name = 'Confidential Technologies GmbH'
+                        url = 'https://www.cotech.de'
+                    }
+                }
+            }
+        }
+        /*
+         * To upload release, create file gradle.properties in ~/.gradle/ with this content:
+         *
+         * cotechMavenName=xxx
+         * cotechMavenPassword=xxx
+         */
+        if (project.hasProperty('cotechMavenName') && project.hasProperty('cotechMavenPassword')) {
+            println "Found cotechMavenName, cotechMavenPassword in gradle.properties!"
+
+            repositories {
+                maven {
+                    credentials {
+                        username cotechMavenName
+                        password cotechMavenPassword
+                    }
+                    url = "https://maven.cotech.de"
+                }
+            }
+        }
+    }
+}
+
+dokka {
+    moduleName = 'hwsecurity-fido2'
+    outputFormat = "hugo"
+    outputDirectory = "$projectDir/../../hwsecurity.dev/content/reference"
+    sourceDirs = files('src/main/java')
+
+    packageOptions {
+        prefix = "de.cotech.hw.fido2.internal"
+        suppress = true
+    }
+}

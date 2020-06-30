@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -33,7 +33,6 @@ import de.cotech.hw.SecurityKeyException;
 import de.cotech.hw.exceptions.AppletFileNotFoundException;
 import de.cotech.hw.exceptions.ClaNotSupportedException;
 import de.cotech.hw.exceptions.ConditionsNotSatisfiedException;
-import de.cotech.hw.exceptions.FileInTerminationStateException;
 import de.cotech.hw.exceptions.InsNotSupportedException;
 import de.cotech.hw.exceptions.SelectAppletException;
 import de.cotech.hw.internal.iso7816.CommandApdu;
@@ -146,21 +145,6 @@ public class PivAppletConnection {
             return;
         }
 
-//        CommandApdu selectFidesmoApdu = commandFactory.createSelectFileCommand(AID_PREFIX_FIDESMO);
-//        if (communicate(selectFidesmoApdu).isSuccess()) {
-//            securityKeyType = SecurityKeyType.FIDESMO;
-//            return;
-//        }
-
-        /* We could determine if this is a yubikey here. The info isn't used at the moment, so we save the roundtrip
-        // AID from https://github.com/Yubico/ykneo-oath/blob/master/build.xml#L16
-        CommandApdu selectYubicoApdu = commandFactory.createSelectFileCommand("A000000527200101");
-        if (communicate(selectYubicoApdu).isSuccess()) {
-            securityKeyType = SecurityKeyType.YUBIKEY_UNKNOWN;
-            return;
-        }
-        */
-
         securityKeyType = SecurityKeyType.UNKNOWN;
     }
 
@@ -175,25 +159,6 @@ public class PivAppletConnection {
     // endregion
 
     // region communication
-
-    /**
-     * Transceives APDU
-     * Splits extended APDU into short APDUs and chains them if necessary
-     * Performs GET RESPONSE command(ISO/IEC 7816-4 par.7.6.1) on retrieving if necessary
-     *
-     * @param commandApdu short or extended APDU to transceive
-     * @return response from the card
-     */
-    public ResponseApdu communicate(CommandApdu commandApdu) throws IOException {
-        ResponseApdu lastResponse;
-
-        lastResponse = transceiveWithChaining(commandApdu);
-        if (lastResponse.getSw1() == RESPONSE_SW1_INCORRECT_LENGTH && lastResponse.getSw2() != 0) {
-            commandApdu = commandApdu.withNe(lastResponse.getSw2());
-            lastResponse = transceiveWithChaining(commandApdu);
-        }
-        return readChainedResponseIfAvailable(lastResponse);
-    }
 
     public ResponseApdu communicateOrThrow(CommandApdu commandApdu) throws IOException {
         ResponseApdu response = communicate(commandApdu);
@@ -223,15 +188,30 @@ public class PivAppletConnection {
         }
     }
 
+    /**
+     * Transceives APDU
+     * Splits extended APDU into short APDUs and chains them if necessary
+     * Performs GET RESPONSE command(ISO/IEC 7816-4 par.7.6.1) on retrieving if necessary
+     *
+     * @param commandApdu short or extended APDU to transceive
+     * @return response from the card
+     */
+    public ResponseApdu communicate(CommandApdu commandApdu) throws IOException {
+        ResponseApdu lastResponse;
+
+        lastResponse = transceiveWithChaining(commandApdu);
+        if (lastResponse.getSw1() == RESPONSE_SW1_INCORRECT_LENGTH && lastResponse.getSw2() != 0) {
+            commandApdu = commandApdu.withNe(lastResponse.getSw2());
+            lastResponse = transceiveWithChaining(commandApdu);
+        }
+        return readChainedResponseIfAvailable(lastResponse);
+    }
+
     @NonNull
     private ResponseApdu transceiveWithChaining(CommandApdu commandApdu) throws IOException {
-        /* if (cardCapabilities.hasExtended()) {
-            return transport.transceive(commandApdu);
-        } else */
-
-        if (commandFactory.isSuitableForShortApdu(commandApdu)) {
-            CommandApdu shortApdu = commandFactory.createShortApdu(commandApdu);
-            return transport.transceive(shortApdu);
+        // NOTE: Currently always using short APDUs for PIV
+        if (commandFactory.isSuitableForSingleShortApdu(commandApdu)) {
+            return transport.transceive(commandApdu.withShortApduNe());
         }
         ResponseApdu lastResponse = null;
 
@@ -242,7 +222,7 @@ public class PivAppletConnection {
 
             boolean isLastCommand = (i == totalCommands - 1);
             if (!isLastCommand && !lastResponse.isSuccess()) {
-                throw new IOException("Failed to chain apdu " +
+                throw new IOException("Failed to chain APDU " +
                         "(" + i + "/" + (totalCommands-1) + ", last SW: " + Integer.toHexString(lastResponse.getSw()) + ")");
             }
         }

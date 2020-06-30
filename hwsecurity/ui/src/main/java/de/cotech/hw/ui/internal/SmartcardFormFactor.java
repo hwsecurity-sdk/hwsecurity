@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -25,26 +25,49 @@
 package de.cotech.hw.ui.internal;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.drawable.Animatable;
+import android.os.Build;
+import android.provider.Settings;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.RestrictTo;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.OnLifecycleEvent;
 
+import de.cotech.hw.SecurityKeyManager;
 import de.cotech.hw.ui.R;
+import de.cotech.hw.util.NfcStatusObserver;
 
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public class SmartcardFormFactor {
+public class SmartcardFormFactor implements LifecycleObserver {
     private Context context;
 
     private View view;
     private ImageView smartcardAnimation;
 
-    public SmartcardFormFactor(@NonNull View view) {
+    private TextView textViewNfcDisabled;
+    private Button buttonNfcDisabled;
+
+    private NfcStatusObserver nfcStatusObserver;
+
+    public SmartcardFormFactor(@NonNull View view, LifecycleOwner lifecycleOwner) {
         this.context = view.getContext();
         this.view = view;
 
+        lifecycleOwner.getLifecycle().addObserver(this);
+        nfcStatusObserver = new NfcStatusObserver(context, lifecycleOwner, this::showOrHideNfcDisabledView);
+
+        textViewNfcDisabled = view.findViewById(R.id.textNfcDisabled);
+        buttonNfcDisabled = view.findViewById(R.id.buttonNfcDisabled);
         smartcardAnimation = view.findViewById(R.id.smartcardAnimation);
 
         smartcardAnimation.setOnClickListener(v -> {
@@ -53,6 +76,46 @@ public class SmartcardFormFactor {
                     AnimatedVectorDrawableHelper.startAnimation(smartcardAnimation, R.drawable.hwsecurity_smartcard_animation);
                 }
         );
+
+        showOrHideNfcView();
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+    public void onResume() {
+        // re-check NFC status, maybe user is coming back from settings
+        if (getVisibility() == View.VISIBLE) {
+            showOrHideNfcView();
+        }
+    }
+
+    private void showOrHideNfcView() {
+        boolean isNfcHardwareAvailable = SecurityKeyManager.getInstance().isNfcHardwareAvailable();
+        smartcardAnimation.setVisibility(isNfcHardwareAvailable ? View.VISIBLE : View.GONE);
+
+        if (isNfcHardwareAvailable) {
+            boolean nfcEnabled = nfcStatusObserver.isNfcEnabled();
+            showOrHideNfcDisabledView(nfcEnabled);
+        }
+    }
+
+    private void showOrHideNfcDisabledView(boolean nfcEnabled) {
+        textViewNfcDisabled.setVisibility(nfcEnabled ? View.GONE : View.VISIBLE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            buttonNfcDisabled.setOnClickListener(v -> startAndroidNfcConfigActivityWithHint());
+            buttonNfcDisabled.setVisibility(nfcEnabled ? View.GONE : View.VISIBLE);
+        }
+        smartcardAnimation.setVisibility(nfcEnabled ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+    private void startAndroidNfcConfigActivityWithHint() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            context.startActivity(new Intent(Settings.Panel.ACTION_NFC));
+        } else {
+            Toast.makeText(context.getApplicationContext(),
+                    R.string.hwsecurity_ui_nfc_settings_toast, Toast.LENGTH_LONG).show();
+            context.startActivity(new Intent(Settings.ACTION_NFC_SETTINGS));
+        }
     }
 
     public void setVisibility(int visibility) {

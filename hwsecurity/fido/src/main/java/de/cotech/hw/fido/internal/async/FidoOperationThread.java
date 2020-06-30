@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -37,7 +37,7 @@ import androidx.lifecycle.Lifecycle.Event;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 
-import de.cotech.hw.exceptions.SecurityKeyLostException;
+import de.cotech.hw.exceptions.SecurityKeyDisconnectedException;
 import de.cotech.hw.fido.exceptions.FidoPresenceRequiredException;
 import de.cotech.hw.fido.internal.FidoU2fAppletConnection;
 import de.cotech.hw.util.HwTimber;
@@ -85,7 +85,7 @@ abstract class FidoOperationThread<T> extends Thread implements LifecycleObserve
             } catch (InterruptedException e) {
                 HwTimber.e("Fido operation was interrupted");
                 break;
-            } catch (SecurityKeyLostException e) {
+            } catch (SecurityKeyDisconnectedException e) {
                 HwTimber.e("Transport gone during fido operation");
                 break;
             } catch (FidoPresenceRequiredException e) {

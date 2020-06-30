@@ -5,9 +5,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.2'
+        classpath 'com.android.tools.build:gradle:4.0.0'
         classpath 'org.jetbrains.dokka:dokka-android-gradle-plugin:0.9.17'
-        classpath 'digital.wup:android-maven-publish:3.6.2'
     }
 }
 
@@ -19,6 +18,6 @@ allprojects {
 }
 
 ext {
-    compileSdkVersion = 28
-    hwSdkVersionName = '3.2.1'
+    compileSdkVersion = 29
+    hwSdkVersionName = '4.1.0'
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -93,20 +93,20 @@ public class UsbUtils {
         return hasIn && hasOut;
     }
 
-    static List<UsbInterface> getCcidAndU2fHidInterfaces(UsbDevice device) {
+    static List<UsbInterface> getCcidAndCtapHidInterfaces(UsbDevice device) {
         List<UsbInterface> result = new ArrayList<>();
         for (int i = 0; i < device.getInterfaceCount(); i++) {
             UsbInterface usbInterface = device.getInterface(i);
             if (usbInterfaceLooksLikeCcid(usbInterface)) {
                 result.add(usbInterface);
-            } else if (usbInterfaceLooksLikeU2fHid(usbInterface)) {
+            } else if (usbInterfaceLooksLikeCtapHid(usbInterface)) {
                 result.add(usbInterface);
             }
         }
         return result;
     }
 
-    static boolean usbInterfaceLooksLikeU2fHid(UsbInterface usbInterface) {
+    static boolean usbInterfaceLooksLikeCtapHid(UsbInterface usbInterface) {
         return usbInterface.getInterfaceClass() == UsbConstants.USB_CLASS_HID &&
                 UsbUtils.checkHasIoInterruptEndpoints(usbInterface);
     }
@@ -131,7 +131,7 @@ public class UsbUtils {
                 buf.length,
                 50);
         if (bytesRead < 0) {
-            throw new IOException("Unable to retrieve U2FHID Report data");
+            throw new IOException("Unable to retrieve CTAPHID Report data");
         }
         return Arrays.copyOf(buf, bytesRead);
     }

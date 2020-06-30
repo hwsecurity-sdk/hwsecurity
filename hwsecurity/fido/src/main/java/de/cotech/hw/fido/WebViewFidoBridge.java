@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -35,7 +35,6 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Handler;
 import android.os.Parcelable;
@@ -43,6 +42,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 
+import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -63,6 +63,8 @@ import de.cotech.hw.fido.ui.FidoDialogFragment.OnFidoAuthenticateCallback;
 import de.cotech.hw.fido.ui.FidoDialogFragment.OnFidoRegisterCallback;
 import de.cotech.hw.fido.ui.FidoDialogOptions;
 import de.cotech.hw.util.HwTimber;
+
+import de.cotech.hw.ui.R;
 
 
 /**
@@ -124,17 +126,22 @@ public class WebViewFidoBridge {
     }
 
     private void addJavascriptInterfaceToWebView() {
-        webView.addJavascriptInterface(new Object() {
-            @JavascriptInterface
-            public void register(String requestJson) {
-                handleRegisterRequest(requestJson);
-            }
+        webView.addJavascriptInterface(new JsInterface(), FIDO_BRIDGE_INTERFACE);
+    }
 
-            @JavascriptInterface
-            public void sign(String requestJson) {
-                handleSignRequest(requestJson);
-            }
-        }, FIDO_BRIDGE_INTERFACE);
+    @Keep
+    class JsInterface {
+        @Keep
+        @JavascriptInterface
+        public void register(String requestJson) {
+            handleRegisterRequest(requestJson);
+        }
+
+        @Keep
+        @JavascriptInterface
+        public void sign(String requestJson) {
+            handleSignRequest(requestJson);
+        }
     }
 
     // region delegate
@@ -185,11 +192,11 @@ public class WebViewFidoBridge {
             loadingNewPage = false;
             HwTimber.d("Scheduling fido bridge injection!");
             Handler handler = new Handler(context.getMainLooper());
-            handler.postAtFrontOfQueue(this::injectJavascriptFidoBridge);
+            handler.postAtFrontOfQueue(this::injectJavascriptBridge);
         }
     }
 
-    private void injectJavascriptFidoBridge() {
+    private void injectJavascriptBridge() {
         try {
             String jsContent = AndroidUtils.loadTextFromAssets(context, ASSETS_BRIDGE_JS, Charset.defaultCharset());
             webView.evaluateJavascript("javascript:(" + jsContent + ")()", null);
@@ -232,7 +239,7 @@ public class WebViewFidoBridge {
 
         FidoDialogOptions.Builder opsBuilder = optionsBuilder != null ? optionsBuilder : FidoDialogOptions.builder();
         opsBuilder.setTimeoutSeconds(timeoutSeconds);
-        opsBuilder.setTitle(context.getString(R.string.hwsecurity_title_default_register_app_id, getDisplayAppId(appId)));
+        opsBuilder.setTitle(context.getString(R.string.hwsecurity_fido_title_default_register_app_id, getDisplayAppId(appId)));
 
         FidoDialogFragment fidoDialogFragment = FidoDialogFragment.newInstance(registerRequest, opsBuilder.build());
         fidoDialogFragment.setFidoRegisterCallback(fidoRegisterCallback);
@@ -295,7 +302,7 @@ public class WebViewFidoBridge {
 
         FidoDialogOptions.Builder opsBuilder = optionsBuilder != null ? optionsBuilder : FidoDialogOptions.builder();
         opsBuilder.setTimeoutSeconds(timeoutSeconds);
-        opsBuilder.setTitle(context.getString(R.string.hwsecurity_title_default_authenticate_app_id, getDisplayAppId(appId)));
+        opsBuilder.setTitle(context.getString(R.string.hwsecurity_fido_title_default_authenticate_app_id, getDisplayAppId(appId)));
 
         FidoDialogFragment fidoDialogFragment = FidoDialogFragment.newInstance(authenticateRequest, opsBuilder.build());
         fidoDialogFragment.setFidoAuthenticateCallback(fidoAuthenticateCallback);

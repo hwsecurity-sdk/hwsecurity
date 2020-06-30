@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -106,14 +106,18 @@ public class KeyboardPinInput extends PinInput {
         keyboardInput.clearFocus();
     }
 
-    private void confirmPin() {
-        ByteSecret pinSecret = getPin();
-        callback.onPinEntered(pinSecret);
+    private ByteSecret getPinAndClear() {
+        closeKeyboard();
+        if (keyboardInput.length() == 0) {
+            return null;
+        } else {
+            return ByteSecret.fromEditableAsUtf8AndClear(keyboardInput.getText());
+        }
     }
 
     @Override
-    public ByteSecret getPin() {
-        closeKeyboard();
-        return ByteSecret.fromEditableAsUtf8AndClear(keyboardInput.getText());
+    public void confirmPin() {
+        ByteSecret pinSecret = getPinAndClear();
+        callback.onPinEntered(pinSecret);
     }
 }

@@ -33,7 +33,7 @@
     <style name="HwSecurity.BaseDialog" parent="Theme.MaterialComponents.Light.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/HwSecurity.Dialog.Modal</item>
         <item name="colorSecondary">?attr/hwSecurityButtonColor</item>
-        <item name="colorPrimary">?attr/hwSecuritySurfaceColor</item>
+        <item name="colorPrimary">?attr/hwSecurityButtonColor</item>
     </style>
 
     <style name="HwSecurity.Dialog.Modal" parent="Widget.Design.BottomSheet.Modal">

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -70,11 +70,14 @@ public abstract class SecurityKeyDialogOptions implements Parcelable {
     @StyleRes
     public abstract int getTheme();
 
+    public abstract boolean getShowSdkLogo();
+
     public static Builder builder() {
         return new AutoValue_SecurityKeyDialogOptions.Builder()
                 .setPreventScreenshots(true)
                 .setShowReset(false)
                 .setAllowKeyboard(false)
+                .setShowSdkLogo(false)
                 .setPinMode(PinMode.PIN_INPUT)
                 .setFormFactor(FormFactor.SECURITY_KEY)
                 .setTheme(R.style.HwSecurity_Dialog);
@@ -154,6 +157,13 @@ public abstract class SecurityKeyDialogOptions implements Parcelable {
          * }</pre>
          */
         public abstract Builder setTheme(@StyleRes int theme);
+
+        /**
+         * Shows the Hardware Security SDK Logo with a clickable link
+         * <p>
+         * Default: false
+         */
+        public abstract Builder setShowSdkLogo(boolean showLogo);
 
         abstract SecurityKeyDialogOptions autoBuild();
 

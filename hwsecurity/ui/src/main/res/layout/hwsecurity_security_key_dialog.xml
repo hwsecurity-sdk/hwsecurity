@@ -4,102 +4,32 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/hwSecurityDialogBottomSheet"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/textTitle"
-        android:layout_width="match_parent"
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidelineBottom"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:gravity="center"
-        android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        android:textColor="@android:color/black"
-        android:textSize="16sp"
-        app:fontFamily="sans-serif-medium"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="Title" />
-
-    <TextView
-        android:id="@+id/textDescription"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:gravity="center"
-        android:textColor="@android:color/black"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textTitle"
-        tools:text="Description" />
+        android:orientation="horizontal"
+        app:layout_constraintGuide_end="32dp" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guidelineForceHeight"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="370dp" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/buttonNegative"
-        style="@style/HwSecurity.Dialog.TextButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:text="@string/hwsecurity_ui_button_cancel"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/guidelineForceHeight" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/buttonPositive"
-        style="@style/HwSecurity.Dialog.TextButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/guidelineForceHeight"
-        tools:text="Positive Button" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/buttonKeyboardSwitch"
-        style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
-        android:layout_width="40dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:visibility="gone"
-        app:icon="@drawable/hwsecurity_ic_keyboard_alphabetical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/buttonPositive"
-        app:layout_constraintStart_toEndOf="@+id/buttonNegative"
-        app:layout_constraintTop_toTopOf="@+id/guidelineForceHeight"
-        tools:visibility="visible" />
+        app:layout_constraintGuide_end="402dp" />
 
     <include
         android:id="@+id/includeSecurityKeyFormFactor"
         layout="@layout/hwsecurity_security_key_security_key_form_factor"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="24dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/guidelineForceHeight"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/textDescription"
+        app:layout_constraintTop_toBottomOf="@+id/textDescription"
         tools:visibility="visible" />
 
     <include
@@ -120,10 +50,12 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/guidelineForceHeight"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/guidelineBottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textDescription" />
+        app:layout_constraintTop_toBottomOf="@+id/textDescription"
+        tools:visibility="visible" />
 
     <include
         android:id="@+id/includeKeyboardInput"
@@ -144,6 +76,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/guidelineBottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textDescription"
@@ -156,6 +89,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/guidelineBottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textDescription"
@@ -166,9 +100,8 @@
         layout="@layout/hwsecurity_security_key_progress"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/guidelineForceHeight"
+        app:layout_constraintBottom_toBottomOf="@id/guidelineBottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textDescription"
@@ -179,12 +112,96 @@
         layout="@layout/hwsecurity_security_key_error"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/guidelineForceHeight"
+        app:layout_constraintBottom_toBottomOf="@id/guidelineBottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textDescription"
+        tools:visibility="visible" />
+
+    <include
+        android:id="@+id/includeNfcFullscreen"
+        layout="@layout/hwsecurity_security_key_nfc_fullscreen"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/textTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textColor="@android:color/black"
+        android:textSize="16sp"
+        app:fontFamily="sans-serif-medium"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/guidelineForceHeight"
+        tools:text="Title" />
+
+    <TextView
+        android:id="@+id/textDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:gravity="center"
+        android:textColor="@android:color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textTitle"
+        tools:text="Description" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonLeft"
+        style="@style/HwSecurity.Dialog.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:text="@string/hwsecurity_ui_button_cancel"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonRight"
+        style="@style/HwSecurity.Dialog.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="Second Button" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonKeyboardSwitch"
+        style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+        android:layout_width="40dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:visibility="gone"
+        app:icon="@drawable/hwsecurity_ic_keyboard_alphabetical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/buttonRight"
+        app:layout_constraintStart_toEndOf="@+id/buttonLeft"
         tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

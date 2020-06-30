@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -52,7 +52,7 @@ public class FidoSecurityKeyConnectionMode extends SecurityKeyConnectionMode<Fid
 
     @Override
     protected boolean isRelevantTransport(Transport transport) {
-        return transport.getTransportType() == TransportType.USB_U2FHID
+        return transport.getTransportType() == TransportType.USB_CTAPHID
                 // || transport.getTransportType() == TransportType.USB_CCID
                 || transport.getTransportType() == TransportType.NFC;
     }

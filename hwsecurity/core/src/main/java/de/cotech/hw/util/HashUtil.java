@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -35,7 +35,10 @@ public class HashUtil {
 
     public static byte[] sha256(String data) {
         byte[] dataBytes = data.getBytes(Charset.forName("UTF-8"));
+        return sha256(dataBytes);
+    }
 
+    public static byte[] sha256(byte[] dataBytes) {
         try {
             return MessageDigest.getInstance("SHA-256").digest(dataBytes);
         } catch (final NoSuchAlgorithmException e) {

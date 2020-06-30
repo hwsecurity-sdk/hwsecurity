@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -51,7 +51,7 @@ import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 import de.cotech.hw.internal.transport.Transport;
 import de.cotech.hw.internal.transport.usb.ccid.UsbCcidTransport;
-import de.cotech.hw.internal.transport.usb.u2fhid.UsbU2fHidTransport;
+import de.cotech.hw.internal.transport.usb.ctaphid.UsbCtapHidTransport;
 import de.cotech.hw.util.Hex;
 import de.cotech.hw.util.HwTimber;
 
@@ -140,7 +140,7 @@ public class UsbDeviceManager {
     private ManagedUsbDevice createManagedUsbDevice(UsbDevice usbDevice) throws UsbTransportException {
         HwTimber.d("Initializing managed USB security key");
 
-        List<UsbInterface> usbInterfaces = UsbUtils.getCcidAndU2fHidInterfaces(usbDevice);
+        List<UsbInterface> usbInterfaces = UsbUtils.getCcidAndCtapHidInterfaces(usbDevice);
         if (usbInterfaces.isEmpty()) {
             throw new UsbTransportException("USB error: No usable USB class interface found. (Is CCID mode enabled on your security key?)");
         }
@@ -162,7 +162,7 @@ public class UsbDeviceManager {
         boolean hasCcidInterface = false;
         for (int i = 0; i < usbDevice.getInterfaceCount(); i++) {
             UsbInterface usbInterface = usbDevice.getInterface(i);
-            if (UsbUtils.usbInterfaceLooksLikeU2fHid(usbInterface)) {
+            if (UsbUtils.usbInterfaceLooksLikeCtapHid(usbInterface)) {
                 return true;
             }
             if (UsbUtils.usbInterfaceLooksLikeCcid(usbInterface)) {
@@ -228,7 +228,7 @@ public class UsbDeviceManager {
                 usbTransport = UsbCcidTransport.createUsbTransport(
                         usbManager, usbDevice, usbConnection, usbInterface, enableDebugLogging);
             } else if (usbInterface.getInterfaceClass() == UsbConstants.USB_CLASS_HID) {
-                usbTransport = UsbU2fHidTransport.createUsbTransport(
+                usbTransport = UsbCtapHidTransport.createUsbTransport(
                         usbManager, usbDevice, usbConnection, usbInterface, enableDebugLogging);
             } else {
                 throw new RuntimeException("unsupported USB class");

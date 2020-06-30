@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -50,21 +50,21 @@ public class NfcTagManager {
     private final OnDiscoveredNfcTagListener callback;
     private final Handler callbackHandler;
     private final boolean enableDebugLogging;
-    private final boolean enableNfcTagMonitoring;
+    private final boolean enablePersistentNfcConnection;
 
     private final HashMap<Tag, ManagedNfcTag> managedNfcTags = new HashMap<>();
 
     public static NfcTagManager createInstance(OnDiscoveredNfcTagListener callback,
-            Handler handler, boolean enableDebugLogging, boolean enableTagMonitoring) {
-        return new NfcTagManager(callback, handler, enableDebugLogging, enableTagMonitoring);
+            Handler handler, boolean enableDebugLogging, boolean enablePersistentNfcConnection) {
+        return new NfcTagManager(callback, handler, enableDebugLogging, enablePersistentNfcConnection);
     }
 
     private NfcTagManager(OnDiscoveredNfcTagListener callback, Handler handler, boolean enableDebugLogging,
-            boolean enableNfcTagMonitoring) {
+            boolean enablePersistentNfcConnection) {
         this.callback = callback;
         this.callbackHandler = handler;
         this.enableDebugLogging = enableDebugLogging;
-        this.enableNfcTagMonitoring = enableNfcTagMonitoring;
+        this.enablePersistentNfcConnection = enablePersistentNfcConnection;
     }
 
     @UiThread
@@ -127,7 +127,7 @@ public class NfcTagManager {
                 return;
             }
 
-            NfcTransport nfcTransport = NfcTransport.createNfcTransport(nfcTag, enableDebugLogging, enableNfcTagMonitoring);
+            NfcTransport nfcTransport = NfcTransport.createNfcTransport(nfcTag, enableDebugLogging, enablePersistentNfcConnection);
             activeTransport = nfcTransport;
             startMonitorThread(this).start();
             callbackHandler.post(() -> callback.nfcTransportDiscovered(nfcTransport));
@@ -175,7 +175,7 @@ public class NfcTagManager {
         @WorkerThread
         boolean deviceIsStillConnected() {
             long lastTransceiveTime = managedNfcTag.activeTransport.getLastTransceiveTime();
-            if (enableNfcTagMonitoring) {
+            if (enablePersistentNfcConnection) {
                 boolean connectionIsActive = lastTransceiveTime + MONITOR_PING_DELAY > System.currentTimeMillis();
                 return connectionIsActive || managedNfcTag.activeTransport.ping();
             } else {

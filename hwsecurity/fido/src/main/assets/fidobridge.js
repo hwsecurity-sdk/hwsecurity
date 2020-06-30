@@ -72,11 +72,6 @@ function () {
         fidobridgejava.sign(jsonMessage);
     };
 
-    // TODO: WebAuthn test
-//    navigator.credentials.create = function(options) {
-//        u2fbridge.register("TODO");
-//    };
-
     console.log("fidobridge end execution");
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -65,7 +65,7 @@ public interface SecurityKeyCallback<T extends SecurityKey> {
      * <p>
      * This callback is only called on Security Keys for which {@link SecurityKey#isPersistentlyConnected()}
      * returns true. This typically applies to USB devices, but can be applied to NFC devices as well if
-     * NFC tag monitoring has been enabled via {@link SecurityKeyManagerConfig.Builder#setEnableNfcTagMonitoring}.
+     * persistent NFC connection has been enabled via {@link SecurityKeyManagerConfig.Builder#setEnablePersistentNfcConnection}.
      * Those Security Keys are also listed under {@link SecurityKeyManager#getConnectedPersistentSecurityKeys()}.
      *
      * <p>

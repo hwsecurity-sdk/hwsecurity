@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -38,12 +38,6 @@ import java.util.List;
 public class PivCommandApduFactory {
     private static final PivCommandApduDescriber DESCRIBER = new PivCommandApduDescriber();
 
-    private static final int MAX_APDU_NC = 255;
-    private static final int MAX_APDU_NC_EXT = 65535;
-
-    private static final int MAX_APDU_NE = 256;
-    private static final int MAX_APDU_NE_EXT = 65536;
-
     private static final int CLA = 0x00;
     private static final int MASK_CLA_CHAINING = 1 << 4;
 
@@ -73,12 +67,6 @@ public class PivCommandApduFactory {
     private static final int P1_AUTHENTICATE_P384 = 0x14;
     private static final int P2_AUTHENTICATE = 0x9A;
 
-    // ISO/IEC 7816-4
-    @NonNull
-    public CommandApdu createSelectFileCommand(byte[] fileAid) {
-        return CommandApdu.create(CLA, INS_SELECT_FILE, P1_SELECT_FILE, P2_EMPTY, fileAid).withDescriber(DESCRIBER);
-    }
-
     @NonNull
     public CommandApdu createGetDataCommand(byte[] dataObject) {
         return CommandApdu.create(CLA, INS_GET_DATA, P1_GET_DATA, P2_GET_DATA, dataObject, 0).withDescriber(DESCRIBER);
@@ -86,7 +74,7 @@ public class PivCommandApduFactory {
 
     @NonNull
     public CommandApdu createVerifyCommand(int slot, byte[] data) {
-        return CommandApdu.create(CLA, INS_VERIFY, 0x00, slot, data).withDescriber(DESCRIBER);
+        return CommandApdu.create(CLA, INS_VERIFY, P1_EMPTY, slot, data).withDescriber(DESCRIBER);
     }
 
     @NonNull
@@ -109,17 +97,17 @@ public class PivCommandApduFactory {
         return CommandApdu.create(CLA, INS_RESET_RETRY_COUNTER, P1_EMPTY, P2_RESET_RETRY_COUNTER_CARD_APPLICATION_PIN, data).withDescriber(DESCRIBER);
     }
 
+    // ISO/IEC 7816-4
+    // SELECT command always as short APDU
+    @NonNull
+    public CommandApdu createSelectFileCommand(byte[] fileAid) {
+        return CommandApdu.create(CLA, INS_SELECT_FILE, P1_SELECT_FILE, P2_EMPTY, fileAid, CommandApdu.MAX_APDU_NE_SHORT).withDescriber(DESCRIBER);
+    }
+
     // ISO/IEC 7816-4 par.7.6.1
     @NonNull
     public CommandApdu createGetResponseCommand(int lastResponseSw2) {
         return CommandApdu.create(CLA, INS_GET_RESPONSE, P1_EMPTY, P2_EMPTY, lastResponseSw2).withDescriber(DESCRIBER);
-    }
-
-    // ISO/IEC 7816-4
-    @NonNull
-    public CommandApdu createShortApdu(CommandApdu apdu) {
-        int ne = Math.min(apdu.getNe(), MAX_APDU_NE);
-        return CommandApdu.create(apdu.getCLA(), apdu.getINS(), apdu.getP1(), apdu.getP2(), apdu.getData(), ne).withDescriber(DESCRIBER);
     }
 
     // ISO/IEC 7816-4
@@ -130,13 +118,14 @@ public class PivCommandApduFactory {
         int offset = 0;
         byte[] data = apdu.getData();
         while (offset < data.length) {
-            int curLen = Math.min(MAX_APDU_NC, data.length - offset);
+            int curLen = Math.min(CommandApdu.MAX_APDU_NC_SHORT, data.length - offset);
             boolean last = offset + curLen >= data.length;
             int cla = apdu.getCLA() + (last ? 0 : MASK_CLA_CHAINING);
 
             CommandApdu cmd;
             if (last) {
-                int ne = Math.min(apdu.getNe(), MAX_APDU_NE);
+                // TODO: check this!
+                int ne = Math.min(apdu.getNe(), CommandApdu.MAX_APDU_NE_SHORT);
                 cmd = CommandApdu.create(cla, apdu.getINS(), apdu.getP1(), apdu.getP2(), data, offset, curLen, ne, DESCRIBER);
             } else {
                 cmd = CommandApdu.create(cla, apdu.getINS(), apdu.getP1(), apdu.getP2(), data, offset, curLen, 0, DESCRIBER);
@@ -149,7 +138,7 @@ public class PivCommandApduFactory {
         return result;
     }
 
-    public boolean isSuitableForShortApdu(CommandApdu apdu) {
-        return apdu.getData().length <= MAX_APDU_NC;
+    public boolean isSuitableForSingleShortApdu(CommandApdu apdu) {
+        return apdu.getNc() <= CommandApdu.MAX_APDU_NC_SHORT;
     }
 }

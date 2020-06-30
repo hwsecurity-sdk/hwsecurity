@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -29,7 +29,7 @@ import java.io.IOException;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.WorkerThread;
-import androidx.lifecycle.LifecycleOwner;
+
 import de.cotech.hw.internal.transport.SecurityKeyInfo.TransportType;
 import de.cotech.hw.internal.transport.Transport;
 
@@ -81,7 +81,7 @@ public abstract class SecurityKey {
      */
     @AnyThread
     public boolean isTransportUsb() {
-        return transport.getTransportType() == TransportType.USB_CCID || transport.getTransportType() == TransportType.USB_U2FHID;
+        return transport.getTransportType() == TransportType.USB_CCID || transport.getTransportType() == TransportType.USB_CTAPHID;
     }
 
     /**

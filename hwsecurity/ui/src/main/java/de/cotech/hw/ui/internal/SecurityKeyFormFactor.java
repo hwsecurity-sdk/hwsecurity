@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -24,23 +24,27 @@
 
 package de.cotech.hw.ui.internal;
 
-import android.animation.*;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
-import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.annotation.AttrRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.RestrictTo;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.Guideline;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.OnLifecycleEvent;
 import androidx.transition.AutoTransition;
 import androidx.transition.Scene;
 import androidx.transition.Transition;
@@ -50,53 +54,69 @@ import de.cotech.hw.SecurityKeyManager;
 import de.cotech.hw.ui.R;
 import de.cotech.hw.util.NfcStatusObserver;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
-public class SecurityKeyFormFactor {
+public class SecurityKeyFormFactor implements LifecycleObserver {
     private Context context;
 
     private ViewGroup view;
-    private ConstraintLayout innerBottomSheet;
-    private Guideline guidelineForceHeight;
 
     private TextView textTitle;
     private TextView textDescription;
+
     private TextView textNfc;
     private TextView textUsb;
     private ImageView imageNfc;
-    private ImageView imageNfcFullscreen;
     private ImageView imageUsb;
 
     private TextView textViewNfcDisabled;
     private Button buttonNfcDisabled;
 
-    private ImageView sweetspotIndicator;
-    private TextView textNfcFullscreen;
+    private NfcStatusObserver nfcStatusObserver;
 
-    public SecurityKeyFormFactor(@NonNull ViewGroup view, ConstraintLayout innerBottomSheet) {
+    private SelectTransportCallback callback;
+
+    public interface SelectTransportCallback {
+        void screeFullscreenNfc();
+
+        void onSecurityKeyFormFactorClickUsb();
+    }
+
+    public SecurityKeyFormFactor(@NonNull ViewGroup view, LifecycleOwner lifecycleOwner, SelectTransportCallback callback, ConstraintLayout innerBottomSheet, boolean showSdkButton) {
         this.context = view.getContext();
 
         this.view = view;
-        this.innerBottomSheet = innerBottomSheet;
+        this.callback = callback;
 
-        guidelineForceHeight = innerBottomSheet.findViewById(R.id.guidelineForceHeight);
+        lifecycleOwner.getLifecycle().addObserver(this);
+        nfcStatusObserver = new NfcStatusObserver(context, lifecycleOwner, this::showOrHideNfcDisabledView);
+
         textTitle = innerBottomSheet.findViewById(R.id.textTitle);
         textDescription = innerBottomSheet.findViewById(R.id.textDescription);
 
         textNfc = view.findViewById(R.id.textNfc);
-        textNfcFullscreen = view.findViewById(R.id.textNfcFullscreen);
         textUsb = view.findViewById(R.id.textUsb);
         imageNfc = view.findViewById(R.id.imageNfc);
-        imageNfcFullscreen = view.findViewById(R.id.imageNfcFullscreen);
-        sweetspotIndicator = view.findViewById(R.id.imageNfcSweetspot);
         imageUsb = view.findViewById(R.id.imageUsb);
         textViewNfcDisabled = view.findViewById(R.id.textNfcDisabled);
         buttonNfcDisabled = view.findViewById(R.id.buttonNfcDisabled);
+        ImageButton sdkButton = view.findViewById(R.id.buttonSdk);
+
+        sdkButton.setVisibility(showSdkButton ? View.VISIBLE : View.GONE);
+        sdkButton.setOnClickListener(v -> {
+            String packageName = context.getPackageName();
+            String url = "https://hwsecurity.dev/?pk_campaign=sdk&pk_source=" + packageName;
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            context.startActivity(i);
+        });
 
         imageNfc.setOnClickListener(v -> animateSelectNfc());
-        imageUsb.setOnClickListener(v -> animateSelectUsb());
+        imageUsb.setOnClickListener(v -> {
+            callback.onSecurityKeyFormFactorClickUsb();
+            animateSelectUsb();
+        });
+
+        showOrHideNfcView();
     }
 
     public void setVisibility(int visibility) {
@@ -107,7 +127,15 @@ public class SecurityKeyFormFactor {
         return view.getVisibility();
     }
 
-    private void showOrHideNfcView(NfcStatusObserver nfcStatusObserver) {
+    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+    public void onResume() {
+        // re-check NFC status, maybe user is coming back from settings
+        if (getVisibility() == View.VISIBLE) {
+            showOrHideNfcView();
+        }
+    }
+
+    private void showOrHideNfcView() {
         boolean isNfcHardwareAvailable = SecurityKeyManager.getInstance().isNfcHardwareAvailable();
         textNfc.setVisibility(isNfcHardwareAvailable ? View.VISIBLE : View.GONE);
         imageNfc.setVisibility(isNfcHardwareAvailable ? View.VISIBLE : View.GONE);
@@ -130,24 +158,34 @@ public class SecurityKeyFormFactor {
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     private void startAndroidNfcConfigActivityWithHint() {
-        Toast.makeText(context.getApplicationContext(),
-                R.string.hwsecurity_nfc_settings_toast, Toast.LENGTH_SHORT).show();
-        context.startActivity(new Intent(Settings.ACTION_NFC_SETTINGS));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            context.startActivity(new Intent(Settings.Panel.ACTION_NFC));
+        } else {
+            Toast.makeText(context.getApplicationContext(),
+                    R.string.hwsecurity_ui_nfc_settings_toast, Toast.LENGTH_LONG).show();
+            context.startActivity(new Intent(Settings.ACTION_NFC_SETTINGS));
+        }
     }
-
 
     private void removeOnClickListener() {
         imageNfc.setOnClickListener(null);
         imageUsb.setOnClickListener(null);
     }
 
-    private int resolveColorFromAttr(@AttrRes int resId) {
-        TypedValue outValue = new TypedValue();
-        context.getTheme().resolveAttribute(resId, outValue, true);
-        return outValue.data;
+    public void resetAnimation() {
+        imageNfc.setImageResource(R.drawable.hwsecurity_nfc_start);
+        imageUsb.setImageResource(R.drawable.hwsecurity_usb_start);
+
+        AutoTransition selectModeTransition = new AutoTransition();
+        selectModeTransition.setDuration(150);
+
+        TransitionManager.go(new Scene(view), selectModeTransition);
+        showOrHideNfcView();
+        imageUsb.setVisibility(View.VISIBLE);
+        textUsb.setVisibility(View.VISIBLE);
     }
 
-    private void animateSelectNfc() {
+    public void animateSelectNfc() {
         removeOnClickListener();
 
         AutoTransition selectModeTransition = new AutoTransition();
@@ -159,69 +197,7 @@ public class SecurityKeyFormFactor {
 
             @Override
             public void onTransitionEnd(@NonNull Transition transition) {
-                int colorFrom = context.getResources().getColor(R.color.hwSecurityWhite);
-                int colorTo = resolveColorFromAttr(R.attr.hwSecuritySurfaceColor);
-                ValueAnimator colorChange = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
-                colorChange.setDuration(100);
-                colorChange.addUpdateListener(animator -> {
-                    innerBottomSheet.setBackgroundColor((int) animator.getAnimatedValue());
-                });
-
-                ObjectAnimator fadeInImageNfcFullscreen = ObjectAnimator
-                        .ofFloat(imageNfcFullscreen, View.ALPHA, 0, 1)
-                        .setDuration(150);
-                fadeInImageNfcFullscreen.setStartDelay(50);
-                fadeInImageNfcFullscreen.addListener(new Animator.AnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animation) {
-                        imageNfcFullscreen.setVisibility(View.VISIBLE);
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        AnimatedVectorDrawableHelper.startAndLoopAnimation(imageNfcFullscreen, R.drawable.hwsecurity_nfc_handling);
-                    }
-
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animator animation) {
-                    }
-                });
-
-                ObjectAnimator fadeOutNfcFullscreen = ObjectAnimator
-                        .ofFloat(imageNfc, View.ALPHA, 1, 0)
-                        .setDuration(150);
-                fadeInImageNfcFullscreen.setStartDelay(50);
-                fadeInImageNfcFullscreen.addListener(new Animator.AnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animation) {
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                    }
-
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animator animation) {
-                    }
-                });
-
-                List<Animator> items = new ArrayList<>();
-                items.add(fadeInImageNfcFullscreen);
-                items.add(fadeOutNfcFullscreen);
-                items.add(colorChange);
-
-                AnimatorSet set = new AnimatorSet();
-                set.playTogether(items);
-                set.setInterpolator(new AccelerateDecelerateInterpolator());
-                set.start();
+                callback.screeFullscreenNfc();
             }
 
             @Override
@@ -238,7 +214,7 @@ public class SecurityKeyFormFactor {
         });
 
         TransitionManager.go(new Scene(view), selectModeTransition);
-        textTitle.setText(R.string.hwsecurity_title_nfc_fullscreen);
+        textTitle.setText(R.string.hwsecurity_ui_title_nfc_fullscreen);
         imageUsb.setVisibility(View.GONE);
         textViewNfcDisabled.setVisibility(View.GONE);
         buttonNfcDisabled.setVisibility(View.GONE);
@@ -247,7 +223,7 @@ public class SecurityKeyFormFactor {
         textUsb.setVisibility(View.GONE);
     }
 
-    private void animateSelectUsb() {
+    public void animateSelectUsb() {
         removeOnClickListener();
 
         AutoTransition selectModeTransition = new AutoTransition();
@@ -276,13 +252,54 @@ public class SecurityKeyFormFactor {
         });
 
         TransitionManager.go(new Scene(view), selectModeTransition);
-        textTitle.setText(R.string.hwsecurity_title_usb_selected);
+        textTitle.setText(R.string.hwsecurity_ui_title_usb_selected);
         imageNfc.setVisibility(View.GONE);
         textViewNfcDisabled.setVisibility(View.GONE);
         buttonNfcDisabled.setVisibility(View.GONE);
         textDescription.setVisibility(View.GONE);
         textNfc.setVisibility(View.GONE);
         textUsb.setVisibility(View.GONE);
+    }
+
+    public void animateSelectUsbAndPressButton() {
+        AutoTransition selectModeTransition = new AutoTransition();
+        selectModeTransition.setDuration(150);
+        selectModeTransition.addListener(new Transition.TransitionListener() {
+            @Override
+            public void onTransitionStart(@NonNull Transition transition) {
+            }
+
+            @Override
+            public void onTransitionEnd(@NonNull Transition transition) {
+                AnimatedVectorDrawableHelper.startAndLoopAnimation(imageUsb, R.drawable.hwsecurity_usb_handling_b);
+            }
+
+            @Override
+            public void onTransitionCancel(@NonNull Transition transition) {
+            }
+
+            @Override
+            public void onTransitionPause(@NonNull Transition transition) {
+            }
+
+            @Override
+            public void onTransitionResume(@NonNull Transition transition) {
+            }
+        });
+
+        TransitionManager.go(new Scene(view), selectModeTransition);
+        textTitle.setText(R.string.hwsecurity_ui_title_usb_button);
+        imageNfc.setVisibility(View.GONE);
+        textViewNfcDisabled.setVisibility(View.GONE);
+        buttonNfcDisabled.setVisibility(View.GONE);
+        textDescription.setVisibility(View.GONE);
+        textNfc.setVisibility(View.GONE);
+        textUsb.setVisibility(View.GONE);
+    }
+
+    public void animateUsbPressButton() {
+        textTitle.setText(R.string.hwsecurity_ui_title_usb_button);
+        AnimatedVectorDrawableHelper.startAndLoopAnimation(imageUsb, R.drawable.hwsecurity_usb_handling_b);
     }
 
 }

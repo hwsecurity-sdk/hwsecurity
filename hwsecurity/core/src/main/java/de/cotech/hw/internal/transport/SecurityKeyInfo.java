@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Confidential Technologies GmbH
+ * Copyright (C) 2018-2020 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -83,7 +83,7 @@ public abstract class SecurityKeyInfo implements Parcelable {
     }
 
     public enum TransportType {
-        NFC, USB_CCID, USB_U2FHID
+        NFC, USB_CCID, USB_CTAPHID
     }
 
     public enum SecurityKeyType {
