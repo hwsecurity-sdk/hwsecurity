@@ -29,8 +29,6 @@ import de.cotech.hw.exceptions.WrongDataException;
 
 
 public class FidoWrongKeyHandleException extends WrongDataException {
-    public static final int SW_WRONG_KEY_HANDLE = WrongDataException.SW_WRONG_DATA;
-
     public FidoWrongKeyHandleException() {
         super("Security Key returned error WRONG_KEY_HANDLE (0x6A80)");
     }

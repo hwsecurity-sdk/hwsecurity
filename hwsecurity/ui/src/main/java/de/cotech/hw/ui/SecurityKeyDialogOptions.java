@@ -147,14 +147,14 @@ public abstract class SecurityKeyDialogOptions implements Parcelable {
         public abstract Builder setAllowKeyboard(boolean allowKeyboard);
 
         /**
-         * Set your own custom theme for the dialog to change colors:
-         * <pre>{@code
-         * <style name="MyCustomDialog" parent="HwSecurity.Dialog">
-         *     <item name="hwSecurityButtonColor">@color/hwSecurityDarkBlue</item>
-         *     <item name="hwSecuritySurfaceColor">@color/hwSecurityBlue</item>
-         *     <item name="hwSecurityErrorColor">@color/hwSecurityRed</item>
-         * </style>
-         * }</pre>
+         * Set your own custom theme for the dialog to change colors.
+         * <pre>
+         * &#60;style name="MyCustomDialog" parent="HwSecurity.Dialog"&#62;
+         *     &#60;item name="hwSecurityButtonColor"&#62;@color/hwSecurityDarkBlue&#60;/item&#62;
+         *     &#60;item name="hwSecuritySurfaceColor"&#62;@color/hwSecurityBlue&#60;/item&#62;
+         *     &#60;item name="hwSecurityErrorColor"&#62;@color/hwSecurityRed&#60;/item&#62;
+         * &#60;/style&#62;
+         * </pre>
          */
         public abstract Builder setTheme(@StyleRes int theme);
 

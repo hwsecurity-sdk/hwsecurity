@@ -51,12 +51,18 @@ public abstract class SecurityKeyManagerConfig {
 
     public abstract boolean isEnableDebugLogging();
 
+    public abstract boolean isSentrySupportDisabled();
+
+    public abstract boolean isSentryCaptureExceptionOnInternalError();
+
     @Nullable
     public abstract HwTimber.Tree getLoggingTree();
 
     public abstract boolean isEnablePersistentNfcConnection();
 
     public abstract boolean isIgnoreNfcTagAfterUse();
+
+    public abstract boolean isDisableWhileInactive();
 
     public abstract boolean isDisableNfcDiscoverySound();
 
@@ -75,9 +81,12 @@ public abstract class SecurityKeyManagerConfig {
         private boolean disableUsbPermissionFallback = false;
         private boolean isAllowUntestedUsbDevices = false;
         private boolean isEnableDebugLogging = false;
+        private boolean isSentrySupportDisabled = false;
+        private boolean isSentryCaptureExceptionOnInternalError = false;
         private HwTimber.Tree loggingTree = null;
         private boolean isEnablePersistentNfcConnection = false;
         private boolean isIgnoreNfcTagAfterUse = false;
+        private boolean isDisableWhileInactive = false;
         private boolean isDisableNfcDiscoverySound = false;
         private ArrayList<Class<? extends Activity>> excludedActivityClasses = new ArrayList<>();
 
@@ -121,12 +130,36 @@ public abstract class SecurityKeyManagerConfig {
         }
 
         /**
+         * This setting controls whether Sentry is support is generally enabled or not.
+         * <p>
+         * Unless disabled with this setting, and if Sentry is included and configured in the
+         * application, the hwsecurity SDK will automatically add a small number of breadcrumbs and
+         * tags to the Sentry scope while the user performs Security Key operations.
+         * <p>
+         * This setting has no effect unless Sentry is initialized and configured in the application.
+         */
+        public Builder setSentrySupportDisabled(boolean isSentrySupportDisabled) {
+            this.isSentrySupportDisabled = isSentrySupportDisabled;
+            return this;
+        }
+
+        /**
+         * This setting controls whether exceptions for internal errors shall be captured via Sentry.
+         * <p>
+         * This setting has no effect unless Sentry is initialized and configured in the application.
+         * It also has no effect if setSentrySupportDisabled has been set to true.
+         */
+        public Builder setSentryCaptureExceptionOnInternalError(boolean isSentryCaptureExceptionOnInternalError) {
+            this.isSentryCaptureExceptionOnInternalError = isSentryCaptureExceptionOnInternalError;
+            return this;
+        }
+
+        /**
          * If you like to filter based on different priorities or delegate output to other logging frameworks
          * (by default Android’s Log class is used), a custom logging tree can be used.
          * Setting your own logging tree overrides setEnableDebugLogging(true).
-         * <pre>{@code
+         * <pre>
          * .setLoggingTree(new HwTimber.DebugTree() {
-         *     @Override
          *     protected String createStackElementTag(@NonNull StackTraceElement element) {
          *         if (element.getClassName().startsWith("de.cotech.hw")) {
          *             return super.createStackElementTag(element);
@@ -135,7 +168,6 @@ public abstract class SecurityKeyManagerConfig {
          *         }
          *     }
          *
-         *     @Override
          *     protected boolean isLoggable(String tag, int priority) {
          *         if (tag == null) {
          *             return false;
@@ -143,12 +175,11 @@ public abstract class SecurityKeyManagerConfig {
          *         // TODO: filter based on priority
          *     }
          *
-         *     @Override
          *     protected void log(int priority, String tag, @NonNull String message, Throwable t) {
          *         // TODO: delegate log output to your own logging framework
          *     }
          * });
-         * }</pre>
+         * </pre>
          * <p>
          * This tree overrides {@link SecurityKeyManagerConfig.Builder#setEnableDebugLogging(boolean)}.
          */
@@ -162,9 +193,14 @@ public abstract class SecurityKeyManagerConfig {
          * <p>
          * Enable this setting if you need to retrieve NFC Security Keys via
          * {@link SecurityKeyManager#getConnectedPersistentSecurityKeys()}.
+         * <p>
+         * This setting cannot be enabled if setDisableWhileInactive is set to true.
          */
         public Builder setEnablePersistentNfcConnection(boolean isEnablePersistentNfcConnection) {
             this.isEnablePersistentNfcConnection = isEnablePersistentNfcConnection;
+            if (this.isDisableWhileInactive) {
+                throw new IllegalStateException("Cannot set disableWhileInactive and enablePersistentNfcConnection at the same time!");
+            }
             return this;
         }
 
@@ -177,6 +213,27 @@ public abstract class SecurityKeyManagerConfig {
          */
         public Builder setIgnoreNfcTagAfterUse(boolean isIgnoreNfcTagAfterUse) {
             this.isIgnoreNfcTagAfterUse = isIgnoreNfcTagAfterUse;
+            return this;
+        }
+
+        /**
+         * This setting disables managing NFC and USB connections while no callbacks are registered.
+         * <p>
+         * Enabling this setting will disable background NFC and USB connection management. Instead,
+         * connections will only be managed while a callback is registerd via
+         * {@link SecurityKeyManager#registerCallback}.
+         * <p>
+         * This setting improves compatibility with other libraries that perform NFC or USB related
+         * tasks in the same app. At the same time it reduces reliability for longer connections,
+         * and precludes for use cases that work with persistent device connections.
+         * <p>
+         * This setting cannot be enabled if setEnablePersistentNfcConnection is set to true.
+         */
+        public Builder setDisableWhileInactive(boolean isDisableWhileInactive) {
+            this.isDisableWhileInactive = isDisableWhileInactive;
+            if (this.isEnablePersistentNfcConnection) {
+                throw new IllegalStateException("Cannot set disableWhileInactive and enablePersistentNfcConnection at the same time!");
+            }
             return this;
         }
 
@@ -204,10 +261,10 @@ public abstract class SecurityKeyManagerConfig {
          * A call to the {@link SecurityKeyManager#registerCallback} method for an Activity that has
          * been excluded in this way will result in an {@link IllegalArgumentException}.
          *
-         * <pre>{@code
+         * <pre>
          * new SecurityKeyManagerConfig.Builder()
          *   .addExcludedActivityClass(MyCustomNfcActivity.class)
-         * }</pre>
+         * </pre>
          */
         public Builder addExcludedActivityClass(Class<? extends Activity> clazz) {
             this.excludedActivityClasses.add(clazz);
@@ -222,9 +279,12 @@ public abstract class SecurityKeyManagerConfig {
                     disableUsbPermissionFallback,
                     isAllowUntestedUsbDevices,
                     isEnableDebugLogging,
+                    isSentrySupportDisabled,
+                    isSentryCaptureExceptionOnInternalError,
                     loggingTree,
                     isEnablePersistentNfcConnection,
                     isIgnoreNfcTagAfterUse,
+                    isDisableWhileInactive,
                     isDisableNfcDiscoverySound,
                     Collections.unmodifiableList(excludedActivityClasses)
             );

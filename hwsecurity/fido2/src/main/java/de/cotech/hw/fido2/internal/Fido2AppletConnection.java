@@ -35,13 +35,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
-
 import de.cotech.hw.SecurityKeyException;
 import de.cotech.hw.exceptions.AppletFileNotFoundException;
 import de.cotech.hw.exceptions.ClaNotSupportedException;
 import de.cotech.hw.exceptions.InsNotSupportedException;
-import de.cotech.hw.exceptions.SelectAppletException;
 import de.cotech.hw.exceptions.WrongRequestLengthException;
+import de.cotech.hw.fido2.exceptions.Fido2AndU2fNotSupportedException;
 import de.cotech.hw.fido2.exceptions.FidoPresenceRequiredException;
 import de.cotech.hw.fido2.exceptions.FidoWrongKeyHandleException;
 import de.cotech.hw.fido2.internal.ctap2.Ctap2Command;
@@ -52,6 +51,7 @@ import de.cotech.hw.fido2.internal.ctap2.CtapErrorResponse;
 import de.cotech.hw.fido2.internal.ctap2.commands.getInfo.AuthenticatorGetInfo;
 import de.cotech.hw.fido2.internal.ctap2.commands.getInfo.AuthenticatorGetInfoResponse;
 import de.cotech.hw.fido2.internal.pinauth.PinToken;
+import de.cotech.hw.internal.HwSentry;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.internal.transport.SecurityKeyInfo.TransportType;
@@ -62,6 +62,8 @@ import de.cotech.hw.util.HwTimber;
 
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class Fido2AppletConnection {
+    public static final String SENTRY_TAG_FIDO2_AAGUID = "fido2-aaguid";
+
     private static final int APDU_SW1_RESPONSE_AVAILABLE = 0x61;
     private static final int RESPONSE_SW1_INCORRECT_LENGTH = 0x6C;
 
@@ -124,6 +126,9 @@ public class Fido2AppletConnection {
                 ctap2Info = ctap2AuthenticatorGetInfo();
                 HwTimber.d("Call to AuthenticatorGetInfo returns valid response - using CTAP2");
                 HwTimber.d(ctap2Info.toString());
+                // This is cleaned up globally in handleTransportRelease in SecurityKeyManager
+                HwSentry.addBreadcrumb("FIDO2 AAGUID: ", ctap2Info.aaguid());
+                HwSentry.addTag(SENTRY_TAG_FIDO2_AAGUID, ctap2Info.aaguid());
             } catch (IOException e) {
                 HwTimber.d("Call to AuthenticatorGetInfo returned no valid response - using CTAP1");
             }
@@ -141,7 +146,7 @@ public class Fido2AppletConnection {
 
     public <T extends Ctap2Response> T ctap2CommunicateOrThrow(Ctap2Command<T> ctap2Command)
             throws IOException {
-        if (!isCtap2Capable()) {
+        if (isFidoAppletConnected && !isCtap2Capable()) {
             HwTimber.w("Attempting to send CTAP2 command, but CTAP2 is not supported. " +
                     "This will probably cause an error.");
         }
@@ -170,7 +175,7 @@ public class Fido2AppletConnection {
                 return initializedAid;
             }
         }
-        throw new SelectAppletException(FIDO_AID_PREFIXES, "FIDO U2F or CTAP2");
+        throw new Fido2AndU2fNotSupportedException();
     }
 
     private void checkVersionOrThrow(byte[] versionBytes) throws IOException {
@@ -213,9 +218,9 @@ public class Fido2AppletConnection {
         }
 
         switch (response.getSw()) {
-            case FidoPresenceRequiredException.SW_TEST_OF_USER_PRESENCE_REQUIRED:
+            case FidoPresenceRequiredException.SW_CONDITIONS_NOT_SATISFIED:
                 throw new FidoPresenceRequiredException();
-            case FidoWrongKeyHandleException.SW_WRONG_KEY_HANDLE:
+            case FidoWrongKeyHandleException.SW_WRONG_DATA:
                 throw new FidoWrongKeyHandleException();
             case AppletFileNotFoundException.SW_FILE_NOT_FOUND:
                 throw new AppletFileNotFoundException();

@@ -40,7 +40,7 @@ import java.security.PublicKey;
  * is already associated with a specific key.
  * <p>
  * Example:
- * <pre>{@code
+ * <pre>
  * byte[] challenge = { (byte) 1, (byte) 2, (byte) 3, (byte) 4 };
  * PinProvider pinProvider = StaticPinProvider.getInstance(ByteSecret.unsafeFromString("123456"));
  *
@@ -52,7 +52,7 @@ import java.security.PublicKey;
  * signature.update(challenge);
  * boolean isVerified = signature.verify(signatureBytes);
  * assert isVerified;
- * }</pre>
+ * </pre>
  */
 public interface SecurityKeyAuthenticator {
     /**

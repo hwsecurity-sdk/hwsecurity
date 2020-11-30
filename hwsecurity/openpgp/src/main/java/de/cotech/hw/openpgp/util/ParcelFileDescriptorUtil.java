@@ -47,7 +47,7 @@ import android.os.ParcelFileDescriptor;
  * seekable file descriptors. {@link android.content.ContentProvider}
  *
  * <p>
- * <pre>{@code
+ * <pre>
  * ParcelFileDescriptor openFile(Uri uri, String mode) {
  *     try {
  *         File file = database.getEncryptedFilenameForUri(uri);
@@ -57,7 +57,7 @@ import android.os.ParcelFileDescriptor;
  *         throw new FileNotFoundException(e.getMessage());
  *     }
  * }
- * }</pre>
+ * </pre>
  * <p>
  * Internally, this uses one of two mechanisms:
  * <ul>

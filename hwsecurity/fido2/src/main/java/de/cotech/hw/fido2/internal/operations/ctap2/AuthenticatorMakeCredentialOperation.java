@@ -27,8 +27,6 @@ package de.cotech.hw.fido2.internal.operations.ctap2;
 
 import java.io.IOException;
 
-import android.net.Uri;
-
 import de.cotech.hw.fido2.PublicKeyCredential;
 import de.cotech.hw.fido2.PublicKeyCredentialCreate;
 import de.cotech.hw.fido2.domain.CollectedClientData;
@@ -51,6 +49,7 @@ import de.cotech.hw.fido2.internal.json.JsonCollectedClientDataSerializer;
 import de.cotech.hw.fido2.internal.operations.WebauthnSecurityKeyOperation;
 import de.cotech.hw.fido2.internal.pinauth.PinProtocolV1;
 import de.cotech.hw.fido2.internal.pinauth.PinToken;
+import de.cotech.hw.fido2.internal.utils.RelyingPartyIdUtils;
 import de.cotech.hw.fido2.internal.webauthn.ConstructCredentialAlg;
 import de.cotech.hw.util.HashUtil;
 import de.cotech.hw.util.HwTimber;
@@ -61,12 +60,15 @@ public class AuthenticatorMakeCredentialOperation extends
     private static final String CLIENT_DATA_TYPE_CREATE = "webauthn.create";
     private final ConstructCredentialAlg constructCredentialAlg;
     private final PinProtocolV1 pinProtocolV1;
+    private final RelyingPartyIdUtils relyingPartyIdUtils;
 
     public AuthenticatorMakeCredentialOperation(
             ConstructCredentialAlg constructCredentialAlg,
-            PinProtocolV1 pinProtocolV1) {
+            PinProtocolV1 pinProtocolV1,
+            RelyingPartyIdUtils relyingPartyIdUtils) {
         this.constructCredentialAlg = constructCredentialAlg;
         this.pinProtocolV1 = pinProtocolV1;
+        this.relyingPartyIdUtils = relyingPartyIdUtils;
     }
 
     @Override
@@ -119,19 +121,12 @@ public class AuthenticatorMakeCredentialOperation extends
     public AuthenticatorMakeCredential webauthnToCtap2Command(
             PublicKeyCredentialCreate credentialCreate, PinToken pinToken)
             throws FidoSecurityError {
-        Uri callerOrigin = Uri.parse(credentialCreate.origin());
-        String effectivedomain = callerOrigin.getHost();
-
         PublicKeyCredentialCreationOptions options = credentialCreate.options();
 
         PublicKeyCredentialRpEntity rp = options.rp();
-        String rpId = rp.id();
-        if (rpId == null) {
-            rp = rp.withId(effectivedomain);
-        } else if (!rpId.equals(effectivedomain)) {
-            throw new FidoSecurityError("Security error: rpId is not a valid subdomain of caller origin!");
-        }
-
+        String origin = credentialCreate.origin();
+        String rpId = relyingPartyIdUtils.determineRelyingPartyId(origin, rp.id());
+        rp = rp.withId(rpId);
 
         CollectedClientData collectedClientData =
                 CollectedClientData.create(CLIENT_DATA_TYPE_CREATE, options.challenge(), credentialCreate.origin(), "SHA-256");

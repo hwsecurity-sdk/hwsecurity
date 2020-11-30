@@ -1,6 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
-apply plugin: 'org.jetbrains.dokka-android'
+apply plugin: 'org.jetbrains.dokka'
 
 dependencies {
     api project(':hwsecurity:core')
@@ -86,10 +86,21 @@ afterEvaluate {
     }
 }
 
-dokka {
-    moduleName = 'hwsecurity-ssh'
-    outputFormat = "hugo"
-    outputDirectory = "$projectDir/../../hwsecurity.dev/content/reference"
-    sourceDirs = files('src/main/java')
-}
+dokkaHugo {
+    configure {
+        outputDirectory.set(file("$projectDir/../../hwsecurity.dev/content/reference"))
 
+        dokkaSourceSets {
+            register("java") {
+                moduleDisplayName.set("hwsecurity-ssh")
+
+                sourceRoots.setFrom(file("src/main/java"))
+
+                jdkVersion.set(8) // Used for linking to JDK documentation
+                noStdlibLink.set(false) // Disable linking to online kotlin-stdlib documentation
+                noJdkLink.set(true) // Disable linking to online JDK documentation
+                noAndroidSdkLink.set(false) // Disable linking to online Android documentation
+            }
+        }
+    }
+}

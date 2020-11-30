@@ -28,8 +28,6 @@ package de.cotech.hw.fido2.internal.operations.ctap2;
 import java.io.IOException;
 import java.util.List;
 
-import android.net.Uri;
-
 import de.cotech.hw.fido2.PublicKeyCredential;
 import de.cotech.hw.fido2.PublicKeyCredentialGet;
 import de.cotech.hw.fido2.domain.CollectedClientData;
@@ -56,6 +54,7 @@ import de.cotech.hw.fido2.internal.json.JsonCollectedClientDataSerializer;
 import de.cotech.hw.fido2.internal.operations.WebauthnSecurityKeyOperation;
 import de.cotech.hw.fido2.internal.pinauth.PinProtocolV1;
 import de.cotech.hw.fido2.internal.pinauth.PinToken;
+import de.cotech.hw.fido2.internal.utils.RelyingPartyIdUtils;
 import de.cotech.hw.util.HashUtil;
 import de.cotech.hw.util.HwTimber;
 
@@ -67,14 +66,17 @@ public class AuthenticatorGetAssertionOperation extends
     private final CborPublicKeyCredentialDescriptorParser cborPublicKeyCredentialDescriptorParser;
     private final PinProtocolV1 pinProtocolV1;
     private final JsonCollectedClientDataSerializer jsonCollectedClientDataSerializer;
+    private final RelyingPartyIdUtils relyingPartyIdUtils;
 
     public AuthenticatorGetAssertionOperation(
             CborPublicKeyCredentialDescriptorParser cborPublicKeyCredentialDescriptorParser,
             PinProtocolV1 pinProtocolV1,
-            JsonCollectedClientDataSerializer jsonCollectedClientDataSerializer) {
+            JsonCollectedClientDataSerializer jsonCollectedClientDataSerializer,
+            RelyingPartyIdUtils relyingPartyIdUtils) {
         this.cborPublicKeyCredentialDescriptorParser = cborPublicKeyCredentialDescriptorParser;
         this.pinProtocolV1 = pinProtocolV1;
         this.jsonCollectedClientDataSerializer = jsonCollectedClientDataSerializer;
+        this.relyingPartyIdUtils = relyingPartyIdUtils;
     }
 
     @Override
@@ -140,21 +142,14 @@ public class AuthenticatorGetAssertionOperation extends
     }
 
     public AuthenticatorGetAssertion webauthnCommandToCtap2Command(
-            PublicKeyCredentialGet credentialCreate, PinToken pinToken) throws FidoSecurityError {
-        Uri callerOrigin = Uri.parse(credentialCreate.origin());
-        String effectivedomain = callerOrigin.getHost();
+            PublicKeyCredentialGet credentialGet, PinToken pinToken) throws FidoSecurityError {
+        PublicKeyCredentialRequestOptions options = credentialGet.options();
 
-        PublicKeyCredentialRequestOptions options = credentialCreate.options();
-
-        String rpId = options.rpId();
-        if (rpId == null) {
-            rpId = effectivedomain;
-        } else if (!rpId.equals(effectivedomain)) {
-            throw new FidoSecurityError("Security error: rpId is not a valid subdomain of caller origin!");
-        }
+        String origin = credentialGet.origin();
+        String rpId = relyingPartyIdUtils.determineRelyingPartyId(origin, options.rpId());
 
         CollectedClientData collectedClientData =
-                CollectedClientData.create(CLIENT_DATA_TYPE_GET, options.challenge(), credentialCreate.origin(), "SHA-256");
+                CollectedClientData.create(CLIENT_DATA_TYPE_GET, options.challenge(), origin, "SHA-256");
         String clientDataJson = jsonCollectedClientDataSerializer.clientClientDataToJson(collectedClientData);
         byte[] clientDataHash = HashUtil.sha256(clientDataJson);
 

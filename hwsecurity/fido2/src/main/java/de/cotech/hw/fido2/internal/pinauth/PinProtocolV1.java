@@ -102,7 +102,7 @@ public class PinProtocolV1 {
         } catch (Ctap2Exception e) {
             switch (e.ctapErrorResponse.errorCode()) {
                 case CtapErrorResponse.CTAP2_ERR_PIN_BLOCKED:
-                    throw new FidoClientPinInvalidException(0);
+                    throw new FidoClientPinBlockedException();
                 case CtapErrorResponse.CTAP2_ERR_PIN_INVALID:
                     int retriesLeft = retries - 1;
                     throw new FidoClientPinInvalidException(retriesLeft);

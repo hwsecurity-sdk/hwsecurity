@@ -39,12 +39,13 @@ import de.cotech.hw.fido2.internal.cbor_java.model.Map;
 import de.cotech.hw.fido2.internal.cbor.CborUtils;
 import de.cotech.hw.fido2.internal.cose.CoseIdentifiers.CoseAlg;
 import de.cotech.hw.util.Arrays;
+import de.cotech.hw.util.HwTimber;
 
 
 public class CosePublicKeyUtils {
     private static final int X962_UNCOMPRESSED = 0x04;
 
-    public static byte[] encodex962PublicKeyAsCose(byte[] publicKey) throws IOException {
+    public static byte[] encodex962PublicKeyAsCose(byte[] publicKey, CoseAlg algorithm) throws IOException {
         if (publicKey.length != 65) {
             throw new IOException("Invalid length for X9.62 public key!");
         }
@@ -56,7 +57,7 @@ public class CosePublicKeyUtils {
         List<DataItem> coseKeyCbor = new CborBuilder()
                 .addMap()
                     .put(CoseIdentifiers.KTY, CoseIdentifiers.KTY_EC2)
-                    .put(CoseIdentifiers.ALG, CoseAlg.ES256.cborLabel)
+                    .put(CoseIdentifiers.ALG, algorithm.cborLabel)
                     .put(CoseIdentifiers.CRV, CoseIdentifiers.CRV_P256)
                     .put(CoseIdentifiers.X, new ByteString(x))
                     .put(CoseIdentifiers.Y, new ByteString(y))
@@ -90,7 +91,9 @@ public class CosePublicKeyUtils {
             throw new IOException("Unexpected kty value. Expected " + CoseIdentifiers.KTY_EC2 + ", got " + kty);
         }
         DataItem alg = map.get(CoseIdentifiers.ALG);
-        if (!CoseAlg.ECDH_ES_w_HKDF_256.cborLabel.equals(alg) && !CoseAlg.ES256.cborLabel.equals(alg)) {
+        if (CoseAlg.ES256.cborLabel.equals(alg)) {
+            HwTimber.w("Received pinAuth algorithm ES256. This is rare, trying to force ECDH_ES_w_HKDF_256 instead");
+        } else if (!CoseAlg.ECDH_ES_w_HKDF_256.cborLabel.equals(alg)) {
             throw new IOException("Unexpected alg value. Expected " + CoseAlg.ES256.cborLabel + " or " + CoseAlg.ECDH_ES_w_HKDF_256.cborLabel + ", got " + alg);
         }
         DataItem crv = map.get(CoseIdentifiers.CRV);

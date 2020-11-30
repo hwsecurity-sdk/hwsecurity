@@ -139,6 +139,17 @@ public class NfcTagManager {
         return new NfcMonitorThread(managedNfcTag);
     }
 
+    @AnyThread
+    public void clearManagedNfcTags() {
+        HwTimber.d("Clearing NFC managed tags");
+        synchronized (managedNfcTags) {
+            for (ManagedNfcTag managedNfcTag : managedNfcTags.values()) {
+                managedNfcTag.clearActiveNfcTransport();
+            }
+            managedNfcTags.clear();
+        }
+    }
+
     @WorkerThread
     private void onNfcTagLost(Tag nfcTag) {
         HwTimber.d("Lost NFC tag");

@@ -42,9 +42,10 @@ import de.cotech.hw.util.HwTimber;
  * A pseudo-activity used in the USB dispatching process.
  * <p>
  * This class is optional, and shipped as an extra library (see below). If included, the App will be registered for
- * dispatching security keys connected via USB. <b>Without this, the app will be unable to persist permission to access
- * a USB security key.</b> To avoid asking the user for permission every time a USB security key connects, it is
- * recommended to include this class.
+ * dispatching security keys connected via USB. This has two effects:
+ *  - Firstly, it allows the user to give persistent for the App to access a Security Key. That way, permission doesn't
+ *    have to be requested for access every time a Security Key is connected.
+ *  - Secondly, the user will be offered to open this App when they connect a Security Key.
  * <p>
  * This is an internal class used for discovering USB security keys through the intent dispatch mechanism. It
  * should never be used directly, but automatically supplements the discovery mechanism in {@link SecurityKeyManager}.

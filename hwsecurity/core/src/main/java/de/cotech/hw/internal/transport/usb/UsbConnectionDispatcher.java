@@ -58,7 +58,9 @@ public class UsbConnectionDispatcher {
         this.usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
         this.disableUsbPermissionFallback = disableUsbPermissionFallback;
 
-        intentFilter = new IntentFilter(ACTION_USB);
+        intentFilter = new IntentFilter();
+        intentFilter.addAction(ACTION_USB);
+        intentFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
     }
 
     private final BroadcastReceiver usbBroadcastReceiver = new BroadcastReceiver() {
@@ -71,10 +73,21 @@ public class UsbConnectionDispatcher {
             }
             HwTimber.d("Callback: %s", intent);
 
-            if (ACTION_USB.equals(action)) {
-                usbDeviceRequestedPermissions = null;
-                UsbDevice usbDevice = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                handleConnectedUsbDevice(usbDevice, false);
+            switch (action) {
+                case ACTION_USB: {
+                    usbDeviceRequestedPermissions = null;
+                    UsbDevice usbDevice = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    handleConnectedUsbDevice(usbDevice, false);
+                    return;
+                }
+                case UsbManager.ACTION_USB_DEVICE_ATTACHED: {
+                    UsbDevice usbDevice = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    if (usbDevice == null) {
+                        HwTimber.e("Missing EXTRA_DEVICE in Intent!");
+                        return;
+                    }
+                    handleConnectedUsbDevice(usbDevice, true);
+                }
             }
         }
     };
@@ -109,12 +122,12 @@ public class UsbConnectionDispatcher {
     }
 
     @UiThread
-    public void onResume() {
+    public void onActive() {
         context.registerReceiver(usbBroadcastReceiver, intentFilter);
     }
 
     @UiThread
-    public void onPause() {
+    public void onInactive() {
         context.unregisterReceiver(usbBroadcastReceiver);
     }
 

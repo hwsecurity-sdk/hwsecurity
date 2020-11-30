@@ -6,6 +6,7 @@ import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 
+import de.cotech.hw.fido2.internal.cose.CoseIdentifiers.CoseAlg;
 import de.cotech.hw.fido2.internal.cose.CosePublicKeyUtils;
 import de.cotech.hw.fido2.internal.crypto.P256;
 import de.cotech.hw.util.Hex;
@@ -58,7 +59,7 @@ public class PinAuthCryptoUtilTest {
 
     @Test
     public void publicKeyFromCosePublicKey_to_cosePublicKeyFromPublicKey() throws IOException {
-        byte[] cosePublicKey = CosePublicKeyUtils.encodex962PublicKeyAsCose(EC_PUB);
+        byte[] cosePublicKey = CosePublicKeyUtils.encodex962PublicKeyAsCose(EC_PUB, CoseAlg.ECDH_ES_w_HKDF_256);
 
         PublicKey publicKey = pinAuthCryptoUtil.publicKeyFromCosePublicKey(cosePublicKey);
         byte[] cosePublicKey2 = pinAuthCryptoUtil.cosePublicKeyFromPublicKey(publicKey);
@@ -70,7 +71,7 @@ public class PinAuthCryptoUtilTest {
     public void generateSharedSecret() throws Exception {
         PrivateKey platformPrivateKey = P256.deserializePrivateKey(EC_PRIV);
 
-        byte[] cosePublicKey = CosePublicKeyUtils.encodex962PublicKeyAsCose(DEV_PUB);
+        byte[] cosePublicKey = CosePublicKeyUtils.encodex962PublicKeyAsCose(DEV_PUB, CoseAlg.ECDH_ES_w_HKDF_256);
         PublicKey authenticatorPublicKey = pinAuthCryptoUtil.publicKeyFromCosePublicKey(cosePublicKey);
 
         byte[] secret = pinAuthCryptoUtil.generateSharedSecret(platformPrivateKey, authenticatorPublicKey);

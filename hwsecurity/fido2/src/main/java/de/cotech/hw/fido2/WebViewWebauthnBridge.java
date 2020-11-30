@@ -30,6 +30,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -44,6 +45,7 @@ import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
+
 import de.cotech.hw.fido2.domain.create.PublicKeyCredentialCreationOptions;
 import de.cotech.hw.fido2.domain.get.PublicKeyCredentialRequestOptions;
 import de.cotech.hw.fido2.internal.json.JsonPublicKeyCredentialSerializer;
@@ -54,6 +56,7 @@ import de.cotech.hw.fido2.ui.WebauthnDialogFragment.OnGetAssertionCallback;
 import de.cotech.hw.fido2.ui.WebauthnDialogFragment.OnMakeCredentialCallback;
 import de.cotech.hw.fido2.ui.WebauthnDialogOptions;
 import de.cotech.hw.util.HwTimber;
+
 import org.json.JSONException;
 
 import de.cotech.hw.ui.R;
@@ -81,25 +84,39 @@ public class WebViewWebauthnBridge {
     private JsonPublicKeyCredentialSerializer jsonPublicKeyCredentialSerializer =
             new JsonPublicKeyCredentialSerializer();
 
+    /**
+     * Create an instance of the bridge from an activity and attach it to a WebView.
+     */
     @SuppressWarnings("unused") // public API
     public static WebViewWebauthnBridge createInstanceForWebView(AppCompatActivity activity, WebView webView) {
         return createInstanceForWebView(activity.getApplicationContext(), activity.getSupportFragmentManager(), webView, null);
     }
 
     /**
-     * Same as createInstanceForWebView, but allows to set WebauthnDialogOptions.Builder.
+     * Create an instance of the bridge from an activity and attach it to a WebView. Additional options can be set to configure the
+     * dialog using WebauthnDialogOptions.Builder.
      * <p>
-     * Note: Timeout and Title will be overwritten.
+     * Note: The options timeout and title will be overwritten by the bridge.
      */
     @SuppressWarnings("unused") // public API
     public static WebViewWebauthnBridge createInstanceForWebView(AppCompatActivity activity, WebView webView, WebauthnDialogOptions.Builder optionsBuilder) {
         return createInstanceForWebView(activity.getApplicationContext(), activity.getSupportFragmentManager(), webView, optionsBuilder);
     }
 
+    /**
+     * Create an instance of the bridge from anywhere using a FragmentManager and attach it to a WebView.
+     */
+    @SuppressWarnings("unused") // public API
     public static WebViewWebauthnBridge createInstanceForWebView(Context context, FragmentManager fragmentManager, WebView webView) {
         return createInstanceForWebView(context, fragmentManager, webView, null);
     }
 
+    /**
+     * Create an instance of the bridge from anywhere using a FragmentManager and attach it to a WebView. Additional options can be set to configure the
+     * dialog using WebauthnDialogOptions.Builder.
+     * <p>
+     * Note: The options timeout and title will be overwritten by the bridge.
+     */
     @SuppressWarnings("WeakerAccess") // public API
     public static WebViewWebauthnBridge createInstanceForWebView(Context context, FragmentManager fragmentManager, WebView webView, WebauthnDialogOptions.Builder optionsBuilder) {
         Context applicationContext = context.getApplicationContext();
@@ -118,6 +135,7 @@ public class WebViewWebauthnBridge {
         this.optionsBuilder = optionsBuilder;
     }
 
+    @SuppressLint("AddJavascriptInterface")
     private void addJavascriptInterfaceToWebView() {
         webView.addJavascriptInterface(new JsInterface(), WEBAUTHN_BRIDGE_INTERFACE);
     }
@@ -155,8 +173,7 @@ public class WebViewWebauthnBridge {
      * Call this in your WebViewClient.shouldInterceptRequest(WebView view, WebResourceRequest request)
      */
     @TargetApi(VERSION_CODES.LOLLIPOP)
-    @SuppressWarnings("unused")
-    // parity with WebViewClient.shouldInterceptRequest(WebView view, WebResourceRequest request)
+    @SuppressWarnings("unused") // public API
     public void delegateShouldInterceptRequest(WebView view, WebResourceRequest request) {
         HwTimber.d("shouldInterceptRequest(WebView view, WebResourceRequest request) %s", request.getUrl());
         injectOnInterceptRequest();
@@ -166,14 +183,16 @@ public class WebViewWebauthnBridge {
      * Call this in your WebViewClient.shouldInterceptRequest(WebView view, String url)
      */
     @TargetApi(VERSION_CODES.KITKAT)
-    @SuppressWarnings("unused")
-    // parity with WebViewClient.shouldInterceptRequest(WebView view, String url)
+    @SuppressWarnings("unused") // public API
     public void delegateShouldInterceptRequest(WebView view, String url) {
         HwTimber.d("shouldInterceptRequest(WebView view, String url): %s", url);
         injectOnInterceptRequest();
     }
 
-    @SuppressWarnings("unused") // parity with WebViewClient.onPageStarted
+    /**
+     * Call this in your WebViewClient.onPageStarted(WebView view, String url, Bitmap favicon)
+     */
+    @SuppressWarnings("unused") // public API
     public void delegateOnPageStarted(WebView view, String url, Bitmap favicon) {
         this.currentOrigin = null;
         this.loadingNewPage = false;
@@ -324,6 +343,7 @@ public class WebViewWebauthnBridge {
         webView.evaluateJavascript(javascript, null);
     }
 
+    @Deprecated
     public void setForceU2f(boolean forceU2f) {
         optionsBuilder.setForceU2f(forceU2f);
     }

@@ -30,6 +30,8 @@ import java.util.List;
 import de.cotech.hw.fido2.internal.cbor_java.CborBuilder;
 import de.cotech.hw.fido2.internal.cbor_java.CborException;
 import de.cotech.hw.fido2.internal.cbor_java.model.DataItem;
+import de.cotech.hw.fido2.internal.cbor_java.model.Map;
+
 
 public class CborCtap1AttestationStatementUtil {
     public static byte[] toAttestionStatement(byte[] x509certificate, byte[] signature) {
@@ -43,6 +45,16 @@ public class CborCtap1AttestationStatementUtil {
                 .end()
                 .build();
             return CborUtils.writeCborDataToBytes(dataItems);
+        } catch (CborException e) {
+            // this operation will always work
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static byte[] emptyAttestationStatement() {
+        try {
+            Map map = new Map();
+            return CborUtils.writeCborDataToBytes(map);
         } catch (CborException e) {
             // this operation will always work
             throw new IllegalStateException(e);

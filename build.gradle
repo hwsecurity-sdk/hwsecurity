@@ -1,3 +1,5 @@
+import org.jetbrains.dokka.gradle.DokkaTask
+
 buildscript {
     repositories {
         google()
@@ -5,8 +7,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.0'
-        classpath 'org.jetbrains.dokka:dokka-android-gradle-plugin:0.9.17'
+        classpath 'com.android.tools.build:gradle:4.0.1'
+        classpath 'org.jetbrains.dokka:dokka-gradle-plugin:1.4.0'
     }
 }
 
@@ -15,9 +17,16 @@ allprojects {
         google()
         jcenter()
     }
+
+    // custom dokka format
+    tasks.register("dokkaHugo", DokkaTask) {
+        dependencies {
+            dokkaHugoPlugin 'com.github.cotechde:dokka-hugo-plugin:d053c16110'
+        }
+    }
 }
 
 ext {
     compileSdkVersion = 29
-    hwSdkVersionName = '4.1.0'
+    hwSdkVersionName = '4.1.4'
 }

@@ -31,8 +31,6 @@ import de.cotech.hw.exceptions.ConditionsNotSatisfiedException;
 
 
 public class FidoPresenceRequiredException extends ConditionsNotSatisfiedException {
-    public static final int SW_TEST_OF_USER_PRESENCE_REQUIRED = SW_CONDITIONS_NOT_SATISFIED;
-
     @RestrictTo(Scope.LIBRARY_GROUP)
     public FidoPresenceRequiredException() {
         super("Security Key returned error, user presence is required for this operation");

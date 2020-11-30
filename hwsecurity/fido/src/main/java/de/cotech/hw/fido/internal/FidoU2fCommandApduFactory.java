@@ -66,7 +66,7 @@ public class FidoU2fCommandApduFactory {
 
     @NonNull
     public CommandApdu createRegistrationCommand(byte[] data) {
-        return CommandApdu.create(CLA, U2F_REGISTER, U2F_AUTHENTICATE_P1_ENFORCE_USER_PRESENCE_AND_SIGN, P2_EMPTY, data).withDescriber(DESCRIBER);
+        return CommandApdu.create(CLA, U2F_REGISTER, P1_EMPTY, P2_EMPTY, data).withDescriber(DESCRIBER);
     }
 
     @NonNull

@@ -31,6 +31,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -89,25 +90,39 @@ public class WebViewFidoBridge {
     private String currentLoadedHost;
     private boolean loadingNewPage;
 
+    /**
+     * Create an instance of the bridge from an activity and attach it to a WebView.
+     */
     @SuppressWarnings("unused") // public API
     public static WebViewFidoBridge createInstanceForWebView(AppCompatActivity activity, WebView webView) {
         return createInstanceForWebView(activity.getApplicationContext(), activity.getSupportFragmentManager(), webView, null);
     }
 
     /**
-     * Same as createInstanceForWebView, but allows to set FidoDialogOptions.
+     * Create an instance of the bridge from an activity and attach it to a WebView. Additional options can be set to configure the
+     * dialog using FidoDialogOptions.Builder.
      * <p>
-     * Note: Timeout and Title will be overwritten.
+     * Note: The options timeout and title will be overwritten by the bridge.
      */
     @SuppressWarnings("unused") // public API
     public static WebViewFidoBridge createInstanceForWebView(AppCompatActivity activity, WebView webView, FidoDialogOptions.Builder optionsBuilder) {
         return createInstanceForWebView(activity.getApplicationContext(), activity.getSupportFragmentManager(), webView, optionsBuilder);
     }
 
+    /**
+     * Create an instance of the bridge from anywhere using a FragmentManager and attach it to a WebView.
+     */
+    @SuppressWarnings("unused") // public API
     public static WebViewFidoBridge createInstanceForWebView(Context context, FragmentManager fragmentManager, WebView webView) {
         return createInstanceForWebView(context, fragmentManager, webView, null);
     }
 
+    /**
+     * Create an instance of the bridge from anywhere using a FragmentManager and attach it to a WebView. Additional options can be set to configure the
+     * dialog using FidoDialogOptions.Builder.
+     * <p>
+     * Note: The options timeout and title will be overwritten by the bridge.
+     */
     @SuppressWarnings("WeakerAccess") // public API
     public static WebViewFidoBridge createInstanceForWebView(Context context, FragmentManager fragmentManager, WebView webView, FidoDialogOptions.Builder optionsBuilder) {
         Context applicationContext = context.getApplicationContext();
@@ -125,6 +140,7 @@ public class WebViewFidoBridge {
         this.optionsBuilder = optionsBuilder;
     }
 
+    @SuppressLint("AddJavascriptInterface")
     private void addJavascriptInterfaceToWebView() {
         webView.addJavascriptInterface(new JsInterface(), FIDO_BRIDGE_INTERFACE);
     }
@@ -150,8 +166,7 @@ public class WebViewFidoBridge {
      * Call this in your WebViewClient.shouldInterceptRequest(WebView view, WebResourceRequest request)
      */
     @TargetApi(VERSION_CODES.LOLLIPOP)
-    @SuppressWarnings("unused")
-    // parity with WebViewClient.shouldInterceptRequest(WebView view, WebResourceRequest request)
+    @SuppressWarnings("unused") // public API
     public void delegateShouldInterceptRequest(WebView view, WebResourceRequest request) {
         HwTimber.d("shouldInterceptRequest(WebView view, WebResourceRequest request) %s", request.getUrl());
         injectOnInterceptRequest();
@@ -161,14 +176,16 @@ public class WebViewFidoBridge {
      * Call this in your WebViewClient.shouldInterceptRequest(WebView view, String url)
      */
     @TargetApi(VERSION_CODES.KITKAT)
-    @SuppressWarnings("unused")
-    // parity with WebViewClient.shouldInterceptRequest(WebView view, String url)
+    @SuppressWarnings("unused") // public API
     public void delegateShouldInterceptRequest(WebView view, String url) {
         HwTimber.d("shouldInterceptRequest(WebView view, String url): %s", url);
         injectOnInterceptRequest();
     }
 
-    @SuppressWarnings("unused") // parity with WebViewClient.onPageStarted
+    /**
+     * Call this in your WebViewClient.onPageStarted(WebView view, String url, Bitmap favicon)
+     */
+    @SuppressWarnings("unused") // public API
     public void delegateOnPageStarted(WebView view, String url, Bitmap favicon) {
         this.currentLoadedHost = null;
         this.loadingNewPage = false;

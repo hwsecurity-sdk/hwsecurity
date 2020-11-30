@@ -34,4 +34,8 @@ public class InsNotSupportedException extends SecurityKeyException {
     public InsNotSupportedException() {
         super("INS_NOT_SUPPORTED", SW_INS_NOT_SUPPORTED);
     }
+
+    public InsNotSupportedException(String longErrorMessage) {
+        super(longErrorMessage, "INS_NOT_SUPPORTED", SW_INS_NOT_SUPPORTED);
+    }
 }

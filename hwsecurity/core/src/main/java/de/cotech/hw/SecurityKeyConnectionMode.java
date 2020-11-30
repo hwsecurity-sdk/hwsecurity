@@ -39,4 +39,7 @@ public abstract class SecurityKeyConnectionMode<T extends SecurityKey> {
     protected abstract boolean isRelevantTransport(Transport transport);
     @AnyThread
     protected abstract boolean isRelevantSecurityKey(SecurityKey securityKey);
+
+    @AnyThread
+    protected void clearSentryTags() { }
 }

@@ -35,6 +35,7 @@ import de.cotech.hw.fido2.internal.async.Fido2AsyncOperationManager;
 import de.cotech.hw.fido2.internal.operations.WebauthnSecurityKeyOperationFactory;
 import de.cotech.hw.fido2.internal.pinauth.PinAuthCryptoUtil;
 import de.cotech.hw.fido2.internal.pinauth.PinProtocolV1;
+import de.cotech.hw.internal.HwSentry;
 import de.cotech.hw.internal.transport.SecurityKeyInfo.TransportType;
 import de.cotech.hw.internal.transport.Transport;
 
@@ -87,5 +88,10 @@ public class Fido2SecurityKeyConnectionMode extends SecurityKeyConnectionMode<Fi
     @Override
     protected boolean isRelevantSecurityKey(SecurityKey securityKey) {
         return securityKey instanceof Fido2SecurityKey;
+    }
+
+    @Override
+    protected void clearSentryTags() {
+        HwSentry.removeTag(Fido2AppletConnection.SENTRY_TAG_FIDO2_AAGUID);
     }
 }

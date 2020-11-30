@@ -34,6 +34,8 @@ import de.cotech.hw.fido.exceptions.FidoPresenceRequiredException;
 import de.cotech.hw.fido.internal.FidoU2fAppletConnection;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
+import de.cotech.hw.util.Arrays;
+
 
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class RegisterOp {
@@ -85,10 +87,6 @@ public class RegisterOp {
      * The application parameter [32 bytes]
      */
     private byte[] prepareData(byte[] challengeParam, byte[] applicationParam) {
-        byte[] data = new byte[32 + 32];
-        System.arraycopy(challengeParam, 0, data, 0, 32);
-        System.arraycopy(applicationParam, 0, data, 32, 32);
-
-        return data;
+        return Arrays.concatenate(challengeParam, applicationParam);
     }
 }

@@ -54,11 +54,10 @@ import de.cotech.hw.SecurityKeyManager;
  * <p>
  * Example:
  * <p>
- * <pre>{@code
+ * <pre>
  * public class NfcActionActivity extends AppCompatActivity {
  *     private NfcStatusObserver nfcStatusObserver;
  *
- *     @Override
  *     protected void onCreate(@Nullable Bundle savedInstanceState) {
  *         super.onCreate(savedInstanceState);
  *
@@ -82,14 +81,13 @@ import de.cotech.hw.SecurityKeyManager;
  *         startActivity(new Intent(android.provider.Settings.ACTION_NFC_SETTINGS));
  *     }
  *
- *     @Override
  *     protected void onResume() {
  *         super.onResume();
  *         // In case we missed a change while the activity was in the background
  *         showOrHideNfcDisabledView(nfcStatusObserver.isNfcEnabled());
  *     }
  * }
- * }</pre>
+ * </pre>
  *
  */
 public class NfcStatusObserver implements LifecycleObserver {

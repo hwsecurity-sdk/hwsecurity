@@ -47,7 +47,7 @@ import javax.crypto.spec.SecretKeySpec;
 /**
  * An {@link OutputStream} that encrypts data with a {@link ByteSecret}.
  *
- * <pre>{@code
+ * <pre>
  * ByteSecret secret = SecretGenerator.getInstance().createRandom(32);
  * EncryptingFileOutputStream efos = new EncryptingFileOutputStream(new File("filename.encrypted"), secret);
  * try {
@@ -62,7 +62,7 @@ import javax.crypto.spec.SecretKeySpec;
  * } finally {
  *     reader.close();
  * }
- * }</pre>
+ * </pre>
  * <p>
  *
  * Internally, this uses AES-GCM for authenticated encryption. The randomly generated nonce is stored as part of the file.

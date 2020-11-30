@@ -53,6 +53,7 @@ import androidx.lifecycle.Lifecycle.Event;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.OnLifecycleEvent;
+import de.cotech.hw.internal.HwSentry;
 import de.cotech.hw.internal.dispatch.UsbIntentDispatchActivity;
 import de.cotech.hw.internal.transport.Transport;
 import de.cotech.hw.internal.transport.nfc.NfcConnectionDispatcher;
@@ -73,23 +74,23 @@ import de.cotech.hw.util.HwTimber.DebugTree;
  * Once initialized, this class will dispatch newly connected security keys to all currently registered listeners.
  * Listeners can be registered with {@link #registerCallback}.
  * <p>
- * <pre>{@code
+ * <pre>
  * public void onCreate() {
  *     super.onCreate();
  *     SecurityKeyManager securityKeyManager = SecurityKeyManager.getInstance();
  *     securityKeyManager.init(this);
  * }
- * }</pre>
+ * </pre>
  * <p>
  * A callback is registered together with a {@link SecurityKeyConnectionMode}, which establishes a
- * connection to a particular type of Security Token, such as FIDO, PIV, or OpenPGP.  Implementations
- * for different SecurityKeyConnectionModes are shipped as modules, such as :de.cotech:hwsecurity-fido:,
- * :de.cotech:hwsecurity-piv:, and :de.cotech:hwsecurity-openpgp:. Apps will typically use only a
- * single type of Security Key.
+ * connection to a particular type of Security Token, such as FIDO2, FIDO, PIV, or OpenPGP.
+ * Implementations for different SecurityKeyConnectionModes are shipped as artifacts,
+ * such as hwsecurity-fido2, hwsecurity-fido, hwsecurity-piv, and hwsecurity-openpgp.
+ * Apps will typically use only a single type of Security Key.
  * <p>
  * To receive callbacks in an Activity, register for a callback bound to the Activity's lifecycle:
  * <p>
- * <pre>{@code
+ * <pre>
  * public void onCreate() {
  *     super.onResume();
  *     FidoSecurityKeyConnectionMode connectionMode = new FidoSecurityKeyConnectionMode();
@@ -98,7 +99,7 @@ import de.cotech.hw.util.HwTimber.DebugTree;
  * public void onSecurityKeyDiscovered(FidoSecurityKey securityKey) {
  *     // perform operations on FidoSecurityKey
  * }
- * }</pre>
+ * </pre>
  * <p>
  * Advanced applications that want to work with different applets on the same connected Security Key
  * can do so using {@link de.cotech.hw.raw.RawSecurityKeyConnectionMode}.
@@ -178,6 +179,8 @@ public class SecurityKeyManager {
             HwTimber.plant(loggingTree);
         }
 
+        HwSentry.initializeIfAvailable(config);
+
         if (config.isEnableDebugLogging() && HwTimber.treeCount() == 0) {
             HwTimber.plant(new DebugTree() {
                 @Override
@@ -238,6 +241,8 @@ public class SecurityKeyManager {
         private Activity boundActivity;
         private UsbConnectionDispatcher activeUsbDispatcher;
         private NfcConnectionDispatcher activeNfcDispatcher;
+        private boolean isResumed;
+        private boolean isActive;
 
         private void bindToActivity(Activity activity) {
             if (isUsbDispatchActivity(activity)) {
@@ -274,29 +279,58 @@ public class SecurityKeyManager {
             boundActivity = null;
         }
 
-        @Override
-        public void onActivityResumed(Activity activity) {
-            bindToActivity(activity);
+        private void refreshActiveState() {
+            if (boundActivity == null) {
+                return;
+            }
+            boolean isActive = isResumed && (!config.isDisableWhileInactive() || !registeredCallbacks.isEmpty());
+            if (isActive) {
+                ensureStateActive();
+            } else {
+                ensureStateInactive();
+            }
+        }
+
+        private void ensureStateActive() {
+            if (isActive) {
+                return;
+            }
+            isActive = true;
+            HwTimber.d("Switching hwsecurity state to active");
             if (activeUsbDispatcher != null) {
-                activeUsbDispatcher.onResume();
+                activeUsbDispatcher.onActive();
             }
             if (activeNfcDispatcher != null) {
-                activeNfcDispatcher.onResume();
+                activeNfcDispatcher.onActive();
             }
             postTriggerCallbacksActively();
         }
 
-        @Override
-        public void onActivityPaused(Activity activity) {
-            if (boundActivity != activity) {
+        private void ensureStateInactive() {
+            if (!isActive) {
                 return;
             }
+            isActive = false;
+            HwTimber.d("Switching hwsecurity state to inactive");
             if (activeUsbDispatcher != null) {
-                activeUsbDispatcher.onPause();
+                activeUsbDispatcher.onInactive();
             }
             if (activeNfcDispatcher != null) {
-                activeNfcDispatcher.onPause();
+                activeNfcDispatcher.onInactive();
             }
+        }
+
+        @Override
+        public void onActivityResumed(Activity activity) {
+            bindToActivity(activity);
+            isResumed = true;
+            refreshActiveState();
+        }
+
+        @Override
+        public void onActivityPaused(Activity activity) {
+            isResumed = false;
+            refreshActiveState();
         }
 
         @Override
@@ -424,6 +458,7 @@ public class SecurityKeyManager {
         RegisteredConnectionMode<T> registeredConnectionMode = new RegisteredConnectionMode<>(mode, callback, false);
         lifecycleOwner.getLifecycle().addObserver(registeredConnectionMode);
         registeredCallbacks.add(0, registeredConnectionMode);
+        activityLifecycleCallbacks.refreshActiveState();
 
         postTriggerCallbacksActively();
     }
@@ -439,6 +474,7 @@ public class SecurityKeyManager {
             throw new IllegalStateException("SecurityKeyManager must be initialized in your Application class!");
         }
         registeredCallbacks.add(0, new RegisteredConnectionMode<>(mode, callback, true));
+        activityLifecycleCallbacks.refreshActiveState();
     }
 
     @SuppressWarnings("WeakerAccess") // public API
@@ -461,6 +497,24 @@ public class SecurityKeyManager {
     @AnyThread
     public void rediscoverConnectedSecurityKeys() {
         postTriggerCallbacksActively();
+    }
+
+    /**
+     * This method clears and releases all connected security keys.
+     *
+     * Calling this method will clear the managed state of all persistently connected Security Keys.
+     * This operation should not be called during regular operation, since all managed devices (NFC
+     * and USB) are automatically cleaned up when they are disconnected. However, it may still be
+     * useful to clear managed state in order to rediscover a connected Security Key with a different
+     * SecurityKeyConnectionMode.
+     *
+     * This method is not part of the public API.
+     */
+    @AnyThread
+    @RestrictTo(Scope.LIBRARY_GROUP)
+    public void clearConnectedSecurityKeys() {
+        nfcTagManager.clearManagedNfcTags();
+        usbDeviceManager.clearManagedUsbDevices();
     }
 
     /**
@@ -549,11 +603,18 @@ public class SecurityKeyManager {
 
         @UiThread
         boolean maybeRedeliverSecurityKey(SecurityKey securityKeyCandidate) {
-            if (!isBoundForever && isActive && postponedTransport == null &&
-                    connectionMode.isRelevantSecurityKey(securityKeyCandidate)) {
-                // noinspection unchecked, this is checked with isRelevantSecurityKey
-                deliverDiscover((T) securityKeyCandidate);
-                return true;
+            if (!isBoundForever && isActive && postponedTransport == null) {
+                if (connectionMode.isRelevantSecurityKey(securityKeyCandidate)) {
+                    // noinspection unchecked, this is checked with isRelevantSecurityKey
+                    deliverDiscover((T) securityKeyCandidate);
+                    return true;
+                } else {
+                    HwTimber.d(
+                            "Connected Security Key of type %s doesn't match SecurityKeyConnectionMode %s",
+                            securityKeyCandidate.getClass().getSimpleName(),
+                            connectionMode.getClass().getSimpleName());
+                    return false;
+                }
             }
             return false;
         }
@@ -566,6 +627,9 @@ public class SecurityKeyManager {
                 if (securityKey == null) {
                     return false;
                 }
+                HwSentry.addBreadcrumb("Connected security key of type %s on transport %s",
+                        securityKey.getClass().getSimpleName(),
+                        securityKey.transport.getTransportType());
             } catch (IOException e) {
                 callbackHandlerMain.post(() -> {
                     if (!isActive) {
@@ -602,6 +666,12 @@ public class SecurityKeyManager {
 
         @AnyThread
         private void handleTransportRelease(T securityKey) {
+            HwSentry.addBreadcrumb("Released security key of type %s on transport %s",
+                    securityKey.getClass().getSimpleName(),
+                    securityKey.transport.getTransportType());
+            // Clear tags that may have been added by us while this Security Key was active
+            connectionMode.clearSentryTags();
+
             persistentSecurityKeys.remove(securityKey);
 
             boolean isNfcTransport = securityKey.transport instanceof NfcTransport;
@@ -646,6 +716,10 @@ public class SecurityKeyManager {
                     connectionMode.getClass().getSimpleName(), callback.getClass().getSimpleName());
             registeredCallbacks.remove(this);
             postponedTransport = null;
+            if (persistentSecurityKeys.isEmpty()) {
+                connectionMode.clearSentryTags();
+            }
+            activityLifecycleCallbacks.refreshActiveState();
         }
     }
 }

@@ -34,6 +34,7 @@ import de.cotech.hw.fido2.internal.operations.ctap1.AuthenticatorMakeCredentialC
 import de.cotech.hw.fido2.internal.operations.ctap2.AuthenticatorGetAssertionOperation;
 import de.cotech.hw.fido2.internal.operations.ctap2.AuthenticatorMakeCredentialOperation;
 import de.cotech.hw.fido2.internal.pinauth.PinProtocolV1;
+import de.cotech.hw.fido2.internal.utils.RelyingPartyIdUtils;
 import de.cotech.hw.fido2.internal.webauthn.ConstructCredentialAlg;
 import de.cotech.hw.fido2.internal.webauthn.WebauthnCommand;
 import de.cotech.hw.fido2.internal.webauthn.WebauthnResponse;
@@ -46,6 +47,7 @@ public class WebauthnSecurityKeyOperationFactory {
     private static final ConstructCredentialAlg CONSTRUCT_CREDENTIAL_ALG = new ConstructCredentialAlg();
     private static final JsonCollectedClientDataSerializer JSON_COLLECTED_CLIENT_DATA_SERIALIZER =
             new JsonCollectedClientDataSerializer();
+    private static final RelyingPartyIdUtils RELYING_PARTY_ID_UTILS = new RelyingPartyIdUtils();
 
     public WebauthnSecurityKeyOperationFactory(PinProtocolV1 pinProtocolV1) {
         this.pinProtocolV1 = pinProtocolV1;
@@ -88,12 +90,13 @@ public class WebauthnSecurityKeyOperationFactory {
     }
 
     private AuthenticatorMakeCredentialOperation getAuthenticatorMakeCredentialOperation() {
-        return new AuthenticatorMakeCredentialOperation(CONSTRUCT_CREDENTIAL_ALG, pinProtocolV1);
+        return new AuthenticatorMakeCredentialOperation(CONSTRUCT_CREDENTIAL_ALG, pinProtocolV1,
+                RELYING_PARTY_ID_UTILS);
     }
 
     private AuthenticatorGetAssertionOperation getAuthenticatorGetAssertionOperation() {
         return new AuthenticatorGetAssertionOperation(
                 CBOR_PUBLIC_KEY_CREDENTIAL_DESCRIPTOR_PARSER, pinProtocolV1,
-                JSON_COLLECTED_CLIENT_DATA_SERIALIZER);
+                JSON_COLLECTED_CLIENT_DATA_SERIALIZER, RELYING_PARTY_ID_UTILS);
     }
 }

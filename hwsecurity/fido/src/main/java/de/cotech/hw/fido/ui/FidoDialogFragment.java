@@ -60,6 +60,7 @@ import java.io.IOException;
 import de.cotech.hw.SecurityKeyCallback;
 import de.cotech.hw.SecurityKeyException;
 import de.cotech.hw.SecurityKeyManager;
+import de.cotech.hw.exceptions.InsNotSupportedException;
 import de.cotech.hw.exceptions.SecurityKeyDisconnectedException;
 import de.cotech.hw.fido.FidoAuthenticateCallback;
 import de.cotech.hw.fido.FidoAuthenticateRequest;
@@ -69,6 +70,9 @@ import de.cotech.hw.fido.FidoRegisterRequest;
 import de.cotech.hw.fido.FidoRegisterResponse;
 import de.cotech.hw.fido.FidoSecurityKey;
 import de.cotech.hw.fido.FidoSecurityKeyConnectionMode;
+import de.cotech.hw.fido.exceptions.FidoU2fDisabledException;
+import de.cotech.hw.fido.exceptions.FidoU2fNotSupportedException;
+import de.cotech.hw.internal.HwSentry;
 import de.cotech.hw.ui.R;
 import de.cotech.hw.fido.exceptions.FidoWrongKeyHandleException;
 import de.cotech.hw.ui.internal.ErrorView;
@@ -374,9 +378,11 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     }
 
     private void gotoScreen(Screen newScreen) {
+        currentScreen = newScreen;
         switch (newScreen) {
             case START: {
                 animateStart();
+                SecurityKeyManager.getInstance().rediscoverConnectedSecurityKeys();
                 break;
             }
             case NFC_FULLSCREEN: {
@@ -400,7 +406,6 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
                 break;
             }
         }
-        currentScreen = newScreen;
     }
 
     @Override
@@ -539,13 +544,19 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
 
         try {
             throw exception;
+        } catch (FidoU2fNotSupportedException e) {
+            showError(getString(R.string.hwsecurity_fido_error_u2f_not_supported));
+        } catch (FidoU2fDisabledException e) {
+            showError(getString(R.string.hwsecurity_fido_error_u2f_disabled));
         } catch (FidoWrongKeyHandleException e) {
             showError(getString(R.string.hwsecurity_fido_error_wrong_security_key));
         } catch (SecurityKeyException e) {
+            HwSentry.captureException(e);
             showError(getString(R.string.hwsecurity_fido_error_internal, e.getShortErrorName()));
         } catch (SecurityKeyDisconnectedException e) {
             // not handled
         } catch (IOException e) {
+            HwSentry.captureException(e);
             showError(getString(R.string.hwsecurity_fido_error_internal, e.getMessage()));
         }
     }

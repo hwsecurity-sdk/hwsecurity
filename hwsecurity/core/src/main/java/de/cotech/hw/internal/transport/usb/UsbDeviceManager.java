@@ -249,6 +249,17 @@ public class UsbDeviceManager {
         }
     }
 
+    @AnyThread
+    public void clearManagedUsbDevices() {
+        HwTimber.d("Clearing USB managed device state");
+        synchronized (managedUsbDevices) {
+            for (ManagedUsbDevice managedUsbDevice : managedUsbDevices.values()) {
+                managedUsbDevice.clearAllActiveUsbTransports();
+            }
+            managedUsbDevices.clear();
+        }
+    }
+
     @WorkerThread
     private void onUsbDeviceLost(UsbDevice usbDevice) {
         HwTimber.d("Lost USB security key, dropping managed device");

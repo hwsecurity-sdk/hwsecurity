@@ -44,6 +44,7 @@ import de.cotech.hw.fido.internal.async.FidoAuthenticateOperationThread;
 import de.cotech.hw.fido.internal.async.FidoRegisterOperationThread;
 import de.cotech.hw.fido.internal.operations.AuthenticateOp;
 import de.cotech.hw.fido.internal.operations.RegisterOp;
+import de.cotech.hw.internal.HwSentry;
 import de.cotech.hw.internal.transport.Transport;
 import de.cotech.hw.util.HashUtil;
 
@@ -65,6 +66,8 @@ public class FidoSecurityKey extends SecurityKey {
     @WorkerThread
     public FidoRegisterResponse register(FidoRegisterRequest fidoRegisterRequest)
             throws IOException {
+        HwSentry.addBreadcrumb("Performing sync FIDO operation: register");
+
         byte[] challengeParam = HashUtil.sha256(fidoRegisterRequest.getClientData());
         byte[] applicationParam = HashUtil.sha256(fidoRegisterRequest.getAppId());
 
@@ -84,6 +87,7 @@ public class FidoSecurityKey extends SecurityKey {
     @AnyThread
     public void registerAsync(FidoRegisterRequest registerRequest,
             FidoRegisterCallback callback, Handler handler, LifecycleOwner lifecycleOwner) {
+        HwSentry.addBreadcrumb("Performing async FIDO U2F operation: register");
         FidoRegisterOperationThread fidoOperationThread = new FidoRegisterOperationThread(
                 fidoU2fAppletConnection, handler, callback, registerRequest, USER_PRESENCE_CHECK_DELAY_MS);
         fidoAsyncOperationManager.startAsyncOperation(lifecycleOwner, fidoOperationThread);
@@ -92,6 +96,8 @@ public class FidoSecurityKey extends SecurityKey {
     @WorkerThread
     public FidoAuthenticateResponse authenticate(FidoAuthenticateRequest authenticateRequest)
             throws IOException {
+        HwSentry.addBreadcrumb("Performing sync FIDO U2F operation: authenticate");
+
         byte[] challengeParam = HashUtil.sha256(authenticateRequest.getClientData());
         byte[] applicationParam = HashUtil.sha256(authenticateRequest.getAppId());
 
@@ -122,6 +128,7 @@ public class FidoSecurityKey extends SecurityKey {
     @AnyThread
     public void authenticateAsync(FidoAuthenticateRequest authenticateRequest,
             FidoAuthenticateCallback callback, Handler handler, LifecycleOwner lifecycleOwner) {
+        HwSentry.addBreadcrumb("Performing async FIDO U2F operation: authenticate");
         FidoAuthenticateOperationThread fidoOperationThread = new FidoAuthenticateOperationThread(
                 fidoU2fAppletConnection, handler, callback, authenticateRequest, USER_PRESENCE_CHECK_DELAY_MS);
         fidoAsyncOperationManager.startAsyncOperation(lifecycleOwner, fidoOperationThread);

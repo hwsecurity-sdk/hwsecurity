@@ -39,6 +39,7 @@ import androidx.annotation.Keep;
 import androidx.annotation.VisibleForTesting;
 
 import de.cotech.hw.fido2.exceptions.FidoClientPinTooShortException;
+import de.cotech.hw.fido2.internal.cose.CoseIdentifiers.CoseAlg;
 import de.cotech.hw.fido2.internal.cose.CosePublicKeyUtils;
 import de.cotech.hw.fido2.internal.crypto.P256;
 import de.cotech.hw.util.Arrays;
@@ -156,7 +157,7 @@ public class PinAuthCryptoUtil {
     }
 
     public byte[] cosePublicKeyFromPublicKey(PublicKey publicKey) throws IOException {
-        return CosePublicKeyUtils.encodex962PublicKeyAsCose(P256.serializePublicKey(publicKey));
+        return CosePublicKeyUtils.encodex962PublicKeyAsCose(P256.serializePublicKey(publicKey), CoseAlg.ECDH_ES_w_HKDF_256);
     }
 
     public PublicKey publicKeyFromCosePublicKey(byte[] cosePublicKey) throws IOException {

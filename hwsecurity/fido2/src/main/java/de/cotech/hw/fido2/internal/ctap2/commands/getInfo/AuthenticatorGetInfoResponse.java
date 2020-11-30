@@ -31,6 +31,7 @@ import java.util.List;
 import androidx.annotation.Nullable;
 import com.google.auto.value.AutoValue;
 import de.cotech.hw.fido2.internal.ctap2.Ctap2Response;
+import de.cotech.hw.util.Hex;
 
 
 @AutoValue
@@ -40,7 +41,7 @@ public abstract class AuthenticatorGetInfoResponse extends Ctap2Response {
     public abstract List<String> versions();
     public abstract List<String> extensions();
     @SuppressWarnings("mutable")
-    public abstract byte[] aaguid();
+    public abstract String aaguid();
     public abstract AuthenticatorOptions options();
     public abstract int maxMsgSize();
     @Nullable
@@ -54,6 +55,20 @@ public abstract class AuthenticatorGetInfoResponse extends Ctap2Response {
         if (maxMsgSize == null) {
             maxMsgSize = DEFAULT_MAX_MSG_SIZE;
         }
-        return new AutoValue_AuthenticatorGetInfoResponse(versions, extensions, aaguid, options, maxMsgSize, pinProtocols);
+        String guid = guidFromBytes(aaguid);
+        return new AutoValue_AuthenticatorGetInfoResponse(versions, extensions, guid, options, maxMsgSize, pinProtocols);
+    }
+
+    private static String guidFromBytes(byte[] aaguid) {
+        String hex = Hex.encodeHexString(aaguid);
+        return hex.substring(0, 8) +
+                '-' +
+                hex.substring(9, 12) +
+                '-' +
+                hex.substring(13, 16) +
+                '-' +
+                hex.substring(17, 20) +
+                '-' +
+                hex.substring(21, 32);
     }
 }

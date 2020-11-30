@@ -39,7 +39,7 @@ public class RegisterOpTest {
     static final String REGISTER_REPLY_PRESENCE_REQUIRED = "6985";
 
     static final String REGISTER_EXPECTED_CHALLENGE =
-            "0001030040d05cf90f8fb8465872893527acc13581d955240181ffed27ddca92" +
+            "0001000040d05cf90f8fb8465872893527acc13581d955240181ffed27ddca92" +
                     "9a8209b14cabc34b4eb978b911e55240f345649cd3d7e8b583fbe066984d9881" +
                     "f7b5494dcb";
     static final String REGISTER_REPLY_OK =

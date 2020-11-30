@@ -68,6 +68,8 @@ import de.cotech.hw.fido2.Fido2SecurityKeyConnectionModeConfig;
 import de.cotech.hw.fido2.PublicKeyCredential;
 import de.cotech.hw.fido2.PublicKeyCredentialCreate;
 import de.cotech.hw.fido2.PublicKeyCredentialGet;
+import de.cotech.hw.fido2.exceptions.Fido2AndU2fNotSupportedException;
+import de.cotech.hw.internal.HwSentry;
 import de.cotech.hw.ui.R;
 import de.cotech.hw.fido2.WebauthnCallback;
 import de.cotech.hw.fido2.domain.UserVerificationRequirement;
@@ -471,6 +473,7 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
     }
 
     private void gotoScreen(Screen newScreen) {
+        currentScreen = newScreen;
         switch (newScreen) {
             case START_SECURITY_KEY: {
                 animateStart();
@@ -506,7 +509,6 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
                 break;
             }
         }
-        currentScreen = newScreen;
     }
 
     @Override
@@ -666,7 +668,7 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
 
                         @Override
                         public void onIoException(IOException e) {
-                            handleErrorPublicKeyCredentialCreateError(e);
+                            handleExceptionPublicKeyCredentialCreateError(e);
                         }
                     }, this);
         }
@@ -685,41 +687,15 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
 
                         @Override
                         public void onIoException(IOException e) {
-                            handleErrorPublicKeyCredentialGet(e);
+                            handleExceptionPublicKeyCredentialGet(e);
                         }
                     }, this);
         }
     }
 
-    private void handleErrorPublicKeyCredentialGet(IOException exception) {
+    private void handleExceptionPublicKeyCredentialGet(IOException exception) {
         try {
             throw exception;
-        } catch (FidoClientPinNotSetException e) {
-            errorView.setText(R.string.hwsecurity_fido_error_pin_not_set);
-            gotoScreen(Screen.ERROR);
-        } catch (FidoClientPinInvalidException e) {
-            // if invalid pin was given
-            // attempts left in ((FidoClientPinInvalidException) e).retriesLeft
-            // if zero, key is now blocked
-            gotoErrorScreenAndDelayedScreen(getString(R.string.hwsecurity_fido_error_wrong_pin, e.getRetriesLeft()),
-                    Screen.ERROR, Screen.START_ENTER_PIN);
-        } catch (FidoClientPinLastAttemptException e) {
-            // thrown if only one attempt left, but "lastAttemptOk" above was false.
-            // "hold again to make attempt" or something?
-            // alternatively, just set lastAttemptOk to true and don't bother :)
-            // TODO
-        } catch (FidoClientPinBlockedException e) {
-            // fido key was already blocked, and must be reset
-            errorView.setText(R.string.hwsecurity_fido_error_blocked);
-            gotoScreen(Screen.ERROR);
-        } catch (FidoClientPinNotSupportedException e) {
-            // if UV was requested, but not supported by authenticator
-            gotoErrorScreenAndDelayedScreen(getString(R.string.hwsecurity_fido_error_pin_not_supported),
-                    Screen.ERROR, Screen.START_ENTER_PIN_SKIP);
-        } catch (FidoClientPinRequiredException e) {
-            // if UV was requested, but no PIN provided (shouldn't happen)
-            gotoErrorScreenAndDelayedScreen(getString(R.string.hwsecurity_fido_error_pin_required),
-                    Screen.ERROR, Screen.START_ENTER_PIN);
         } catch (FidoResidentKeyNoCredentialException e) {
             // if resident key was requested, but none stored for domain on FIDO key
             gotoErrorScreenAndDelayedScreen(getString(R.string.hwsecurity_fido_error_wrong_security_key),
@@ -728,26 +704,27 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
             // if credential isn't valid (probably means wrong authenticator?)
             gotoErrorScreenAndDelayedScreen(getString(R.string.hwsecurity_fido_error_wrong_security_key),
                     Screen.ERROR, Screen.START_ENTER_PIN_SKIP);
-        } catch (FidoClientPinTooShortException e) {
-            gotoErrorScreenAndDelayedScreen(getString(R.string.hwsecurity_fido_error_pin_too_short),
-                    Screen.ERROR, Screen.START_ENTER_PIN_SKIP);
-        } catch (SecurityKeyException e) {
-            errorView.setText(getString(R.string.hwsecurity_fido_error_internal, e.getShortErrorName()));
-            gotoScreen(Screen.ERROR);
-        } catch (SecurityKeyDisconnectedException e) {
-            // do nothing if we loose connection
         } catch (IOException e) {
-            errorView.setText(getString(R.string.hwsecurity_fido_error_internal, e.getMessage()));
-            gotoScreen(Screen.ERROR);
+            handleExceptionGeneric(e);
         }
     }
 
-    private void handleErrorPublicKeyCredentialCreateError(IOException exception) {
+    private void handleExceptionPublicKeyCredentialCreateError(IOException exception) {
+        handleExceptionGeneric(exception);
+    }
+
+    private void handleExceptionGeneric(IOException exception) {
         try {
             throw exception;
-        } catch (FidoClientPinNotSetException e) {
-            errorView.setText(R.string.hwsecurity_fido_error_pin_not_set);
-            gotoScreen(Screen.ERROR);
+        } catch (FidoClientPinRequiredException e) {
+            // if UV was requested, but no PIN provided.
+            // once a PIN is set, MakeCredential in particular *always* requires it.
+            gotoErrorScreenAndDelayedScreen(getString(R.string.hwsecurity_fido_error_pin_required),
+                    Screen.ERROR, Screen.START_ENTER_PIN);
+        } catch (FidoClientPinNotSupportedException e) {
+            // if UV was requested, but not supported by authenticator
+            gotoErrorScreenAndDelayedScreen(getString(R.string.hwsecurity_fido_error_pin_not_supported),
+                    Screen.ERROR, Screen.START_ENTER_PIN_SKIP);
         } catch (FidoClientPinInvalidException e) {
             // if invalid pin was given
             // attempts left in ((FidoClientPinInvalidException) e).retriesLeft
@@ -759,24 +736,27 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
             // "hold again to make attempt" or something?
             // alternatively, just set lastAttemptOk to true and don't bother :)
             // TODO
+        } catch (FidoClientPinNotSetException e) {
+            errorView.setText(R.string.hwsecurity_fido_error_pin_not_set);
+            gotoScreen(Screen.ERROR);
         } catch (FidoClientPinBlockedException e) {
             // fido key was already blocked, and must be reset
             errorView.setText(R.string.hwsecurity_fido_error_blocked);
             gotoScreen(Screen.ERROR);
-        } catch (FidoClientPinRequiredException e) {
-            // if authenticator has a PIN set, but none was given. once a PIN
-            // is set, MakeCredential *always* requires it.
-            gotoErrorScreenAndDelayedScreen(getString(R.string.hwsecurity_fido_error_pin_required),
-                    Screen.ERROR, Screen.START_ENTER_PIN);
         } catch (FidoClientPinTooShortException e) {
             gotoErrorScreenAndDelayedScreen(getString(R.string.hwsecurity_fido_error_pin_too_short),
                     Screen.ERROR, Screen.START_ENTER_PIN_SKIP);
+        } catch (SecurityKeyDisconnectedException e) {
+            // do nothing if we lose connection
+        } catch (Fido2AndU2fNotSupportedException e) {
+            errorView.setText(R.string.hwsecurity_fido_error_fido2_not_supported);
+            gotoScreen(Screen.ERROR);
         } catch (SecurityKeyException e) {
+            HwSentry.captureException(e);
             errorView.setText(getString(R.string.hwsecurity_fido_error_internal, e.getShortErrorName()));
             gotoScreen(Screen.ERROR);
-        } catch (SecurityKeyDisconnectedException e) {
-            // do nothing if we loose connection
         } catch (IOException e) {
+            HwSentry.captureException(e);
             errorView.setText(getString(R.string.hwsecurity_fido_error_internal, e.getMessage()));
             gotoScreen(Screen.ERROR);
         }
@@ -797,7 +777,7 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
 
     @Override
     public void onSecurityKeyDiscoveryFailed(@NonNull IOException exception) {
-        handleErrorPublicKeyCredentialCreateError(exception);
+        handleExceptionPublicKeyCredentialCreateError(exception);
     }
 
     private void gotoErrorScreenAndDelayedScreen(String text, Screen errorScreen, Screen delayedScreen) {

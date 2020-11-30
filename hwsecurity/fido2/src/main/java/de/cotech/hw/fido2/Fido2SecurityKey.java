@@ -49,6 +49,7 @@ import de.cotech.hw.fido2.internal.operations.WebauthnSecurityKeyOperation;
 import de.cotech.hw.fido2.internal.operations.WebauthnSecurityKeyOperationFactory;
 import de.cotech.hw.fido2.internal.webauthn.WebauthnCommand;
 import de.cotech.hw.fido2.internal.webauthn.WebauthnResponse;
+import de.cotech.hw.internal.HwSentry;
 import de.cotech.hw.internal.transport.Transport;
 import org.json.JSONException;
 
@@ -142,6 +143,7 @@ public class Fido2SecurityKey extends SecurityKey {
     @WorkerThread
     public <WR extends WebauthnResponse, WC extends WebauthnCommand>
     WR webauthnCommand(WC command) throws IOException {
+        HwSentry.addBreadcrumb("Performing sync FIDO2 operation: ", command.getClass().getSimpleName());
         WebauthnSecurityKeyOperation<WR, WC> operation = operationFactory.getOperation(
                 command, fido2AppletConnection.isCtap2Capable());
         return operation.performWebauthnSecurityKeyOperation(fido2AppletConnection, command);
@@ -160,6 +162,7 @@ public class Fido2SecurityKey extends SecurityKey {
     void webauthnCommandAsync(
             WC command, WebauthnCallback<WR> callback, Handler handler,
             LifecycleOwner lifecycleOwner) {
+        HwSentry.addBreadcrumb("Performing async FIDO2 operation: ", command.getClass().getSimpleName());
         WebauthnFido2OperationThread<WR, WC>
                 fidoOperationThread = new WebauthnFido2OperationThread<>(
                 fido2AppletConnection, operationFactory, handler, callback, command, USER_PRESENCE_CHECK_DELAY_MS);

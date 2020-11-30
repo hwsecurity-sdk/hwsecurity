@@ -65,12 +65,12 @@ public class NfcConnectionDispatcher {
     }
 
     @UiThread
-    public void onResume() {
+    public void onActive() {
         enableExclusiveNfc();
     }
 
     @UiThread
-    public void onPause() {
+    public void onInactive() {
         disableExclusiveNfc();
     }
 

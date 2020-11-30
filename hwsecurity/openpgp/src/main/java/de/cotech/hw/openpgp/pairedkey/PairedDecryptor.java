@@ -40,13 +40,13 @@ import de.cotech.hw.secrets.PinProvider;
  * This use case class performs a "decrypt" operation on encrypted data, parametrized by a
  * {@link OpenPgpSecurityKey}, {@link PinProvider}, and {@link PairedSecurityKey}.
  * <p>
- * <pre>{@code
+ * <pre>
  * PairedSecurityKey pairedSecurityKey = pairedSecurityTokenStorage.getPairedSecurityKey(keyInteractor.getSecurityKeyAid());
  * PairedDecryptor decryptor = PairedDecryptor(keyInteractor, pairedPinProvider, pairedSecurityToken);
  * byte[] encryptedSessionSecret = encryptedSessionStorage.getEncryptedSessionSecret(pairedSecurityToken.getSecurityKeyAid());
  *
  * ByteSecret sessionSecret = decryptor.decryptSessionSecret(encryptedSessionSecret);
- * }</pre>
+ * </pre>
  * <p>
  * This <code>sessionSecret</code> can be used for symmetric encryption operations, e.g. to encrypt a database.
  *

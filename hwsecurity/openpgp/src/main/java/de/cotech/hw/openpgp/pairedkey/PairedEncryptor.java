@@ -36,10 +36,10 @@ import de.cotech.hw.openpgp.util.RsaEncryptionUtil;
 /**
  * This use case class performs an "encrypt" operation on some data, parametrized by a {@link PairedSecurityKey}.
  * <p>
- * <pre>{@code
+ * <pre>
  * ByteSecret sessionSecret = SecretGenerator.getInstance().createRandom(32);
  * byte[] encryptedSessionSecret = new PairedEncryptor(pairedSecurityKey).encrypt(sessionSecret);
- * }</pre>
+ * </pre>
  * <p>
  * The <code>encryptedSessionSecret</code> is typically stored in an
  * {@link EncryptedSessionStorage}, to be able to later restore the

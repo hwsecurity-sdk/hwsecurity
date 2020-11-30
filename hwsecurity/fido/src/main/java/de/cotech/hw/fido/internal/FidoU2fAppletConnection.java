@@ -34,10 +34,14 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
-
 import de.cotech.hw.SecurityKeyException;
-import de.cotech.hw.exceptions.*;
+import de.cotech.hw.exceptions.AppletFileNotFoundException;
+import de.cotech.hw.exceptions.ClaNotSupportedException;
+import de.cotech.hw.exceptions.DataInvalidException;
+import de.cotech.hw.exceptions.WrongRequestLengthException;
 import de.cotech.hw.fido.exceptions.FidoPresenceRequiredException;
+import de.cotech.hw.fido.exceptions.FidoU2fDisabledException;
+import de.cotech.hw.fido.exceptions.FidoU2fNotSupportedException;
 import de.cotech.hw.fido.exceptions.FidoWrongKeyHandleException;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
@@ -113,7 +117,7 @@ public class FidoU2fAppletConnection {
                 return initializedAid;
             }
         }
-        throw new SelectAppletException(FIDO_AID_PREFIXES, "FIDO U2F");
+        throw new FidoU2fNotSupportedException();
     }
 
     private void checkVersionOrThrow(byte[] versionBytes) throws IOException {
@@ -156,18 +160,20 @@ public class FidoU2fAppletConnection {
         }
 
         switch (response.getSw()) {
-            case FidoPresenceRequiredException.SW_TEST_OF_USER_PRESENCE_REQUIRED:
+            case FidoPresenceRequiredException.SW_CONDITIONS_NOT_SATISFIED:
                 throw new FidoPresenceRequiredException();
-            case FidoWrongKeyHandleException.SW_WRONG_KEY_HANDLE:
+            case FidoWrongKeyHandleException.SW_WRONG_DATA:
                 throw new FidoWrongKeyHandleException();
+            case FidoU2fDisabledException.SW_INS_NOT_SUPPORTED:
+                throw new FidoU2fDisabledException();
             case AppletFileNotFoundException.SW_FILE_NOT_FOUND:
                 throw new AppletFileNotFoundException();
             case ClaNotSupportedException.SW_CLA_NOT_SUPPORTED:
                 throw new ClaNotSupportedException();
-            case InsNotSupportedException.SW_INS_NOT_SUPPORTED:
-                throw new InsNotSupportedException();
             case WrongRequestLengthException.SW_WRONG_REQUEST_LENGTH:
                 throw new WrongRequestLengthException();
+            case DataInvalidException.SW_DATA_INVALID:
+                throw new DataInvalidException();
             default:
                 throw new SecurityKeyException("UNKNOWN", response.getSw());
         }

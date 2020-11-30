@@ -44,6 +44,9 @@
     <string name="hwsecurity_fido_error_pin_not_supported">Website requests PIN protection, but this Security Key does not support it.</string>
     <string name="hwsecurity_fido_error_pin_too_short">PIN must be at least 4 digits long.</string>
     <string name="hwsecurity_fido_error_pin_not_set">Website requests PIN protection. Set a PIN by using your Security Key with your desktop computer.</string>
+    <string name="hwsecurity_fido_error_u2f_not_supported">FIDO U2F is not supported on this Security Key.</string>
+    <string name="hwsecurity_fido_error_u2f_disabled">FIDO U2F is supported but disabled on this Security Key.</string>
+    <string name="hwsecurity_fido_error_fido2_not_supported">FIDO2 and U2F are not supported or disabled on this Security Key.</string>
     <string name="hwsecurity_fido_error_internal">Internal error: %1$s</string>
 
 </resources>

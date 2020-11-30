@@ -41,7 +41,7 @@ public abstract class PublicKeyCredentialDescriptor implements Parcelable {
     @Nullable
     public abstract List<AuthenticatorTransport> transports();
 
-    public static PublicKeyCredentialDescriptor create(PublicKeyCredentialType type, byte[] id, List<AuthenticatorTransport> transports) {
+    public static PublicKeyCredentialDescriptor create(PublicKeyCredentialType type, byte[] id, @Nullable List<AuthenticatorTransport> transports) {
         return new AutoValue_PublicKeyCredentialDescriptor(type, id, transports);
     }
 }
