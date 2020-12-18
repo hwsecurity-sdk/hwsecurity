@@ -16,6 +16,7 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven { url 'https://jitpack.io' }
     }
 
     // custom dokka format
@@ -28,5 +29,5 @@ allprojects {
 
 ext {
     compileSdkVersion = 29
-    hwSdkVersionName = '4.1.4'
+    hwSdkVersionName = '4.2.1'
 }

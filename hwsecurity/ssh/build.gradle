@@ -5,7 +5,7 @@ apply plugin: 'org.jetbrains.dokka'
 dependencies {
     api project(':hwsecurity:core')
 
-    implementation 'org.bouncycastle:bcprov-jdk15on:1.67'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.65'
 
     compileOnly 'androidx.annotation:annotation:1.1.0'
 

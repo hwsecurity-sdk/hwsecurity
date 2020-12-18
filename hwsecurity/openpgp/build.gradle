@@ -9,7 +9,7 @@ dependencies {
     compileOnly project(':hwsecurity:ui')
     compileOnly 'com.google.android.material:material:1.1.0'
 
-    implementation 'org.bouncycastle:bcprov-jdk15on:1.67'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.65'
 
     compileOnly 'androidx.annotation:annotation:1.1.0'
 
