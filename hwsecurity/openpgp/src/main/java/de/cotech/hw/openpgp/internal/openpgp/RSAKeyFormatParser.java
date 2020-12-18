@@ -35,19 +35,26 @@ import java.security.spec.RSAPublicKeySpec;
 
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
+
 import de.cotech.hw.internal.iso7816.Iso7816TLV;
 
 
 @RestrictTo(Scope.LIBRARY_GROUP)
 class RSAKeyFormatParser implements KeyFormatParser {
+
+    private static final int DO_RSA_MODULUS_TAG = 0x81;
+    private static final int DO_RSA_EXPONENT_TAG = 0x82;
+
     @Override
     public RSAPublicKey parseKey(byte[] publicKeyBytes) throws IOException {
         Iso7816TLV publicKeyTlv = Iso7816TLV.readSingle(publicKeyBytes, true);
-        Iso7816TLV rsaModulusMpiTlv = Iso7816TLV.findRecursive(publicKeyTlv, 0x81);
-        Iso7816TLV rsaPublicExponentMpiTlv = Iso7816TLV.findRecursive(publicKeyTlv, 0x82);
+        Iso7816TLV rsaModulusMpiTlv = Iso7816TLV.findRecursive(publicKeyTlv, DO_RSA_MODULUS_TAG);
+        Iso7816TLV rsaPublicExponentMpiTlv = Iso7816TLV.findRecursive(publicKeyTlv, DO_RSA_EXPONENT_TAG);
+
         if (rsaModulusMpiTlv == null || rsaPublicExponentMpiTlv == null) {
             throw new IOException("Missing required data for RSA public key (tags 0x81 and 0x82)");
         }
+
         try {
             BigInteger rsaModulus = new BigInteger(1, rsaModulusMpiTlv.mV);
             BigInteger rsaPublicExponent = new BigInteger(1, rsaPublicExponentMpiTlv.mV);

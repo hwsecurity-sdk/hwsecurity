@@ -168,7 +168,7 @@ public class SCP11bSecureMessaging implements SecureMessaging {
             throws NoSuchProviderException, NoSuchAlgorithmException, InvalidParameterSpecException {
         final AlgorithmParameters algoParams = AlgorithmParameters.getInstance(SCP11B_KEY_AGREEMENT_KEY_ALGO, PROVIDER);
 
-        algoParams.init(new ECGenParameterSpec(ECNamedCurveTable.getName(kf.getCurveOID())));
+        algoParams.init(new ECGenParameterSpec(ECNamedCurveTable.getName(kf.curveOid())));
 
         return algoParams.getParameterSpec(ECParameterSpec.class);
     }
@@ -181,7 +181,7 @@ public class SCP11bSecureMessaging implements SecureMessaging {
             ecdhFactory = KeyFactory.getInstance(SCP11B_KEY_AGREEMENT_KEY_TYPE, PROVIDER);
         }
 
-        final X9ECParameters params = NISTNamedCurves.getByOID(kf.getCurveOID());
+        final X9ECParameters params = NISTNamedCurves.getByOID(kf.curveOid());
         if (params == null) {
             throw new InvalidParameterSpecException("unsupported curve");
         }
@@ -317,7 +317,7 @@ public class SCP11bSecureMessaging implements SecureMessaging {
 
         final ECKeyFormat eckf = (ECKeyFormat)kf;
 
-        if (eckf.getCurveOID() == null) {
+        if (eckf.curveOid() == null) {
             throw new SecureMessagingException("unsupported secure messaging curve");
         }
 

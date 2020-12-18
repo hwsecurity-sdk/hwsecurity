@@ -45,20 +45,6 @@ import org.bouncycastle.util.encoders.Hex;
 
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class OpenPgpCardUtils {
-    public static byte[] attributesForEccKey(KeyType slot, ASN1ObjectIdentifier curveOid) throws IOException {
-        byte[] oid = curveOid.getEncoded();
-        byte[] attrs = new byte[1 + (oid.length - 2) + 1];
-
-        if (slot.equals(KeyType.SIGN))
-            attrs[0] = ECKeyFormat.ECAlgorithmFormat.ECDSA_WITH_PUBKEY.getValue();
-        else {
-            attrs[0] = ECKeyFormat.ECAlgorithmFormat.ECDH_WITH_PUBKEY.getValue();
-        }
-
-        System.arraycopy(oid, 2, attrs, 1, (oid.length - 2));
-        attrs[attrs.length - 1] = (byte) 0xff;
-        return attrs;
-    }
 
     public static byte[] createRSAPrivKeyTemplate(RSAPrivateCrtKey secretKey, KeyType slot,
             RSAKeyFormat format) throws IOException {
@@ -141,7 +127,7 @@ public class OpenPgpCardUtils {
         template.write(Hex.decode("92"));
         template.write(encodeLength(data.size()));
 
-        if (format.getAlgorithmFormat().isWithPubkey()) {
+        if (format.ecAlgorithmFormat().isWithPubkey()) {
             data.write(Hex.decode("04"));
             writeBits(data, publicKey.getW().getAffineX(), csize);
             writeBits(data, publicKey.getW().getAffineY(), csize);

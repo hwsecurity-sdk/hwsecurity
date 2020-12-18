@@ -41,8 +41,8 @@ public class RSAKeyFormat extends KeyFormat {
     }
 
     RSAKeyFormat(int modulusLength,
-            int exponentLength,
-            RSAAlgorithmFormat rsaAlgorithmFormat) {
+                 int exponentLength,
+                 RSAAlgorithmFormat rsaAlgorithmFormat) {
         super(KeyFormatType.RSAKeyFormatType);
         mModulusLength = modulusLength;
         mExponentLength = exponentLength;
@@ -65,16 +65,25 @@ public class RSAKeyFormat extends KeyFormat {
         return new RSAKeyFormat(modulus, mExponentLength, mRSAAlgorithmFormat);
     }
 
+    public static KeyFormat fromBytes(byte[] bytes) {
+        if (bytes.length < 6) {
+            throw new IllegalArgumentException("Bad length for RSA attributes");
+        }
+        return new RSAKeyFormat(bytes[1] << 8 | bytes[2],
+                bytes[3] << 8 | bytes[4],
+                RSAKeyFormat.RSAAlgorithmFormat.from(bytes[5]));
+    }
+
     @Override
     public byte[] toBytes(KeyType slot) {
         int i = 0;
         byte[] attrs = new byte[6];
-        attrs[i++] = (byte) 0x01;
+        attrs[i++] = (byte) PublicKeyAlgorithmTags.RSA_GENERAL;
         attrs[i++] = (byte) ((mModulusLength >> 8) & 0xff);
         attrs[i++] = (byte) (mModulusLength & 0xff);
         attrs[i++] = (byte) ((mExponentLength >> 8) & 0xff);
         attrs[i++] = (byte) (mExponentLength & 0xff);
-        attrs[i] = mRSAAlgorithmFormat.getValue();
+        attrs[i] = mRSAAlgorithmFormat.getImportFormat();
 
         return attrs;
     }
@@ -107,32 +116,32 @@ public class RSAKeyFormat extends KeyFormat {
     }
 
     public enum RSAAlgorithmFormat {
-        STANDARD((byte) 0, false, false),
-        STANDARD_WITH_MODULUS((byte) 1, false, true),
-        CRT((byte) 2, true, false),
-        CRT_WITH_MODULUS((byte) 3, true, true);
+        STANDARD((byte) 0x00, false, false),
+        STANDARD_WITH_MODULUS((byte) 0x01, false, true),
+        CRT((byte) 0x02, true, false),
+        CRT_WITH_MODULUS((byte) 0x03, true, true);
 
-        private byte mValue;
+        private byte mImportFormat;
         private boolean mIncludeModulus;
         private boolean mIncludeCrt;
 
-        RSAAlgorithmFormat(byte value, boolean includeCrt, boolean includeModulus) {
-            mValue = value;
+        RSAAlgorithmFormat(byte importFormat, boolean includeCrt, boolean includeModulus) {
+            mImportFormat = importFormat;
             mIncludeModulus = includeModulus;
             mIncludeCrt = includeCrt;
         }
 
-        public static RSAAlgorithmFormat from(byte b) {
+        public static RSAAlgorithmFormat from(byte importFormatByte) {
             for (RSAAlgorithmFormat format : values()) {
-                if (format.mValue == b) {
+                if (format.mImportFormat == importFormatByte) {
                     return format;
                 }
             }
             return null;
         }
 
-        public byte getValue() {
-            return mValue;
+        public byte getImportFormat() {
+            return mImportFormat;
         }
 
         public boolean isIncludeModulus() {

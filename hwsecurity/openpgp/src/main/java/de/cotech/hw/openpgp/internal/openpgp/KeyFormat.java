@@ -27,7 +27,6 @@ package de.cotech.hw.openpgp.internal.openpgp;
 
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 
 @RestrictTo(Scope.LIBRARY_GROUP)
 public abstract class KeyFormat {
@@ -51,33 +50,14 @@ public abstract class KeyFormat {
     public static KeyFormat fromBytes(byte[] bytes) {
         switch (bytes[0]) {
             case PublicKeyAlgorithmTags.RSA_GENERAL:
-                if (bytes.length < 6) {
-                    throw new IllegalArgumentException("Bad length for RSA attributes");
-                }
-                return new RSAKeyFormat(bytes[1] << 8 | bytes[2],
-                                        bytes[3] << 8 | bytes[4],
-                                        RSAKeyFormat.RSAAlgorithmFormat.from(bytes[5]));
-
+                return RSAKeyFormat.fromBytes(bytes);
             case PublicKeyAlgorithmTags.ECDH:
             case PublicKeyAlgorithmTags.ECDSA:
-                if (bytes.length < 2) {
-                    throw new IllegalArgumentException("Bad length for EC attributes");
-                }
-                int len = bytes.length - 1;
-                if (bytes[bytes.length - 1] == (byte)0xff) {
-                    len -= 1;
-                }
-                final byte[] boid = new byte[2 + len];
-                boid[0] = (byte)0x06;
-                boid[1] = (byte)len;
-                System.arraycopy(bytes, 1, boid, 2, len);
-                final ASN1ObjectIdentifier oid = ASN1ObjectIdentifier.getInstance(boid);
-                return new ECKeyFormat(oid, ECKeyFormat.ECAlgorithmFormat.from(bytes[0], bytes[bytes.length - 1]));
+                return ECKeyFormat.getInstanceFromBytes(bytes);
             case PublicKeyAlgorithmTags.EDDSA:
                 return new EdDSAKeyFormat();
-
             default:
-                throw new IllegalArgumentException("Unsupported Algorithm id " + bytes[0]);
+                throw new IllegalArgumentException("Unsupported Algorithm ID " + bytes[0]);
         }
     }
 

@@ -12,7 +12,7 @@
     <string name="hwsecurity_ui_title_reset_pin">Reset PIN</string>
     <string name="hwsecurity_ui_description_enter_puk">Enter the PUK (not PIN!)</string>
     <string name="hwsecurity_ui_description_enter_new_pin">Enter your new favorite PIN</string>
-    <string name="hwsecurity_ui_changed_pin">PIN has been changed!</string>
+    <string name="hwsecurity_ui_changed_pin">PIN has been changed.</string>
     <string name="hwsecurity_ui_start_nfc">NFC help</string>
     <string name="hwsecurity_ui_start_usb">USB help</string>
     <string name="hwsecurity_ui_title_usb_selected">Insert your Security Key into the USB port.</string>

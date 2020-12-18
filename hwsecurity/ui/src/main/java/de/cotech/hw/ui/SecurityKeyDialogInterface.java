@@ -38,11 +38,13 @@ public interface SecurityKeyDialogInterface {
 
     void dismiss();
 
-    @AnyThread
-    void postError(IOException exception);
+    void successAndDismiss();
 
     @AnyThread
     void postProgressMessage(String message);
+
+    @AnyThread
+    void postError(IOException exception);
 
     interface SecurityKeyDialogCallback<T extends SecurityKey> {
         /**

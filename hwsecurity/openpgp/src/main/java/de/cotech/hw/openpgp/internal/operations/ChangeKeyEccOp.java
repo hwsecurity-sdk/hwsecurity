@@ -34,6 +34,8 @@ import java.util.Date;
 
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
+
+import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.openpgp.internal.OpenPgpAppletConnection;
 import de.cotech.hw.openpgp.OpenPgpCapabilities;
 import de.cotech.hw.openpgp.OpenPgpCardUtils;
@@ -42,8 +44,10 @@ import de.cotech.hw.openpgp.internal.openpgp.ECKeyFormat;
 import de.cotech.hw.openpgp.internal.openpgp.KeyFormat;
 import de.cotech.hw.openpgp.internal.openpgp.KeyType;
 import de.cotech.hw.openpgp.internal.openpgp.PgpFingerprintCalculator;
+
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x9.ECNamedCurveTable;
+
 import de.cotech.hw.util.HwTimber;
 
 
@@ -59,7 +63,7 @@ public class ChangeKeyEccOp {
         this.connection = connection;
     }
 
-    public void changeKey(KeyType keyType, String curveName, KeyPair keyPair, Date timestamp)
+    public byte[] changeKey(KeyType keyType, String curveName, KeyPair keyPair, Date creationTime)
             throws IOException {
         PrivateKey privateKey = keyPair.getPrivate();
         if (!(privateKey instanceof ECPrivateKey)) {
@@ -72,19 +76,20 @@ public class ChangeKeyEccOp {
             throw new IllegalArgumentException("Curve name must be valid ECC named curve!");
         }
 
-        changeKey(keyType, curveOid, timestamp, ecPrivateKey, ecPublicKey);
+        uploadEccKey(keyType, curveOid, ecPrivateKey, ecPublicKey);
+        return setKeyMetadata(keyType, curveOid, creationTime, ecPublicKey);
     }
 
-    private void changeKey(KeyType keyType, ASN1ObjectIdentifier curveOid, Date timestamp, ECPrivateKey ecPrivateKey,
-            ECPublicKey ecPublicKey) throws IOException {
-        uploadEccKey(keyType, curveOid, ecPrivateKey, ecPublicKey);
-
+    private byte[] setKeyMetadata(KeyType keyType, ASN1ObjectIdentifier curveOid, Date timestamp,
+                                  ECPublicKey ecPublicKey) throws IOException {
         byte[] fingerprint = PgpFingerprintCalculator.calculateEccFingerprint(ecPublicKey, curveOid, timestamp);
         connection.setKeyMetadata(keyType, timestamp, fingerprint);
+
+        return fingerprint;
     }
 
     private void uploadEccKey(KeyType keyType, ASN1ObjectIdentifier curveOid, ECPrivateKey ecPrivateKey,
-            ECPublicKey ecPublicKey) throws IOException {
+                              ECPublicKey ecPublicKey) throws IOException {
         byte[] keyBytes = prepareKeyBytes(keyType, curveOid, ecPrivateKey, ecPublicKey);
 
         CommandApdu apdu = connection.getCommandFactory().createPutKeyCommand(keyBytes);
@@ -92,7 +97,7 @@ public class ChangeKeyEccOp {
     }
 
     private byte[] prepareKeyBytes(KeyType keyType, ASN1ObjectIdentifier curveOid,
-            ECPrivateKey ecPrivateKey, ECPublicKey ecPublicKey) throws IOException {
+                                   ECPrivateKey ecPrivateKey, ECPublicKey ecPublicKey) throws IOException {
         OpenPgpCapabilities openPgpCapabilities = connection.getOpenPgpCapabilities();
         KeyFormat currentFormat = openPgpCapabilities.getFormatForKeyType(keyType);
         ECKeyFormat requestedKeyFormat;
@@ -130,7 +135,7 @@ public class ChangeKeyEccOp {
         connection.communicateOrThrow(command);
     }
 
-    public void generateKey(KeyType keyType, ASN1ObjectIdentifier curveOid) throws IOException {
+    public ECPublicKey generateKey(KeyType keyType, ASN1ObjectIdentifier curveOid, Date creationTime) throws IOException {
         OpenPgpCapabilities openPgpCapabilities = connection.getOpenPgpCapabilities();
         KeyFormat currentFormat = openPgpCapabilities.getFormatForKeyType(keyType);
         ECKeyFormat requestedKeyFormat;
@@ -145,12 +150,19 @@ public class ChangeKeyEccOp {
             HwTimber.d("Setting key format");
             setKeyAttributes(keyType, requestedKeyFormat);
         } else if (requiresFormatChange) {
-            throw new IOException("Different RSA format required, but applet doesn't support format change!");
+            throw new IOException("Different key format required, but applet doesn't support format change!");
         } else {
             HwTimber.d("Key format compatible, leaving as is");
         }
 
         CommandApdu command = connection.getCommandFactory().createGenerateKeyCommand(keyType.getSlot());
-        connection.communicateOrThrow(command);
+        ResponseApdu response = connection.communicateOrThrow(command);
+
+        byte[] publicKeyBytes = response.getData();
+        ECPublicKey publicKey = (ECPublicKey) requestedKeyFormat.getKeyFormatParser().parseKey(publicKeyBytes);
+
+        byte[] fingerprint = setKeyMetadata(keyType, curveOid, creationTime, publicKey);
+
+        return publicKey;
     }
 }

@@ -35,7 +35,9 @@ import java.security.spec.InvalidKeySpecException;
 
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
+
 import de.cotech.hw.internal.iso7816.Iso7816TLV;
+
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x9.ECNamedCurveTable;
 import org.bouncycastle.asn1.x9.X9ECParameters;
@@ -45,6 +47,9 @@ import org.bouncycastle.jce.spec.ECNamedCurveSpec;
 
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class ECKeyFormatParser implements KeyFormatParser {
+
+    private static final int DO_ECC_PUBKEY_TAG = 0x86;
+
     private final ASN1ObjectIdentifier curveOid;
 
     ECKeyFormatParser(ASN1ObjectIdentifier curveOid) {
@@ -54,7 +59,7 @@ public class ECKeyFormatParser implements KeyFormatParser {
     @Override
     public ECPublicKey parseKey(byte[] publicKeyBytes) throws IOException {
         Iso7816TLV publicKeyTlv = Iso7816TLV.readSingle(publicKeyBytes, true);
-        Iso7816TLV eccEncodedPoints = Iso7816TLV.findRecursive(publicKeyTlv, 0x86);
+        Iso7816TLV eccEncodedPoints = Iso7816TLV.findRecursive(publicKeyTlv, DO_ECC_PUBKEY_TAG);
         if (eccEncodedPoints == null) {
             throw new IOException("Missing ECC public key data (tag 0x86)");
         }

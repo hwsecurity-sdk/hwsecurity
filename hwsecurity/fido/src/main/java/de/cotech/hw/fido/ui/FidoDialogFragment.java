@@ -60,7 +60,6 @@ import java.io.IOException;
 import de.cotech.hw.SecurityKeyCallback;
 import de.cotech.hw.SecurityKeyException;
 import de.cotech.hw.SecurityKeyManager;
-import de.cotech.hw.exceptions.InsNotSupportedException;
 import de.cotech.hw.exceptions.SecurityKeyDisconnectedException;
 import de.cotech.hw.fido.FidoAuthenticateCallback;
 import de.cotech.hw.fido.FidoAuthenticateRequest;
@@ -79,6 +78,7 @@ import de.cotech.hw.ui.internal.ErrorView;
 import de.cotech.hw.ui.internal.NfcFullscreenView;
 import de.cotech.hw.ui.internal.SecurityKeyFormFactor;
 import de.cotech.hw.ui.internal.SmartcardFormFactor;
+import de.cotech.hw.ui.internal.SuccessView;
 import de.cotech.hw.util.HwTimber;
 
 
@@ -86,9 +86,10 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     private static final String FRAGMENT_TAG = "hwsecurity-fido-fragment";
     private static final String ARG_FIDO_REGISTER_REQUEST = "ARG_FIDO_REGISTER_REQUEST";
     private static final String ARG_FIDO_AUTHENTICATE_REQUEST = "ARG_FIDO_AUTHENTICATE_REQUEST";
-    private static final String ARG_FIDO_OPTIONS = "de.cotech.hw.fido.ARG_FIDO_OPTIONS";
+    private static final String ARG_FIDO_OPTIONS = "de.cotech.hw.fido.ui.ARG_FIDO_OPTIONS";
 
     private static final long TIME_DELAYED_SCREEN_CHANGE = 3000;
+    private static final long TIME_DELAYED_SUCCESS_DISMISS = 1600;
 
     static {
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
@@ -112,6 +113,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
     private SmartcardFormFactor smartcardFormFactor;
 
     private ErrorView errorView;
+    private SuccessView successView;
 
     private FidoDialogOptions options;
     private FidoRegisterRequest fidoRegisterRequest;
@@ -126,6 +128,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         USB_PRESS_BUTTON,
         USB_SELECT_AND_PRESS_BUTTON,
         ERROR,
+        SUCCESS,
     }
 
     private Screen currentScreen;
@@ -348,6 +351,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         securityKeyFormFactor = new SecurityKeyFormFactor(view.findViewById(R.id.includeSecurityKeyFormFactor), this, this, innerBottomSheet, options.getShowSdkLogo());
 
         errorView = new ErrorView(view.findViewById(de.cotech.hw.ui.R.id.includeError));
+        successView = new SuccessView(view.findViewById(de.cotech.hw.ui.R.id.includeSuccess));
 
         nfcFullscreenView = new NfcFullscreenView(view.findViewById(de.cotech.hw.ui.R.id.includeNfcFullscreen), innerBottomSheet);
 
@@ -402,7 +406,11 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
                 break;
             }
             case ERROR: {
-                animateError();
+                showError();
+                break;
+            }
+            case SUCCESS: {
+                showSuccess();
                 break;
             }
         }
@@ -413,6 +421,7 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         textTitle.setVisibility(View.GONE);
         textDescription.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
         smartcardFormFactor.setVisibility(View.GONE);
         securityKeyFormFactor.setVisibility(View.GONE);
 
@@ -433,12 +442,13 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         textTitle.setVisibility(View.VISIBLE);
         textDescription.setVisibility(View.VISIBLE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
         securityKeyFormFactor.setVisibility(View.VISIBLE);
 
         securityKeyFormFactor.resetAnimation();
     }
 
-    private void animateError() {
+    private void showError() {
         TransitionManager.beginDelayedTransition(innerBottomSheet);
         textTitle.setVisibility(View.GONE);
         textDescription.setVisibility(View.GONE);
@@ -446,6 +456,18 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
         smartcardFormFactor.setVisibility(View.GONE);
         nfcFullscreenView.setVisibility(View.GONE);
         errorView.setVisibility(View.VISIBLE);
+        successView.setVisibility(View.GONE);
+    }
+
+    private void showSuccess() {
+        TransitionManager.beginDelayedTransition(innerBottomSheet);
+        textTitle.setVisibility(View.GONE);
+        textDescription.setVisibility(View.GONE);
+        securityKeyFormFactor.setVisibility(View.GONE);
+        smartcardFormFactor.setVisibility(View.GONE);
+        nfcFullscreenView.setVisibility(View.GONE);
+        errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.VISIBLE);
     }
 
     @UiThread
@@ -483,7 +505,13 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
                             if (securityKey.isTransportNfc()) {
                                 securityKey.release();
                             }
-                            dismiss();
+                            gotoScreen(Screen.SUCCESS);
+                            bottomSheet.postDelayed(() -> {
+                                if (!isAdded()) {
+                                    return;
+                                }
+                                dismiss();
+                            }, TIME_DELAYED_SUCCESS_DISMISS);
                         }
 
                         @Override
@@ -502,7 +530,13 @@ public class FidoDialogFragment extends BottomSheetDialogFragment implements Sec
                             if (securityKey.isTransportNfc()) {
                                 securityKey.release();
                             }
-                            dismiss();
+                            gotoScreen(Screen.SUCCESS);
+                            bottomSheet.postDelayed(() -> {
+                                if (!isAdded()) {
+                                    return;
+                                }
+                                dismiss();
+                            }, TIME_DELAYED_SUCCESS_DISMISS);
                         }
 
                         @Override

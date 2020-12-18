@@ -37,8 +37,8 @@ public class PinProtocolV1Test {
     static final byte[] PIN_TOKEN_ENC = Hex.decodeHexOrFail("554df3802226935b2bf49f30aae3096f");
     static final String CLIENT_PIN_GET_TOKEN = "801000006606a40101020503a501020326200121582099401f6ffa9446585074d1058578f4c68ab46953ccf8cb7910d8b3c9350e1040225820a3c962cddad166b1fdea8a95a377dbf8efbedd82778a8004b884f0009bd6df9506502eb756ae474f7ca032b5111b2eef6959";
     static final String CLIENT_PIN_GET_TOKEN_RESPONSE = "00a10250554df3802226935b2bf49f30aae3096f9000";
-    static final String CLIENT_PIN_GET_TOKEN_RESPONSE_INVALID = "329000";
-    static final String CLIENT_PIN_GET_TOKEN_RESPONSE_BLOCKED = "319000";
+    static final String CLIENT_PIN_GET_TOKEN_RESPONSE_INVALID = "319000";
+    static final String CLIENT_PIN_GET_TOKEN_RESPONSE_BLOCKED = "329000";
 
     static final byte[] SHARED_SECRET = new byte[1];
     static final byte[] PIN_TOKEN = new byte[1];
@@ -75,7 +75,7 @@ public class PinProtocolV1Test {
         pinProtocolV1.clientPinAuthenticate(fakeFidoConnection.connection, "1234", false);
     }
 
-    @Test(expected = FidoClientPinInvalidException.class)
+    @Test(expected = FidoClientPinBlockedException.class)
     public void pinAuth_invalid_blocked() throws Exception {
         PinProtocolV1 pinProtocolV1 = setupPinProtocol();
 

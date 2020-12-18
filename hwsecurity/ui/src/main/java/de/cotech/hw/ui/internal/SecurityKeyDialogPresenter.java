@@ -25,7 +25,6 @@
 package de.cotech.hw.ui.internal;
 
 import android.content.Context;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -48,6 +47,7 @@ public abstract class SecurityKeyDialogPresenter<T extends SecurityKey> {
     protected static final int SETUP_DEFAULT_PUK_LENGTH = 8;
 
     protected static final long TIME_DELAYED_SCREEN_CHANGE = 3000;
+    protected static final long TIME_DELAYED_SUCCESS_DISMISS = 1600;
 
     protected Context context;
     protected View view;
@@ -66,6 +66,7 @@ public abstract class SecurityKeyDialogPresenter<T extends SecurityKey> {
         NORMAL_SECURITY_KEY,
         NORMAL_SECURITY_KEY_HOLD,
         NORMAL_ERROR,
+        NORMAL_SUCCESS,
         RESET_PIN_ENTER_PUK,
         RESET_PIN_ENTER_NEW_PIN,
         RESET_PIN_SECURITY_KEY,
@@ -185,6 +186,11 @@ public abstract class SecurityKeyDialogPresenter<T extends SecurityKey> {
                 view.screenHoldSecurityKey();
                 break;
             }
+            case NORMAL_SUCCESS: {
+                view.updateSuccessViewText("");
+                view.screenSuccess();
+                break;
+            }
             case RESET_PIN_ENTER_PUK: {
                 view.updateTitle(R.string.hwsecurity_ui_title_reset_pin, R.string.hwsecurity_ui_description_enter_puk);
                 view.screenResetPinEnterPinOrPuk(options.getPukLength());
@@ -202,7 +208,8 @@ public abstract class SecurityKeyDialogPresenter<T extends SecurityKey> {
             }
             case RESET_PIN_SUCCESS: {
                 view.updateTitle(R.string.hwsecurity_ui_title_reset_pin, "");
-                view.screenResetPinSuccess();
+                view.updateSuccessViewText(R.string.hwsecurity_ui_changed_pin);
+                view.screenSuccess();
                 break;
             }
             case NORMAL_ERROR:
@@ -325,7 +332,6 @@ public abstract class SecurityKeyDialogPresenter<T extends SecurityKey> {
                     try {
                         updateSecurityKeyPinUsingPuk(securityKey, resetPukSecret, resetNewPinSecret);
 
-                        view.postRunnable(() -> Toast.makeText(context, R.string.hwsecurity_ui_changed_pin, Toast.LENGTH_LONG).show());
                         view.postRunnable(() -> gotoScreen(Screen.RESET_PIN_SUCCESS));
                         view.postDelayedRunnable(() -> {
                             if (options.getPinMode() == SecurityKeyDialogOptions.PinMode.RESET_PIN) {
@@ -351,6 +357,12 @@ public abstract class SecurityKeyDialogPresenter<T extends SecurityKey> {
         view.postDelayedRunnable(() -> gotoScreen(delayedScreen), TIME_DELAYED_SCREEN_CHANGE);
     }
 
+    public void gotoSuccessScreenAndDelayedDismiss() {
+        view.updateSuccessViewText("");
+        gotoScreen(Screen.NORMAL_SUCCESS);
+        view.postDelayedRunnable(() -> view.dismiss(), TIME_DELAYED_SUCCESS_DISMISS);
+    }
+
     public interface View {
 
         void showKeypadPinInput();
@@ -361,9 +373,15 @@ public abstract class SecurityKeyDialogPresenter<T extends SecurityKey> {
 
         void cancel();
 
+        void dismiss();
+
         void updateErrorViewText(String text);
 
         void updateErrorViewText(int text);
+
+        void updateSuccessViewText(String text);
+
+        void updateSuccessViewText(int text);
 
         boolean postRunnable(Runnable action);
 
@@ -387,7 +405,7 @@ public abstract class SecurityKeyDialogPresenter<T extends SecurityKey> {
 
         void screenResetPinSecurityKey(SecurityKeyDialogOptions.FormFactor formFactor);
 
-        void screenResetPinSuccess();
+        void screenSuccess();
 
         void screenError();
 

@@ -44,7 +44,7 @@ public abstract class U2fAuthenticateResponse {
         int counter = buf.getInt();
 
         int signatureLength = buf.remaining();
-        if (signatureLength < 70 || signatureLength > 73) {
+        if (signatureLength < 71 || signatureLength > 73) {
             throw new IOException("Signature length must be 71-73 bytes!");
         }
         byte[] signature = new byte[signatureLength];

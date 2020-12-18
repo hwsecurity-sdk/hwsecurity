@@ -92,6 +92,7 @@ import de.cotech.hw.ui.internal.NfcFullscreenView;
 import de.cotech.hw.ui.internal.PinInput;
 import de.cotech.hw.ui.internal.SecurityKeyFormFactor;
 import de.cotech.hw.ui.internal.SmartcardFormFactor;
+import de.cotech.hw.ui.internal.SuccessView;
 import de.cotech.hw.util.HwTimber;
 
 
@@ -99,9 +100,10 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
         implements SecurityKeyCallback<Fido2SecurityKey>, SecurityKeyFormFactor.SelectTransportCallback, PinInput.PinInputCallback {
     private static final String FRAGMENT_TAG = "hwsecurity-webauthn-fragment";
     private static final String ARG_WEBAUTHN_COMMAND = "ARG_WEBAUTHN_COMMAND";
-    private static final String ARG_WEBAUTHN_OPTIONS = "de.cotech.hw.fido.ARG_WEBAUTHN_OPTIONS";
+    private static final String ARG_WEBAUTHN_OPTIONS = "de.cotech.hw.fido2.ui.ARG_WEBAUTHN_OPTIONS";
 
     private static final long TIME_DELAYED_SCREEN_CHANGE = 3000;
+    private static final long TIME_DELAYED_SUCCESS_DISMISS = 1600;
 
     static {
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
@@ -130,6 +132,7 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
     private TextView textDescription;
 
     private ErrorView errorView;
+    private SuccessView successView;
 
     private WebauthnDialogOptions options;
     private WebauthnCommand webauthnCommand;
@@ -147,6 +150,7 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
         USB_PRESS_BUTTON,
         USB_SELECT_AND_PRESS_BUTTON,
         ERROR,
+        SUCCESS,
     }
 
     private Screen currentScreen;
@@ -362,6 +366,7 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
         securityKeyFormFactor = new SecurityKeyFormFactor(view.findViewById(R.id.includeSecurityKeyFormFactor), this, this, innerBottomSheet, options.getShowSdkLogo());
 
         errorView = new ErrorView(view.findViewById(de.cotech.hw.ui.R.id.includeError));
+        successView = new SuccessView(view.findViewById(de.cotech.hw.ui.R.id.includeSuccess));
 
         nfcFullscreenView = new NfcFullscreenView(view.findViewById(de.cotech.hw.ui.R.id.includeNfcFullscreen), innerBottomSheet);
 
@@ -508,6 +513,10 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
                 showError();
                 break;
             }
+            case SUCCESS: {
+                showSuccess();
+                break;
+            }
         }
     }
 
@@ -516,6 +525,7 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
         textTitle.setVisibility(View.GONE);
         textDescription.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
         securityKeyFormFactor.setVisibility(View.GONE);
         smartcardFormFactor.setVisibility(View.GONE);
         buttonRight.setVisibility(View.GONE);
@@ -550,6 +560,7 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
         textTitle.setVisibility(View.VISIBLE);
         textDescription.setVisibility(View.VISIBLE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
         keyboardPinInput.setVisibility(View.GONE);
         keypadPinInput.setVisibility(View.GONE);
         switch (options.getFormFactor()) {
@@ -574,6 +585,7 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
         textTitle.setVisibility(View.VISIBLE);
         textDescription.setVisibility(View.VISIBLE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
         securityKeyFormFactor.setVisibility(View.GONE);
         smartcardFormFactor.setVisibility(View.GONE);
         buttonPinInputSwitch.setVisibility(options.getAllowKeyboard() ? View.VISIBLE : View.INVISIBLE);
@@ -604,6 +616,22 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
         smartcardFormFactor.setVisibility(View.GONE);
         nfcFullscreenView.setVisibility(View.GONE);
         errorView.setVisibility(View.VISIBLE);
+        successView.setVisibility(View.GONE);
+        buttonRight.setVisibility(View.GONE);
+        keyboardPinInput.setVisibility(View.GONE);
+        keypadPinInput.setVisibility(View.GONE);
+        buttonPinInputSwitch.setVisibility(View.GONE);
+    }
+
+    private void showSuccess() {
+        TransitionManager.beginDelayedTransition(innerBottomSheet);
+        textTitle.setVisibility(View.GONE);
+        textDescription.setVisibility(View.GONE);
+        securityKeyFormFactor.setVisibility(View.GONE);
+        smartcardFormFactor.setVisibility(View.GONE);
+        nfcFullscreenView.setVisibility(View.GONE);
+        errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.VISIBLE);
         buttonRight.setVisibility(View.GONE);
         keyboardPinInput.setVisibility(View.GONE);
         keypadPinInput.setVisibility(View.GONE);
@@ -663,7 +691,13 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
                             if (securityKey.isTransportNfc()) {
                                 securityKey.release();
                             }
-                            dismiss();
+                            gotoScreen(Screen.SUCCESS);
+                            bottomSheet.postDelayed(() -> {
+                                if (!isAdded()) {
+                                    return;
+                                }
+                                dismiss();
+                            }, TIME_DELAYED_SUCCESS_DISMISS);
                         }
 
                         @Override
@@ -682,7 +716,13 @@ public class WebauthnDialogFragment extends BottomSheetDialogFragment
                             if (securityKey.isTransportNfc()) {
                                 securityKey.release();
                             }
-                            dismiss();
+                            gotoScreen(Screen.SUCCESS);
+                            bottomSheet.postDelayed(() -> {
+                                if (!isAdded()) {
+                                    return;
+                                }
+                                dismiss();
+                            }, TIME_DELAYED_SUCCESS_DISMISS);
                         }
 
                         @Override

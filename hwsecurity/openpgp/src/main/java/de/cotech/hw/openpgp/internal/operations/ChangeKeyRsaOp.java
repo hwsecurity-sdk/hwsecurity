@@ -25,6 +25,9 @@
 package de.cotech.hw.openpgp.internal.operations;
 
 
+import androidx.annotation.RestrictTo;
+import androidx.annotation.RestrictTo.Scope;
+
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -33,12 +36,10 @@ import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Date;
 
-import androidx.annotation.RestrictTo;
-import androidx.annotation.RestrictTo.Scope;
-import de.cotech.hw.openpgp.internal.OpenPgpAppletConnection;
+import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.openpgp.OpenPgpCapabilities;
 import de.cotech.hw.openpgp.OpenPgpCardUtils;
-import de.cotech.hw.internal.iso7816.CommandApdu;
+import de.cotech.hw.openpgp.internal.OpenPgpAppletConnection;
 import de.cotech.hw.openpgp.internal.openpgp.KeyFormat;
 import de.cotech.hw.openpgp.internal.openpgp.KeyType;
 import de.cotech.hw.openpgp.internal.openpgp.PgpFingerprintCalculator;
@@ -67,13 +68,11 @@ public class ChangeKeyRsaOp {
         RSAPrivateCrtKey rsaPrivateCrtKey = (RSAPrivateCrtKey) privateKey;
         RSAPublicKey rsaPublicKey = (RSAPublicKey) publicKey;
 
-        return changeKey(keyType, rsaPublicKey, rsaPrivateCrtKey, creationTime);
+        uploadRsaKey(keyType, rsaPrivateCrtKey);
+        return setKeyMetadata(keyType, rsaPublicKey, creationTime);
     }
 
-    private byte[] changeKey(KeyType keyType, RSAPublicKey rsaPublicKey,
-            RSAPrivateCrtKey rsaPrivateCrtKey, Date creationTime) throws IOException {
-        uploadRsaKey(keyType, rsaPrivateCrtKey);
-
+    private byte[] setKeyMetadata(KeyType keyType, RSAPublicKey rsaPublicKey, Date creationTime) throws IOException {
         byte[] fingerprint = PgpFingerprintCalculator.calculateRsaFingerprint(rsaPublicKey, creationTime);
         connection.setKeyMetadata(keyType, creationTime, fingerprint);
 
@@ -102,7 +101,7 @@ public class ChangeKeyRsaOp {
             HwTimber.d("Setting key format");
             setKeyAttributes(keyType, requestedKeyFormat);
         } else if (requiresFormatChange) {
-            throw new IOException("Different RSA format required, but applet doesn't support format change!");
+            throw new IOException("Different key format required, but applet doesn't support format change!");
         } else {
             HwTimber.d("Key format compatible, leaving as is");
         }

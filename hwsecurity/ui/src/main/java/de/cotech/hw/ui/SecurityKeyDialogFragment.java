@@ -74,6 +74,7 @@ import de.cotech.hw.ui.internal.ProgressView;
 import de.cotech.hw.ui.internal.SecurityKeyDialogPresenter;
 import de.cotech.hw.ui.internal.SecurityKeyFormFactor;
 import de.cotech.hw.ui.internal.SmartcardFormFactor;
+import de.cotech.hw.ui.internal.SuccessView;
 import de.cotech.hw.ui.internal.WipeConfirmView;
 import de.cotech.hw.util.HwTimber;
 
@@ -84,7 +85,8 @@ import de.cotech.hw.util.HwTimber;
  * Use the SecurityKeyDialogFactory to instantiate this.
  */
 public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends BottomSheetDialogFragment
-        implements SecurityKeyCallback<T>, PinInput.PinInputCallback, SecurityKeyDialogInterface, SecurityKeyDialogPresenter.View, SecurityKeyFormFactor.SelectTransportCallback {
+        implements SecurityKeyCallback<T>, PinInput.PinInputCallback, SecurityKeyDialogInterface,
+        SecurityKeyDialogPresenter.View, SecurityKeyFormFactor.SelectTransportCallback {
     @SuppressWarnings("WeakerAccess") // public API
     public static final String FRAGMENT_TAG = "security-key-dialog-fragment";
     public static final String ARG_DIALOG_OPTIONS = "de.cotech.hw.ui.ARG_DIALOG_OPTIONS";
@@ -120,6 +122,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
 
     private ProgressView progressView;
     private ErrorView errorView;
+    private SuccessView successView;
 
     private View includeShowPuk;
     private WipeConfirmView wipeConfirmView;
@@ -254,6 +257,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
 
         progressView = new ProgressView(view.findViewById(R.id.includeProgress));
         errorView = new ErrorView(view.findViewById(R.id.includeError));
+        successView = new SuccessView(view.findViewById(R.id.includeSuccess));
 
         keypadPinInput = new KeypadPinInput(view.findViewById(R.id.includeKeypadInput));
         keypadPinInput.reset(options.getPinLength());
@@ -287,11 +291,6 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         keypadPinInput.setVisibility(View.GONE);
         buttonPinInputSwitch.setIcon(getResources().getDrawable(R.drawable.hwsecurity_ic_keyboard_numeric));
         keyboardPinInput.openKeyboard();
-    }
-
-    @Override
-    public void cancel() {
-        getDialog().cancel();
     }
 
     @Override
@@ -346,6 +345,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         wipeConfirmView.setVisibility(View.GONE);
         progressView.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
     }
 
     @Override
@@ -374,6 +374,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         wipeConfirmView.setVisibility(View.GONE);
         progressView.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
     }
 
     @Override
@@ -389,6 +390,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         wipeConfirmView.setVisibility(View.GONE);
         progressView.setVisibility(View.VISIBLE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
     }
 
     @Override
@@ -406,6 +408,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         wipeConfirmView.setVisibility(View.GONE);
         progressView.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
     }
 
     @Override
@@ -433,10 +436,11 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         wipeConfirmView.setVisibility(View.GONE);
         progressView.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
     }
 
     @Override
-    public void screenResetPinSuccess() {
+    public void screenSuccess() {
         TransitionManager.beginDelayedTransition(innerBottomSheet);
         keypadPinInput.setVisibility(View.GONE);
         keyboardPinInput.setVisibility(View.GONE);
@@ -448,6 +452,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         wipeConfirmView.setVisibility(View.GONE);
         progressView.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -463,6 +468,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         wipeConfirmView.setVisibility(View.GONE);
         progressView.setVisibility(View.GONE);
         errorView.setVisibility(View.VISIBLE);
+        successView.setVisibility(View.GONE);
     }
 
     @Override
@@ -479,6 +485,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         wipeConfirmView.setVisibility(View.GONE);
         progressView.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
     }
 
     @Override
@@ -496,6 +503,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         wipeConfirmView.setVisibility(View.GONE);
         progressView.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
     }
 
     @Override
@@ -511,6 +519,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         wipeConfirmView.setVisibility(View.VISIBLE);
         progressView.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
     }
 
     @Override
@@ -525,6 +534,7 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
         wipeConfirmView.setVisibility(View.GONE);
         progressView.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
+        successView.setVisibility(View.GONE);
 
         textTitle.setVisibility(View.GONE);
         textDescription.setVisibility(View.GONE);
@@ -564,6 +574,16 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
     }
 
     @Override
+    public void updateSuccessViewText(String text) {
+        successView.setText(text);
+    }
+
+    @Override
+    public void updateSuccessViewText(int text) {
+        successView.setText(text);
+    }
+
+    @Override
     public boolean postDelayedRunnable(Runnable action, long delayMillis) {
         return bottomSheet.postDelayed(() -> {
             if (!isAdded()) {
@@ -587,6 +607,24 @@ public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends B
     @Override
     public void onSecurityKeyDisconnected(@NonNull SecurityKey securityKey) {
 
+    }
+
+    @AnyThread
+    @Override
+    public void cancel() {
+        getDialog().cancel();
+    }
+
+    @AnyThread
+    @Override
+    public void dismiss() {
+        getDialog().dismiss();
+    }
+
+    @AnyThread
+    @Override
+    public void successAndDismiss() {
+        bottomSheet.post(() -> presenter.gotoSuccessScreenAndDelayedDismiss());
     }
 
     @AnyThread

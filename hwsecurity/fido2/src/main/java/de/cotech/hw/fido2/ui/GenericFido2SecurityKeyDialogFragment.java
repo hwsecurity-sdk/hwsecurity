@@ -39,7 +39,7 @@ import de.cotech.hw.ui.SecurityKeyDialogOptions;
 import de.cotech.hw.ui.internal.SecurityKeyDialogPresenter;
 
 public class GenericFido2SecurityKeyDialogFragment extends SecurityKeyDialogFragment<Fido2SecurityKey> {
-    public static final String ARG_FIDO2_CONFIG = "de.cotech.hw.fido2.ARG_FIDO2_CONFIG";
+    public static final String ARG_FIDO2_CONFIG = "de.cotech.hw.fido2.ui.ARG_FIDO2_CONFIG";
 
     public static SecurityKeyDialogFragment<Fido2SecurityKey> newInstance() {
         return newInstance(SecurityKeyDialogOptions.builder().build(), Fido2SecurityKeyConnectionModeConfig.getDefaultConfig());

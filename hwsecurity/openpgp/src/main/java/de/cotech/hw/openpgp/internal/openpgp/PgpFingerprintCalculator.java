@@ -36,6 +36,7 @@ import java.util.Date;
 
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
+
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 
 
@@ -80,7 +81,7 @@ public class PgpFingerprintCalculator {
         out.write((byte) (time >> 8));
         out.write((byte) time);
 
-        out.write(19); // algorithm id: rsa encrypt
+        out.write(PublicKeyAlgorithmTags.ECDSA);
 
         out.write(curveOid.getEncoded());
         out.write(publicKey.getEncoded()); // TODO not openpgp conform!
@@ -97,7 +98,7 @@ public class PgpFingerprintCalculator {
         out.write((byte) (time >> 8));
         out.write((byte) time);
 
-        out.write(2); // algorithm id: rsa encrypt
+        out.write(PublicKeyAlgorithmTags.RSA_ENCRYPT);
 
         out.write(encodeBigIntegerAsMpi(publicKey.getModulus()));
         out.write(encodeBigIntegerAsMpi(publicKey.getPublicExponent()));

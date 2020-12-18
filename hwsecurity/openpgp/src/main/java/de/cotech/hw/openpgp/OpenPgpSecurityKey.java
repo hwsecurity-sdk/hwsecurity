@@ -30,6 +30,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 import androidx.annotation.WorkerThread;
+
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.sec.SECObjectIdentifiers;
+import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
+
+import java.io.IOException;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.interfaces.ECPublicKey;
+import java.util.Arrays;
+import java.util.Date;
+
 import de.cotech.hw.SecurityKey;
 import de.cotech.hw.SecurityKeyAuthenticator;
 import de.cotech.hw.SecurityKeyException;
@@ -42,6 +55,7 @@ import de.cotech.hw.openpgp.internal.OpenPgpAppletConnection;
 import de.cotech.hw.openpgp.internal.openpgp.KeyFormat;
 import de.cotech.hw.openpgp.internal.openpgp.KeyType;
 import de.cotech.hw.openpgp.internal.openpgp.OpenPgpAid;
+import de.cotech.hw.openpgp.internal.operations.ChangeKeyEccOp;
 import de.cotech.hw.openpgp.internal.operations.ChangeKeyRsaOp;
 import de.cotech.hw.openpgp.internal.operations.ModifyPinOp;
 import de.cotech.hw.openpgp.internal.operations.ResetAndWipeOp;
@@ -54,17 +68,18 @@ import de.cotech.hw.secrets.ByteSecret;
 import de.cotech.hw.secrets.PinProvider;
 import de.cotech.hw.util.HwTimber;
 
-import java.io.IOException;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.util.Arrays;
-import java.util.Date;
-
 
 @SuppressWarnings({"WeakerAccess", "unused"}) // public API
 public class OpenPgpSecurityKey extends SecurityKey {
     private static final ByteSecret DEFAULT_PUK = ByteSecret.unsafeFromString("12345678");
+
+    public enum AlgorithmConfig {
+        RSA_2048_UPLOAD,
+        RSA_2048_ONLY_ENCRYPTION_UPLOAD,
+        NIST_P256_GENERATE_ON_HARDWARE,
+        NIST_P384_GENERATE_ON_HARDWARE,
+        NIST_P521_GENERATE_ON_HARDWARE
+    }
 
     public final OpenPgpAppletConnection openPgpAppletConnection;
 
@@ -162,76 +177,127 @@ public class OpenPgpSecurityKey extends SecurityKey {
      *
      * @see PairedSecurityKey
      * @see PinProvider
+     * @see AlgorithmConfig
      * <p>
      * This method directly performs IO with the security token, and should therefore not be called on the UI thread.
      */
     @WorkerThread
-    public PairedSecurityKey setupPairedKey(PinProvider pinProvider) throws IOException {
+    public PairedSecurityKey setupPairedKey(PinProvider pinProvider, AlgorithmConfig setupAlgorithm) throws IOException {
         ByteSecret pairedPin = pinProvider.getPin(getOpenPgpInstanceAid());
         ByteSecret pairedPuk = pinProvider.getPuk(getOpenPgpInstanceAid());
-        return setupPairedKey(pairedPin, pairedPuk);
+        return setupPairedKey(pairedPin, pairedPuk, setupAlgorithm);
     }
 
+    @Deprecated
+    @WorkerThread
+    public PairedSecurityKey setupPairedKey(PinProvider pinProvider) throws IOException {
+        return setupPairedKey(pinProvider, AlgorithmConfig.RSA_2048_UPLOAD);
+    }
+
+    @Deprecated
     @WorkerThread
     public PairedSecurityKey setupPairedKey(ByteSecret newPin, ByteSecret newPuk) throws IOException {
-        return setupPairedKey(newPin, newPuk, false);
+        return setupPairedKey(newPin, newPuk, AlgorithmConfig.RSA_2048_UPLOAD);
+    }
+
+    @Deprecated
+    @WorkerThread
+    public PairedSecurityKey setupPairedKey(ByteSecret newPin, ByteSecret newPuk, boolean encryptionOnly) throws IOException {
+        if (encryptionOnly) {
+            return setupPairedKey(newPin, newPuk, AlgorithmConfig.RSA_2048_ONLY_ENCRYPTION_UPLOAD);
+        } else {
+            return setupPairedKey(newPin, newPuk, AlgorithmConfig.RSA_2048_UPLOAD);
+        }
     }
 
     @WorkerThread
-    public PairedSecurityKey setupPairedKey(ByteSecret newPin, ByteSecret newPuk, boolean encryptionOnly) throws IOException {
+    public PairedSecurityKey setupPairedKey(ByteSecret newPin, ByteSecret newPuk, AlgorithmConfig algorithmConfig) throws IOException {
         boolean isInFactoryDefaultState = isInFactoryDefaultState();
         if (!isInFactoryDefaultState) {
             wipeAndVerify();
         }
 
         try {
-            Date timestamp = new Date();
+            Date creationTime = new Date();
             ChangeKeyRsaOp changeKeyRsaOp = ChangeKeyRsaOp.create(openPgpAppletConnection);
 
-            // TODO: automatic selection of ECC, if card supports it!
-            // EccEncryptionUtil eccEncryptionUtil = new EccEncryptionUtil();
-            // KeyPair authKeyPair = eccEncryptionUtil.generateEcKeyPair(SECObjectIdentifiers.secp256r1);
+            switch (algorithmConfig) {
+                case RSA_2048_UPLOAD: {
+                    RsaEncryptionUtil rsaEncryptUtil = new RsaEncryptionUtil();
+                    KeyPair encryptKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
+                    KeyPair signKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
+                    KeyPair authKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
+                    byte[] encryptFingerprint = changeKeyRsaOp.changeKey(KeyType.ENCRYPT, encryptKeyPair, creationTime);
+                    byte[] signFingerprint = changeKeyRsaOp.changeKey(KeyType.SIGN, signKeyPair, creationTime);
+                    byte[] authFingerprint = changeKeyRsaOp.changeKey(KeyType.AUTH, authKeyPair, creationTime);
+                    updatePinAndPukUsingDefaultPuk(newPin, newPuk);
 
-            // ChangeKeyEccOp changeKeyEccOp = ChangeKeyEccOp.create(openPgpAppletConnection);
-            // changeKeyEccOp.changeKey(KeyType.SIGN, "secp256r1", authKeyPair, timestamp);
-            // changeKeyEccOp.changeKey(KeyType.ENCRYPT, "secp256r1", authKeyPair, timestamp);
-            // changeKeyEccOp.changeKey(KeyType.AUTH, "secp256r1", authKeyPair, timestamp);
+                    openPgpAppletConnection.refreshConnectionCapabilities();
 
-            RsaEncryptionUtil rsaEncryptUtil = new RsaEncryptionUtil();
-            if (encryptionOnly) {
-                KeyPair encryptionKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
-                byte[] encryptFingerprint = changeKeyRsaOp.changeKey(KeyType.ENCRYPT, encryptionKeyPair, timestamp);
+                    return new PairedSecurityKey(getOpenPgpInstanceAid(),
+                            encryptFingerprint, encryptKeyPair.getPublic(),
+                            signFingerprint, signKeyPair.getPublic(),
+                            authFingerprint, authKeyPair.getPublic()
+                    );
+                }
+                case RSA_2048_ONLY_ENCRYPTION_UPLOAD: {
+                    RsaEncryptionUtil rsaEncryptUtil = new RsaEncryptionUtil();
+                    KeyPair encryptKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
+                    byte[] encryptFingerprint = changeKeyRsaOp.changeKey(KeyType.ENCRYPT, encryptKeyPair, creationTime);
 
-                updatePinAndPukUsingDefaultPuk(newPin, newPuk);
+                    updatePinAndPukUsingDefaultPuk(newPin, newPuk);
 
-                openPgpAppletConnection.refreshConnectionCapabilities();
+                    openPgpAppletConnection.refreshConnectionCapabilities();
 
-                return new PairedSecurityKey(getOpenPgpInstanceAid(),
-                        encryptFingerprint, encryptionKeyPair.getPublic(),
-                        null, null,
-                        null, null
-                );
-            } else {
-                KeyPair encryptionKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
-                KeyPair signKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
-                KeyPair authKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
-                byte[] encryptFingerprint = changeKeyRsaOp.changeKey(KeyType.ENCRYPT, encryptionKeyPair, timestamp);
-                byte[] signFingerprint = changeKeyRsaOp.changeKey(KeyType.SIGN, signKeyPair, timestamp);
-                byte[] authFingerprint = changeKeyRsaOp.changeKey(KeyType.AUTH, authKeyPair, timestamp);
-                updatePinAndPukUsingDefaultPuk(newPin, newPuk);
-
-                openPgpAppletConnection.refreshConnectionCapabilities();
-
-                return new PairedSecurityKey(getOpenPgpInstanceAid(),
-                        encryptFingerprint, encryptionKeyPair.getPublic(),
-                        signFingerprint, signKeyPair.getPublic(),
-                        authFingerprint, authKeyPair.getPublic()
-                );
+                    return new PairedSecurityKey(getOpenPgpInstanceAid(),
+                            encryptFingerprint, encryptKeyPair.getPublic(),
+                            null, null,
+                            null, null
+                    );
+                }
+                case NIST_P256_GENERATE_ON_HARDWARE: {
+                    ASN1ObjectIdentifier curveOid = X9ObjectIdentifiers.prime256v1;
+                    return generateEccKeys(newPin, newPuk, curveOid, creationTime);
+                }
+                case NIST_P384_GENERATE_ON_HARDWARE: {
+                    ASN1ObjectIdentifier curveOid = SECObjectIdentifiers.secp384r1;
+                    return generateEccKeys(newPin, newPuk, curveOid, creationTime);
+                }
+                case NIST_P521_GENERATE_ON_HARDWARE: {
+                    ASN1ObjectIdentifier curveOid = SECObjectIdentifiers.secp521r1;
+                    return generateEccKeys(newPin, newPuk, curveOid, creationTime);
+                }
+                default: {
+                    throw new IOException("Unsupported AlgorithmConfig!");
+                }
             }
         } catch (Exception e) {
             HwTimber.e(e);
             return null;
         }
+    }
+
+    private PairedSecurityKey generateEccKeys(ByteSecret newPin, ByteSecret newPuk,
+                                              ASN1ObjectIdentifier curveOid, Date creationTime) throws IOException {
+
+        ChangeKeyEccOp changeKeyEccOp = ChangeKeyEccOp.create(openPgpAppletConnection);
+        ECPublicKey encryptPublicKey = changeKeyEccOp.generateKey(KeyType.ENCRYPT, curveOid, creationTime);
+        ECPublicKey signPublicKey = changeKeyEccOp.generateKey(KeyType.SIGN, curveOid, creationTime);
+        ECPublicKey authPublicKey = changeKeyEccOp.generateKey(KeyType.AUTH, curveOid, creationTime);
+
+        updatePinAndPukUsingDefaultPuk(newPin, newPuk);
+
+        openPgpAppletConnection.refreshConnectionCapabilities();
+
+        byte[] encryptFingerprint = openPgpAppletConnection.getOpenPgpCapabilities().getFingerprintEncrypt();
+        byte[] signFingerprint = openPgpAppletConnection.getOpenPgpCapabilities().getFingerprintSign();
+        byte[] authFingerprint = openPgpAppletConnection.getOpenPgpCapabilities().getFingerprintAuth();
+
+        return new PairedSecurityKey(getOpenPgpInstanceAid(),
+                encryptFingerprint, encryptPublicKey,
+                signFingerprint, signPublicKey,
+                authFingerprint, authPublicKey
+        );
     }
 
     @NonNull

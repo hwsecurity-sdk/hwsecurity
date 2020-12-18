@@ -153,6 +153,7 @@ public abstract class SecurityKeyDialogOptions implements Parcelable {
          *     &#60;item name="hwSecurityButtonColor"&#62;@color/hwSecurityDarkBlue&#60;/item&#62;
          *     &#60;item name="hwSecuritySurfaceColor"&#62;@color/hwSecurityBlue&#60;/item&#62;
          *     &#60;item name="hwSecurityErrorColor"&#62;@color/hwSecurityRed&#60;/item&#62;
+         *     &#60;item name="hwSecuritySuccessColor"&#62;@color/hwSecurityGreen&#60;/item&#62;
          * &#60;/style&#62;
          * </pre>
          */

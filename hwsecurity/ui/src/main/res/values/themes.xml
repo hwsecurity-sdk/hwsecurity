@@ -28,6 +28,7 @@
         <item name="hwSecurityButtonColor">@color/hwSecurityDarkBlue</item>
         <item name="hwSecuritySurfaceColor">@color/hwSecurityBlue</item>
         <item name="hwSecurityErrorColor">@color/hwSecurityRed</item>
+        <item name="hwSecuritySuccessColor">@color/hwSecurityGreen</item>
     </style>
 
     <style name="HwSecurity.BaseDialog" parent="Theme.MaterialComponents.Light.BottomSheetDialog">

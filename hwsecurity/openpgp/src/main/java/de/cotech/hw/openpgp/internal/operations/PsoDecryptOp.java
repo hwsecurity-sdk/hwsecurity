@@ -35,7 +35,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 import androidx.annotation.VisibleForTesting;
-import de.cotech.hw.SecurityKeyException;
+
 import de.cotech.hw.secrets.ByteSecret;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
@@ -222,10 +222,10 @@ public class PsoDecryptOp {
     }
 
     private byte[] getEcDecipherPayload(ECKeyFormat eckf, byte[] encryptedPoint) throws IOException {
-        if (CV25519.equals(eckf.getCurveOID())) {
+        if (CV25519.equals(eckf.curveOid())) {
             return Arrays.copyOfRange(encryptedPoint, 1, 33);
         } else {
-            X9ECParameters x9Params = ECNamedCurveTable.getByOID(eckf.getCurveOID());
+            X9ECParameters x9Params = ECNamedCurveTable.getByOID(eckf.curveOid());
             ECPoint p = x9Params.getCurve().decodePoint(encryptedPoint);
             if (!p.isValid()) {
                 throw new IOException("Invalid EC point!");

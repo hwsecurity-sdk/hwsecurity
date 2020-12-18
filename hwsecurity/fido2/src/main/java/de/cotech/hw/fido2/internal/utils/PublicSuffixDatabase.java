@@ -36,7 +36,8 @@ import de.cotech.hw.util.HwTimber;
 
 
 class PublicSuffixDatabase {
-    private static final String PUBLIC_SUFFIX_RESOURCE = "publicsuffixes.gz";
+    // Must be an absolute path to work after Proguard optimizations!
+    private static final String PUBLIC_SUFFIX_RESOURCE = "/de/cotech/hw/fido2/internal/utils/publicsuffixes.gz";
     private static final byte[] WILDCARD_LABEL = new byte[] { '*' };
     private static final char EXCEPTION_MARKER = '!';
 

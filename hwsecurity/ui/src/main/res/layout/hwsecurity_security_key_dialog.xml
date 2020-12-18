@@ -120,6 +120,18 @@
         tools:visibility="visible" />
 
     <include
+        android:id="@+id/includeSuccess"
+        layout="@layout/hwsecurity_security_key_success"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/guidelineBottom"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textDescription"
+        tools:visibility="visible" />
+
+    <include
         android:id="@+id/includeNfcFullscreen"
         layout="@layout/hwsecurity_security_key_nfc_fullscreen"
         android:layout_width="0dp"

@@ -108,7 +108,7 @@ public class AuthenticatorGetAssertionCtap1Operation extends
         U2fAuthenticateResponse u2fResponse = U2fAuthenticateResponse.fromBytes(responseData);
 
         AuthenticatorData authenticatorData =
-                AuthenticatorData.create(rpIdHash, (byte) 1, u2fResponse.counter(), null, null);
+                AuthenticatorData.create(rpIdHash, u2fResponse.presence(), u2fResponse.counter(), null, null);
         byte[] authenticatorDataBytes = new AuthenticatorDataParser().toBytes(authenticatorData);
         AuthenticatorAssertionResponse authenticatorResponse =
                 AuthenticatorAssertionResponse.create(
