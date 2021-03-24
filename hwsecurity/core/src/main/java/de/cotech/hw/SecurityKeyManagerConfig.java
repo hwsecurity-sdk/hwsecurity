@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -159,26 +159,25 @@ public abstract class SecurityKeyManagerConfig {
          * (by default Android’s Log class is used), a custom logging tree can be used.
          * Setting your own logging tree overrides setEnableDebugLogging(true).
          * <pre>
-         * .setLoggingTree(new HwTimber.DebugTree() {
-         *     protected String createStackElementTag(@NonNull StackTraceElement element) {
-         *         if (element.getClassName().startsWith("de.cotech.hw")) {
-         *             return super.createStackElementTag(element);
-         *         } else {
-         *             return null;
+         * private static class CrashReportingTree extends HwTimber.Tree {
+         *     @Override protected void log(int priority, String tag, @NonNull String message, Throwable t) {
+         *         if (priority == Log.VERBOSE || priority == Log.DEBUG) {
+         *             return;
+         *         }
+         *
+         *         FakeCrashLibrary.log(priority, tag, message);
+         *
+         *         if (t != null) {
+         *             if (priority == Log.ERROR) {
+         *                 FakeCrashLibrary.logError(t);
+         *             } else if (priority == Log.WARN) {
+         *                 FakeCrashLibrary.logWarning(t);
+         *             }
          *         }
          *     }
-         *
-         *     protected boolean isLoggable(String tag, int priority) {
-         *         if (tag == null) {
-         *             return false;
-         *         }
-         *         // TODO: filter based on priority
-         *     }
-         *
-         *     protected void log(int priority, String tag, @NonNull String message, Throwable t) {
-         *         // TODO: delegate log output to your own logging framework
-         *     }
-         * });
+         * }
+         * new SecurityKeyManagerConfig.Builder()
+         *     .setLoggingTree(CrashReportingTree.class)
          * </pre>
          * <p>
          * This tree overrides {@link SecurityKeyManagerConfig.Builder#setEnableDebugLogging(boolean)}.

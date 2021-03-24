@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -31,11 +31,16 @@ import com.google.auto.value.AutoValue;
 
 @AutoValue
 public abstract class AssertionCreationData {
+    @SuppressWarnings("mutable")
     public abstract byte[] credentialIdResult();
+    @SuppressWarnings("mutable")
     public abstract byte[] clientDataJSONResult();
+    @SuppressWarnings("mutable")
     public abstract byte[] authenticatorDataResult();
+    @SuppressWarnings("mutable")
     public abstract byte[] signatureResult();
     @Nullable
+    @SuppressWarnings("mutable")
     public abstract byte[] userHandleResult();
 
     public static AssertionCreationData create(byte[] credentialId, byte[] clientDataJSON, byte[] authenticatorData, byte[] signature, @Nullable byte[] userHandle) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -41,7 +41,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 
 
-@RestrictTo(Scope.LIBRARY_GROUP)
 public class SecurityKeyTlsClientCertificateAuthenticator {
     private final X509Certificate clientCertificate;
     private final PrivateKey privateKey;

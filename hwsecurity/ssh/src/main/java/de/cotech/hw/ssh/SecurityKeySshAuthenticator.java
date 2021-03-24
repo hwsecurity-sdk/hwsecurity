@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -129,9 +129,7 @@ public class SecurityKeySshAuthenticator {
     public byte[] authenticateSshChallenge(byte[] challenge) throws IOException, NoSuchAlgorithmException {
         String signatureAlgorithmName = getSshSignatureAlgorithmName();
         String signatureHashAlgorithmName = SshUtil.getSignatureHashAlgorithmName(signatureAlgorithmName);
-
         byte[] signedChallenge = securityKeyAuthenticator.authenticateWithDigest(challenge, signatureHashAlgorithmName);
-
         return SshUtil.encodeSshSignature(signatureAlgorithmName, signedChallenge);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -34,9 +34,11 @@ import de.cotech.hw.fido2.internal.ctap2.Ctap2Response;
 public abstract class AuthenticatorClientPinResponse extends Ctap2Response {
     // KeyAgreement (0x01) 	COSE_Key 	Optional 	Authenticator key agreement public key in COSE_Key format. This will be used to establish a sharedSecret between platform and the authenticator. The COSE_Key-encoded public key MUST contain the optional "alg" parameter and MUST NOT contain any other optional parameters. The "alg" parameter MUST contain a COSEAlgorithmIdentifier value.
     @Nullable
+    @SuppressWarnings("mutable")
     public abstract byte[] keyAgreement();
     // pinToken (0x02) 	Byte Array 	Optional 	Encrypted pinToken using sharedSecret to be used in subsequent authenticatorMakeCredential and authenticatorGetAssertion operations.
     @Nullable
+    @SuppressWarnings("mutable")
     public abstract byte[] pinToken();
     // retries (0x03) 	Unsigned Integer 	Optional 	Number of PIN attempts remaining before lockout. This is optionally used to show in UI when collecting the PIN in Setting a new PIN, Changing existing PIN and Getting pinToken from the authenticator flows.
     @Nullable

@@ -7,7 +7,7 @@ dependencies {
     api project(':hwsecurity:provider')
 
     compileOnly project(':hwsecurity:ui')
-    compileOnly 'com.google.android.material:material:1.1.0'
+    compileOnly 'com.google.android.material:material:1.3.0'
 
     compileOnly 'androidx.annotation:annotation:1.1.0'
 
@@ -93,24 +93,22 @@ afterEvaluate {
 }
 
 dokkaHugo {
-    configure {
-        outputDirectory.set(file("$projectDir/../../hwsecurity.dev/content/reference"))
+    outputDirectory.set(file("$projectDir/../../hwsecurity.dev/content/reference"))
 
-        dokkaSourceSets {
-            register("java") {
-                moduleDisplayName.set("hwsecurity-piv")
+    moduleName.set("hwsecurity-piv")
 
-                sourceRoots.setFrom(file("src/main/java"))
+    dokkaSourceSets {
+        register("java") {
+            sourceRoots.setFrom(file("src/main/java"))
 
-                jdkVersion.set(8) // Used for linking to JDK documentation
-                noStdlibLink.set(false) // Disable linking to online kotlin-stdlib documentation
-                noJdkLink.set(true) // Disable linking to online JDK documentation
-                noAndroidSdkLink.set(false) // Disable linking to online Android documentation
+            jdkVersion.set(8) // Used for linking to JDK documentation
+            noStdlibLink.set(false) // Disable linking to online kotlin-stdlib documentation
+            noJdkLink.set(true) // Disable linking to online JDK documentation
+            noAndroidSdkLink.set(false) // Disable linking to online Android documentation
 
-                perPackageOption {
-                    prefix.set("de.cotech.hw.piv.internal")
-                    suppress.set(true)
-                }
+            perPackageOption {
+                matchingRegex.set(".*\\.internal.*") // will match all .internal packages and sub-packages
+                suppress.set(true)
             }
         }
     }

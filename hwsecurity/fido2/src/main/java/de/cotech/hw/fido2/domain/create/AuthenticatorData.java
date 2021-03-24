@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -53,6 +53,7 @@ public abstract class AuthenticatorData {
     public static final byte FLAG_EXTENSION_DATA = (byte) (1<<7);
 
     // rpIdHash 	32 	SHA-256 hash of the RP ID the credential is scoped to.
+    @SuppressWarnings("mutable")
     public abstract byte[] rpIdHash();
 
     // flags 	1 	Flags (bit 0 is the least significant bit):
@@ -67,6 +68,7 @@ public abstract class AuthenticatorData {
 
     // extensions 	variable (if present) 	Extension-defined authenticator data. This is a CBOR [RFC7049] map with extension identifiers as keys, and authenticator extension outputs as values. See §9 WebAuthn Extensions for details.
     @Nullable
+    @SuppressWarnings("mutable")
     public abstract byte[] extensions();
 
     public boolean hasAttestedCredentialData() {

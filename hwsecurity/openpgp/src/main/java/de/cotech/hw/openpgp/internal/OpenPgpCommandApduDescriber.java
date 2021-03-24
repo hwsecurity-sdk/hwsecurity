@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -166,6 +166,9 @@ public class OpenPgpCommandApduDescriber implements CommandApduDescriber {
                 break;
             case OpenPgpCommandApduFactory.DO_GET_DATA_CARDHOLDER_RELATED_DATA:
                 builder.append(" [cardholder related]");
+                break;
+            case OpenPgpCommandApduFactory.DO_GET_DATA_KDF:
+                builder.append(" [kdf do]");
                 break;
             default:
                 builder.append(" [unknown DO 0x").append(Integer.toHexString(p1p2)).append("]");

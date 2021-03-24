@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -45,9 +45,11 @@ import de.cotech.hw.openpgp.internal.openpgp.OpenPgpAid;
 public abstract class OpenPgpCapabilities {
     private static final byte[] EMPTY_FINGERPRINT = new byte[20];
 
+    // Extended Capabilites flag bit offsets are defined on page 32 of [0]
     private final static int MASK_SM = 1 << 7;
     private final static int MASK_KEY_IMPORT = 1 << 5;
     private final static int MASK_ATTRIBUTES_CHANGABLE = 1 << 2;
+    private final static int MASK_KDF_DO = 1;
 
     private static final int MAX_PW1_LENGTH_INDEX = 1;
     private static final int MAX_PW3_LENGTH_INDEX = 3;
@@ -90,6 +92,8 @@ public abstract class OpenPgpCapabilities {
     abstract boolean isHasAesSm();
 
     public abstract boolean isHasScp11bSm();
+
+    public abstract boolean isHasKdf();
 
     abstract int getMaxGetChallengeLength();
 
@@ -193,6 +197,8 @@ public abstract class OpenPgpCapabilities {
 
         abstract Builder hasScp11bSm(boolean hasScp11bSm);
 
+        abstract Builder hasKdf(boolean hasKdf);
+
         abstract Builder maxGetChallengeLength(int maxResponseLen);
 
         abstract Builder maxCardholderCertLength(int maxCommandLen);
@@ -207,6 +213,7 @@ public abstract class OpenPgpCapabilities {
             hasSM(false);
             hasAesSm(false);
             hasScp11bSm(false);
+            hasKdf(false);
             maxGetChallengeLength(0);
             maxCardholderCertLength(0);
             maxSpecialDoLength(0);
@@ -306,6 +313,8 @@ public abstract class OpenPgpCapabilities {
                 hasAesSm(smType == 1 || smType == 2);
                 hasScp11bSm(smType == 3);
             }
+
+            hasKdf((v[0] & MASK_KDF_DO) == 1);
 
             maxGetChallengeLength(((v[2] & 0xff) << 8) + (v[3] & 0xff));
             maxCardholderCertLength(((v[4] & 0xff) << 8) + (v[5] & 0xff));

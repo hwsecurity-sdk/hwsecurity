@@ -7,7 +7,7 @@ dependencies {
 
     compileOnly 'androidx.annotation:annotation:1.1.0'
 
-    api 'com.google.auto.value:auto-value-annotations:1.6.2'
+    api 'com.google.auto.value:auto-value-annotations:1.6.5'
     annotationProcessor 'com.google.auto.value:auto-value:1.6.2'
     annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:0.2.6'
 }
@@ -85,24 +85,22 @@ afterEvaluate {
 }
 
 dokkaHugo {
-    configure {
-        outputDirectory.set(file("$projectDir/../../hwsecurity.dev/content/reference"))
+    outputDirectory.set(file("$projectDir/../../hwsecurity.dev/content/reference"))
 
-        dokkaSourceSets {
-            register("java") {
-                moduleDisplayName.set("hwsecurity-provider")
+    moduleName.set("hwsecurity-provider")
 
-                sourceRoots.setFrom(file("src/main/java"))
+    dokkaSourceSets {
+        register("java") {
+            sourceRoots.setFrom(file("src/main/java"))
 
-                jdkVersion.set(8) // Used for linking to JDK documentation
-                noStdlibLink.set(false) // Disable linking to online kotlin-stdlib documentation
-                noJdkLink.set(true) // Disable linking to online JDK documentation
-                noAndroidSdkLink.set(false) // Disable linking to online Android documentation
+            jdkVersion.set(8) // Used for linking to JDK documentation
+            noStdlibLink.set(false) // Disable linking to online kotlin-stdlib documentation
+            noJdkLink.set(true) // Disable linking to online JDK documentation
+            noAndroidSdkLink.set(false) // Disable linking to online Android documentation
 
-                perPackageOption {
-                    prefix.set("de.cotech.hw.provider.internal")
-                    suppress.set(true)
-                }
+            perPackageOption {
+                matchingRegex.set(".*\\.internal.*") // will match all .internal packages and sub-packages
+                suppress.set(true)
             }
         }
     }

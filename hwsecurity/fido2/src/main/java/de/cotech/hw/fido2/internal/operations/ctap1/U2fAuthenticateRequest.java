@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -30,8 +30,11 @@ import com.google.auto.value.AutoValue;
 
 @AutoValue
 public abstract class U2fAuthenticateRequest {
+    @SuppressWarnings("mutable")
     abstract byte[] challengeParameter();
+    @SuppressWarnings("mutable")
     abstract byte[] applicationParameter();
+    @SuppressWarnings("mutable")
     abstract byte[] keyHandle();
 
     public static U2fAuthenticateRequest create(byte[] challengeParameter, byte[] applicationParameter, byte[] keyHandle) {

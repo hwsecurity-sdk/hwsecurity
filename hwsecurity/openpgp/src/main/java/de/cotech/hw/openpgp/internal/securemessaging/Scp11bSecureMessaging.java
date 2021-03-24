@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -66,14 +66,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 
-import de.cotech.hw.openpgp.internal.openpgp.ECKeyFormat;
+import de.cotech.hw.openpgp.internal.openpgp.EcKeyFormat;
 import de.cotech.hw.openpgp.internal.openpgp.KeyFormat;
 import de.cotech.hw.openpgp.internal.OpenPgpAppletConnection;
-import de.cotech.hw.openpgp.OpenPgpCardUtils;
+import de.cotech.hw.openpgp.internal.OpenPgpCardUtils;
 import de.cotech.hw.openpgp.internal.OpenPgpCommandApduFactory;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.Iso7816TLV;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -83,6 +84,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
 import org.bouncycastle.asn1.nist.NISTNamedCurves;
 import org.bouncycastle.asn1.x9.ECNamedCurveTable;
 import org.bouncycastle.asn1.x9.X9ECParameters;
@@ -91,10 +93,10 @@ import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.util.Arrays;
 
 @RestrictTo(Scope.LIBRARY_GROUP)
-public class SCP11bSecureMessaging implements SecureMessaging {
+public class Scp11bSecureMessaging implements SecureMessaging {
 
-    private static final byte OPENPGP_SECURE_MESSAGING_CLA_MASK = (byte)0x04;
-    private static final byte OPENPGP_SECURE_MESSAGING_KEY_ATTRIBUTES_TAG = (byte)0xD4;
+    private static final byte OPENPGP_SECURE_MESSAGING_CLA_MASK = (byte) 0x04;
+    private static final byte OPENPGP_SECURE_MESSAGING_KEY_ATTRIBUTES_TAG = (byte) 0xD4;
 
     private static final int AES_BLOCK_SIZE = 128 / 8;
 
@@ -125,7 +127,7 @@ public class SCP11bSecureMessaging implements SecureMessaging {
 
     private byte[] mMacChaining;
 
-    private SCP11bSecureMessaging() {
+    private Scp11bSecureMessaging() {
     }
 
     private void setKeys(@NonNull final byte[] sEnc,
@@ -164,7 +166,7 @@ public class SCP11bSecureMessaging implements SecureMessaging {
                 && (mMacChaining != null);
     }
 
-    private static ECParameterSpec getAlgorithmParameterSpec(final ECKeyFormat kf)
+    private static ECParameterSpec getAlgorithmParameterSpec(final EcKeyFormat kf)
             throws NoSuchProviderException, NoSuchAlgorithmException, InvalidParameterSpecException {
         final AlgorithmParameters algoParams = AlgorithmParameters.getInstance(SCP11B_KEY_AGREEMENT_KEY_ALGO, PROVIDER);
 
@@ -174,9 +176,9 @@ public class SCP11bSecureMessaging implements SecureMessaging {
     }
 
 
-    private static ECPublicKey newECDHPublicKey(final ECKeyFormat kf, byte[] data)
+    private static ECPublicKey newECDHPublicKey(final EcKeyFormat kf, byte[] data)
             throws InvalidKeySpecException, NoSuchAlgorithmException,
-                   InvalidParameterSpecException, NoSuchProviderException {
+            InvalidParameterSpecException, NoSuchProviderException {
         if (ecdhFactory == null) {
             ecdhFactory = KeyFactory.getInstance(SCP11B_KEY_AGREEMENT_KEY_TYPE, PROVIDER);
         }
@@ -196,12 +198,12 @@ public class SCP11bSecureMessaging implements SecureMessaging {
                 new java.security.spec.ECPoint(p.getAffineXCoord().toBigInteger(), p.getAffineYCoord().toBigInteger()),
                 getAlgorithmParameterSpec(kf));
 
-        return (ECPublicKey)(ecdhFactory.generatePublic(pk));
+        return (ECPublicKey) (ecdhFactory.generatePublic(pk));
     }
 
-    private static KeyPair generateECDHKeyPair(final ECKeyFormat kf)
+    private static KeyPair generateECDHKeyPair(final EcKeyFormat kf)
             throws NoSuchProviderException, NoSuchAlgorithmException,
-                   InvalidParameterSpecException, InvalidAlgorithmParameterException {
+            InvalidParameterSpecException, InvalidAlgorithmParameterException {
         final KeyPairGenerator gen = KeyPairGenerator.getInstance(SCP11B_KEY_AGREEMENT_KEY_ALGO, PROVIDER);
 
         if (srand == null) {
@@ -214,7 +216,7 @@ public class SCP11bSecureMessaging implements SecureMessaging {
     }
 
     private static ECPublicKey verifyCertificate(KeyStore ks,
-                                                 final ECKeyFormat kf,
+                                                 final EcKeyFormat kf,
                                                  final byte[] data) throws IOException {
         try {
 
@@ -287,7 +289,7 @@ public class SCP11bSecureMessaging implements SecureMessaging {
 
     @CheckResult
     public static SecureMessaging establish(OpenPgpAppletConnection t, OpenPgpCommandApduFactory commandFactory,
-            KeyStore smKeyStore)
+                                            KeyStore smKeyStore)
             throws SecureMessagingException, IOException {
 
         CommandApdu cmd;
@@ -304,18 +306,18 @@ public class SCP11bSecureMessaging implements SecureMessaging {
         }
         tlvs = Iso7816TLV.readList(resp.getData(), true);
         if ((tlvs == null)
-            || (tlvs.length != 1)
-            || ((byte)tlvs[0].mT != OPENPGP_SECURE_MESSAGING_KEY_ATTRIBUTES_TAG)) {
+                || (tlvs.length != 1)
+                || ((byte) tlvs[0].mT != OPENPGP_SECURE_MESSAGING_KEY_ATTRIBUTES_TAG)) {
             throw new SecureMessagingException("unsupported secure messaging key attributes format");
         }
 
         final KeyFormat kf = KeyFormat.fromBytes(tlvs[0].mV);
 
-        if (kf.keyFormatType() != KeyFormat.KeyFormatType.ECKeyFormatType) {
+        if (!(kf instanceof EcKeyFormat)) {
             throw new SecureMessagingException("unsupported secure messaging key format");
         }
 
-        final ECKeyFormat eckf = (ECKeyFormat)kf;
+        final EcKeyFormat eckf = (EcKeyFormat) kf;
 
         if (eckf.curveOid() == null) {
             throw new SecureMessagingException("unsupported secure messaging curve");
@@ -348,13 +350,13 @@ public class SCP11bSecureMessaging implements SecureMessaging {
                 tlvs = Iso7816TLV.readList(resp.getData(), true);
                 if ((tlvs == null)
                         || (tlvs.length != 1)
-                        || ((short)tlvs[0].mT != (short)0x7f49)) {
+                        || ((short) tlvs[0].mT != (short) 0x7f49)) {
                     throw new SecureMessagingException("invalid format of secure messaging key");
                 }
                 tlvs = Iso7816TLV.readList(tlvs[0].mV, true);
                 if ((tlvs == null)
                         || (tlvs.length != 1)
-                        || ((byte)tlvs[0].mT != (byte)0x86)) {
+                        || ((byte) tlvs[0].mT != (byte) 0x86)) {
                     throw new SecureMessagingException("invalid format of secure messaging key");
                 }
 
@@ -369,29 +371,29 @@ public class SCP11bSecureMessaging implements SecureMessaging {
             final int fieldSize = curve.getField().getFieldSize();
             int keySize;
 
-            if(fieldSize < 512) {
+            if (fieldSize < 512) {
                 keySize = 16;
             } else {
                 keySize = 32;
             }
 
             final KeyPair ekoce = generateECDHKeyPair(eckf);
-            final ECPublicKey epkoce = (ECPublicKey)ekoce.getPublic();
-            final ECPrivateKey eskoce = (ECPrivateKey)ekoce.getPrivate();
+            final ECPublicKey epkoce = (ECPublicKey) ekoce.getPublic();
+            final ECPrivateKey eskoce = (ECPrivateKey) ekoce.getPrivate();
 
-            final byte[] crt_template = new byte[] {
-                    (byte)0xA6, (byte)0x0D,
-                    (byte)0x90, (byte)0x02, (byte)0x11, (byte)0x00,
-                    (byte)0x95, (byte)0x01, (byte)0x3C,
-                    (byte)0x80, (byte)0x01, (byte)0x88,
-                    (byte)0x81, (byte)0x01, (byte)keySize,
-                    (byte)0x5F, (byte)0x49 };
+            final byte[] crt_template = new byte[]{
+                    (byte) 0xA6, (byte) 0x0D,
+                    (byte) 0x90, (byte) 0x02, (byte) 0x11, (byte) 0x00,
+                    (byte) 0x95, (byte) 0x01, (byte) 0x3C,
+                    (byte) 0x80, (byte) 0x01, (byte) 0x88,
+                    (byte) 0x81, (byte) 0x01, (byte) keySize,
+                    (byte) 0x5F, (byte) 0x49};
 
-            int csize = (int)Math.ceil(epkoce.getParams().getCurve().getField().getFieldSize() / 8.0);
+            int csize = (int) Math.ceil(epkoce.getParams().getCurve().getField().getFieldSize() / 8.0);
 
             ByteArrayOutputStream pkout = new ByteArrayOutputStream(), bout = new ByteArrayOutputStream();
 
-            pkout.write((byte)0x04);
+            pkout.write((byte) 0x04);
             OpenPgpCardUtils.writeBits(pkout, epkoce.getW().getAffineX(), csize);
             OpenPgpCardUtils.writeBits(pkout, epkoce.getW().getAffineY(), csize);
 
@@ -449,12 +451,12 @@ public class SCP11bSecureMessaging implements SecureMessaging {
 
             csize = bout.size() + 3;
 
-            bout.write(new byte[] {
-                        (byte)0, (byte)0, (byte)0, (byte)0,
-                        crt_template[8], crt_template[11],
-                        (byte)keySize });
+            bout.write(new byte[]{
+                    (byte) 0, (byte) 0, (byte) 0, (byte) 0,
+                    crt_template[8], crt_template[11],
+                    (byte) keySize});
 
-            byte[] shs =  bout.toByteArray();
+            byte[] shs = bout.toByteArray();
 
             //key derivation
             final MessageDigest h = MessageDigest.getInstance(SCP11B_KEY_DERIVATION_ALGO, PROVIDER);
@@ -465,7 +467,7 @@ public class SCP11bSecureMessaging implements SecureMessaging {
                 bout.write(h.digest(shs));
             }
 
-            shs =  bout.toByteArray();
+            shs = bout.toByteArray();
 
             final byte[] rkey = Arrays.copyOfRange(shs, 0, keySize);
             final byte[] sEnc = Arrays.copyOfRange(shs, keySize, 2 * keySize);
@@ -482,13 +484,13 @@ public class SCP11bSecureMessaging implements SecureMessaging {
             mac.update(shs, 0, shs.length - 2 - AES_BLOCK_SIZE);
             shs = mac.doFinal();
 
-            for(int i = 0; i < AES_BLOCK_SIZE; ++i) {
+            for (int i = 0; i < AES_BLOCK_SIZE; ++i) {
                 if (shs[i] != receipt[i]) {
                     throw new SecureMessagingException("corrupted receipt!");
                 }
             }
 
-            final SCP11bSecureMessaging sm = new SCP11bSecureMessaging();
+            final Scp11bSecureMessaging sm = new Scp11bSecureMessaging();
             sm.setKeys(sEnc, sMac, sRmac, receipt);
 
             return sm;
@@ -500,16 +502,15 @@ public class SCP11bSecureMessaging implements SecureMessaging {
         } catch (InvalidParameterSpecException e) {
             throw new SecureMessagingException("invalid ECDH parameters : " + e.getMessage());
         } catch (NoSuchProviderException e) {
-            throw  new SecureMessagingException("unknown provider " + PROVIDER);
+            throw new SecureMessagingException("unknown provider " + PROVIDER);
         } catch (InvalidAlgorithmParameterException e) {
-            throw  new SecureMessagingException("invalid algorithm parameters : " + e.getMessage());
+            throw new SecureMessagingException("invalid algorithm parameters : " + e.getMessage());
         } catch (InvalidKeyException e) {
-            throw  new SecureMessagingException("invalid key : " + e.getMessage());
+            throw new SecureMessagingException("invalid key : " + e.getMessage());
         } catch (IllegalArgumentException e) {
             throw new SecureMessagingException("illegal argument (" + e.getMessage() + ")");
         }
     }
-
 
 
     @Override
@@ -521,7 +522,7 @@ public class SCP11bSecureMessaging implements SecureMessaging {
         }
 
         ++mEncryptionCounter;
-        if(mEncryptionCounter <= 0) {
+        if (mEncryptionCounter <= 0) {
             throw new SecureMessagingException("exhausted encryption counter");
         }
 
@@ -533,11 +534,11 @@ public class SCP11bSecureMessaging implements SecureMessaging {
                 final Cipher cipher = Cipher.getInstance(SCP11_CIPHER_ALGO);
 
                 byte[] iv = new byte[AES_BLOCK_SIZE];
-                Arrays.fill(iv, (byte)0);
+                Arrays.fill(iv, (byte) 0);
                 cipher.init(Cipher.ENCRYPT_MODE, mSEnc, new IvParameterSpec(iv));
 
-                iv[AES_BLOCK_SIZE - 2] = (byte)((mEncryptionCounter >> 8) & 0xff);
-                iv[AES_BLOCK_SIZE - 1] = (byte)(mEncryptionCounter & 0xff);
+                iv[AES_BLOCK_SIZE - 2] = (byte) ((mEncryptionCounter >> 8) & 0xff);
+                iv[AES_BLOCK_SIZE - 1] = (byte) (mEncryptionCounter & 0xff);
 
                 iv = cipher.doFinal(iv);
 
@@ -545,14 +546,14 @@ public class SCP11bSecureMessaging implements SecureMessaging {
 
                 final byte[] pdata = new byte[data.length + AES_BLOCK_SIZE - (data.length % AES_BLOCK_SIZE)];
                 System.arraycopy(data, 0, pdata, 0, data.length);
-                pdata[data.length] = (byte)0x80;
+                pdata[data.length] = (byte) 0x80;
 
-                Arrays.fill(data, (byte)0);
+                Arrays.fill(data, (byte) 0);
 
                 data = cipher.doFinal(pdata);
 
-                Arrays.fill(pdata, (byte)0);
-                Arrays.fill(iv, (byte)0);
+                Arrays.fill(pdata, (byte) 0);
+                Arrays.fill(iv, (byte) 0);
             }
 
 
@@ -575,7 +576,7 @@ public class SCP11bSecureMessaging implements SecureMessaging {
             System.arraycopy(data, 0, odata, ooff, data.length);
             ooff += data.length;
 
-            Arrays.fill(data, (byte)0);
+            Arrays.fill(data, (byte) 0);
 
             final Mac mac = Mac.getInstance(SCP11_MAC_ALGO, PROVIDER);
             mac.init(mSMac);
@@ -597,7 +598,7 @@ public class SCP11bSecureMessaging implements SecureMessaging {
                 throw new SecureMessagingException("Failed to parsing APDU: " + e.getMessage());
             }
 
-            Arrays.fill(odata, (byte)0);
+            Arrays.fill(odata, (byte) 0);
 
             return apdu;
 
@@ -668,7 +669,7 @@ public class SCP11bSecureMessaging implements SecureMessaging {
                 final Cipher cipher = Cipher.getInstance(SCP11_CIPHER_ALGO);
 
                 byte[] iv = new byte[AES_BLOCK_SIZE];
-                Arrays.fill(iv,(byte)0);
+                Arrays.fill(iv, (byte) 0);
                 cipher.init(Cipher.ENCRYPT_MODE, mSEnc, new IvParameterSpec(iv));
 
                 iv[0] = (byte) 0x80;

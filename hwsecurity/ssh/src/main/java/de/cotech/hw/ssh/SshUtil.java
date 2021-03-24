@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -27,6 +27,7 @@ package de.cotech.hw.ssh;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
+
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -44,6 +45,8 @@ import java.security.spec.ECPoint;
 import java.security.spec.EllipticCurve;
 import java.util.Arrays;
 
+import de.cotech.hw.util.Hwsecurity25519PublicKey;
+
 
 class SshUtil {
     private static final String OPENSSH_CERT_SUFFIX = "-cert-v01@openssh.com";
@@ -60,6 +63,13 @@ class SshUtil {
             return algorithmName.substring(0, algorithmName.length() - OPENSSH_CERT_SUFFIX.length());
         }
         return algorithmName;
+    }
+
+    static byte[] encodeEd25519PublicKey(Hwsecurity25519PublicKey publicKey) {
+        SshEncodedData sshEncodedData = new SshEncodedData();
+        sshEncodedData.putString("ssh-ed25519");
+        sshEncodedData.putString(publicKey.getEncoded());
+        return sshEncodedData.toByteArray();
     }
 
     static byte[] encodeEcPublicKey(ASN1ObjectIdentifier oid, ECPublicKey publicKey)
@@ -187,7 +197,7 @@ class SshUtil {
             case "rsa-sha256":
                 return "SHA-256";
             case "rsa-sha512":
-                return "SHA-256";
+                return "SHA-512";
             case "ecdsa-sha2-nistp256":
                 return "SHA-256";
             case "ecdsa-sha2-nistp384":
@@ -195,7 +205,7 @@ class SshUtil {
             case "ecdsa-sha2-nistp521":
                 return "SHA-512";
             case "ssh-ed25519":
-                return "SHA-256";
+                return "SHA-512";
             default:
                 throw new NoSuchAlgorithmException("Unknown ssh algorithm " + sshAlgorithmName);
         }
@@ -243,29 +253,35 @@ class SshUtil {
 
     @AnyThread
     static String retrieveSshAlgorithmName(PublicKey publicKey) throws NoSuchAlgorithmException {
-        if (publicKey instanceof ECPublicKey) {
+        if ("EC".equalsIgnoreCase(publicKey.getAlgorithm())) {
             ECPublicKey ecPublicKey = (ECPublicKey) publicKey;
             ASN1ObjectIdentifier curveOid = magicPublicKeyToCurveOid(ecPublicKey);
             String sshCurveName = SshUtil.getCurveName(curveOid);
             return "ecdsa-sha2-" + sshCurveName;
         }
-        if (publicKey instanceof RSAPublicKey) {
+        if ("RSA".equalsIgnoreCase(publicKey.getAlgorithm())) {
             // "rsa-sha2-512"
             // "rsa-sha2-256"
             return "ssh-rsa";
+        }
+        if ("Ed25519".equalsIgnoreCase(publicKey.getAlgorithm())) {
+            return "ssh-ed25519";
         }
         throw new NoSuchAlgorithmException("Unknown key type for SSH auth: " + publicKey.getClass().getSimpleName());
     }
 
     @AnyThread
     static byte[] getSshPublicKeyBlob(PublicKey publicKey) throws NoSuchAlgorithmException {
-        if (publicKey instanceof ECPublicKey) {
+        if ("EC".equalsIgnoreCase(publicKey.getAlgorithm())) {
             ECPublicKey ecPublicKey = (ECPublicKey) publicKey;
             ASN1ObjectIdentifier curveOid = magicPublicKeyToCurveOid(ecPublicKey);
-            return SshUtil.encodeEcPublicKey(curveOid, ecPublicKey);
+            return encodeEcPublicKey(curveOid, ecPublicKey);
         }
-        if (publicKey instanceof RSAPublicKey) {
-            return SshUtil.encodeRsaPublicKey((RSAPublicKey) publicKey);
+        if ("RSA".equalsIgnoreCase(publicKey.getAlgorithm())) {
+            return encodeRsaPublicKey((RSAPublicKey) publicKey);
+        }
+        if ("Ed25519".equalsIgnoreCase(publicKey.getAlgorithm())) {
+            return encodeEd25519PublicKey((Hwsecurity25519PublicKey) publicKey);
         }
         throw new NoSuchAlgorithmException("Unknown key type for SSH auth: " + publicKey.getClass().getSimpleName());
     }

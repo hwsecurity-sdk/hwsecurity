@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -36,16 +36,18 @@ import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 import androidx.annotation.VisibleForTesting;
 
+import de.cotech.hw.openpgp.internal.openpgp.EcKeyFormat;
+import de.cotech.hw.openpgp.internal.openpgp.RsaKeyFormat;
 import de.cotech.hw.secrets.ByteSecret;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.openpgp.internal.OpenPgpAppletConnection;
-import de.cotech.hw.openpgp.internal.openpgp.ECKeyFormat;
 import de.cotech.hw.openpgp.internal.openpgp.KeyFormat;
+
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+
 import org.bouncycastle.asn1.x9.ECNamedCurveTable;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.math.ec.ECPoint;
@@ -53,14 +55,13 @@ import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 
 
-/** This class implements the PSO:DECIPHER operation, as specified in OpenPGP card spec / 7.2.11 (p52 in v3.0.1).
- *
+/**
+ * This class implements the PSO:DECIPHER operation, as specified in OpenPGP card spec / 7.2.11 (p52 in v3.0.1).
+ * <p>
  * See https://www.g10code.com/docs/openpgp-card-3.0.pdf
  */
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class PsoDecryptOp {
-    public static final ASN1ObjectIdentifier CV25519 = new ASN1ObjectIdentifier("1.3.6.1.4.1.3029.1.5.1");
-
     private final OpenPgpAppletConnection connection;
 
     public static PsoDecryptOp create(OpenPgpAppletConnection connection) {
@@ -72,27 +73,22 @@ public class PsoDecryptOp {
     }
 
     public byte[] verifyAndDecryptSessionKey(ByteSecret pin,
-            @NonNull byte[] encryptedSessionKeyMpi,
-            int securityKeySymmetricKeySize, byte[] userKeyingMaterial)
-            throws IOException {
+                                             @NonNull byte[] encryptedSessionKeyMpi,
+                                             int securityKeySymmetricKeySize, byte[] userKeyingMaterial) throws IOException {
         connection.verifyPinForOther(pin);
 
-        KeyFormat kf = connection.getOpenPgpCapabilities().getEncryptKeyFormat();
-        switch (kf.keyFormatType()) {
-            case RSAKeyFormatType:
-                return decryptSessionKeyRsa(encryptedSessionKeyMpi);
-
-            case ECKeyFormatType:
-                return decryptSessionKeyEcdh(encryptedSessionKeyMpi, (ECKeyFormat) kf,
-                        securityKeySymmetricKeySize, userKeyingMaterial);
-
-            default:
-                throw new IOException("Unknown encryption key type!");
+        KeyFormat keyFormat = connection.getOpenPgpCapabilities().getEncryptKeyFormat();
+        if (keyFormat instanceof RsaKeyFormat) {
+            return decryptSessionKeyRsa(encryptedSessionKeyMpi);
+        } else if (keyFormat instanceof EcKeyFormat) {
+            return decryptSessionKeyEcdh(encryptedSessionKeyMpi, (EcKeyFormat) keyFormat,
+                    securityKeySymmetricKeySize, userKeyingMaterial);
+        } else {
+            throw new IOException("Unsupported KeyFormat.");
         }
     }
 
-    public byte[] simpleDecryptSessionKeyRsa(ByteSecret pin,
-            byte[] encryptedSessionKey) throws IOException {
+    public byte[] simpleDecryptSessionKeyRsa(ByteSecret pin, byte[] encryptedSessionKey) throws IOException {
         connection.verifyPinForOther(pin);
 
         byte[] psoDecipherPayload = Arrays.prepend(encryptedSessionKey, (byte) 0x00);
@@ -126,9 +122,8 @@ public class PsoDecryptOp {
         return psoDecipherPayload;
     }
 
-    private byte[] decryptSessionKeyEcdh(byte[] encryptedSessionKeyMpi, ECKeyFormat eckf,
-            int securityKeySymmetricKeySize, byte[] userKeyingMaterial)
-            throws IOException {
+    private byte[] decryptSessionKeyEcdh(byte[] encryptedSessionKeyMpi, EcKeyFormat eckf,
+                                         int securityKeySymmetricKeySize, byte[] userKeyingMaterial) throws IOException {
         int mpiLength = getMpiLength(encryptedSessionKeyMpi);
         byte[] encryptedPoint = Arrays.copyOfRange(encryptedSessionKeyMpi, 2, mpiLength + 2);
 
@@ -175,6 +170,16 @@ public class PsoDecryptOp {
        */
         byte[] keyEncryptionKey = response.getData();
 
+        int xLen;
+        boolean isCurve25519 = eckf.isX25519();
+        if (eckf.isX25519()) {
+            xLen = keyEncryptionKey.length;
+        } else {
+            xLen = (keyEncryptionKey.length - 1) / 2;
+        }
+        final byte[] kekX = new byte[xLen];
+        System.arraycopy(keyEncryptionKey, isCurve25519 ? 0 : 1, kekX, 0, xLen);
+
         final byte[] keyEnc = new byte[encryptedSessionKeyMpi[mpiLength + 2]];
 
         System.arraycopy(encryptedSessionKeyMpi, 2 + mpiLength + 1, keyEnc, 0, keyEnc.length);
@@ -183,7 +188,7 @@ public class PsoDecryptOp {
             final MessageDigest kdf = MessageDigest.getInstance("SHA-256");
 
             kdf.update(new byte[]{(byte) 0, (byte) 0, (byte) 0, (byte) 1});
-            kdf.update(keyEncryptionKey);
+            kdf.update(kekX);
             kdf.update(userKeyingMaterial);
 
             byte[] kek = kdf.digest();
@@ -221,8 +226,8 @@ public class PsoDecryptOp {
         return taggedKey;
     }
 
-    private byte[] getEcDecipherPayload(ECKeyFormat eckf, byte[] encryptedPoint) throws IOException {
-        if (CV25519.equals(eckf.curveOid())) {
+    private byte[] getEcDecipherPayload(EcKeyFormat eckf, byte[] encryptedPoint) throws IOException {
+        if (eckf.isX25519()) {
             return Arrays.copyOfRange(encryptedPoint, 1, 33);
         } else {
             X9ECParameters x9Params = ECNamedCurveTable.getByOID(eckf.curveOid());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -38,12 +38,12 @@ import java.util.Date;
 
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.openpgp.OpenPgpCapabilities;
-import de.cotech.hw.openpgp.OpenPgpCardUtils;
+import de.cotech.hw.openpgp.internal.OpenPgpCardUtils;
 import de.cotech.hw.openpgp.internal.OpenPgpAppletConnection;
 import de.cotech.hw.openpgp.internal.openpgp.KeyFormat;
 import de.cotech.hw.openpgp.internal.openpgp.KeyType;
-import de.cotech.hw.openpgp.internal.openpgp.PgpFingerprintCalculator;
-import de.cotech.hw.openpgp.internal.openpgp.RSAKeyFormat;
+import de.cotech.hw.openpgp.internal.openpgp.Rfc4880FingerprintCalculator;
+import de.cotech.hw.openpgp.internal.openpgp.RsaKeyFormat;
 import de.cotech.hw.util.HwTimber;
 
 
@@ -68,32 +68,28 @@ public class ChangeKeyRsaOp {
         RSAPrivateCrtKey rsaPrivateCrtKey = (RSAPrivateCrtKey) privateKey;
         RSAPublicKey rsaPublicKey = (RSAPublicKey) publicKey;
 
-        uploadRsaKey(keyType, rsaPrivateCrtKey);
+        byte[] keyBytes = prepareKeyBytes(keyType, rsaPrivateCrtKey);
+        CommandApdu apdu = connection.getCommandFactory().createPutKeyCommand(keyBytes);
+        connection.communicateOrThrow(apdu);
+
         return setKeyMetadata(keyType, rsaPublicKey, creationTime);
     }
 
     private byte[] setKeyMetadata(KeyType keyType, RSAPublicKey rsaPublicKey, Date creationTime) throws IOException {
-        byte[] fingerprint = PgpFingerprintCalculator.calculateRsaFingerprint(rsaPublicKey, creationTime);
+        byte[] fingerprint = Rfc4880FingerprintCalculator.calculateRsaFingerprint(rsaPublicKey, creationTime);
         connection.setKeyMetadata(keyType, creationTime, fingerprint);
 
         return fingerprint;
     }
 
-    private void uploadRsaKey(KeyType keyType, RSAPrivateCrtKey rsaPrivateCrtKey) throws IOException {
-        byte[] keyBytes = prepareKeyBytes(keyType, rsaPrivateCrtKey);
-
-        CommandApdu apdu = connection.getCommandFactory().createPutKeyCommand(keyBytes);
-        connection.communicateOrThrow(apdu);
-    }
-
     private byte[] prepareKeyBytes(KeyType keyType, RSAPrivateCrtKey rsaPrivateCrtKey) throws IOException {
         OpenPgpCapabilities openPgpCapabilities = connection.getOpenPgpCapabilities();
         KeyFormat currentFormat = openPgpCapabilities.getFormatForKeyType(keyType);
-        RSAKeyFormat requestedKeyFormat;
-        if (currentFormat instanceof RSAKeyFormat) {
-            requestedKeyFormat = ((RSAKeyFormat) currentFormat).withModulus(2048);
+        RsaKeyFormat requestedKeyFormat;
+        if (currentFormat instanceof RsaKeyFormat) {
+            requestedKeyFormat = ((RsaKeyFormat) currentFormat).withModulus(2048);
         } else {
-            requestedKeyFormat = RSAKeyFormat.getDefault2048BitFormat();
+            requestedKeyFormat = RsaKeyFormat.getInstanceDefault2048BitFormat();
         }
 
         boolean requiresFormatChange = !requestedKeyFormat.equals(currentFormat);
@@ -106,7 +102,7 @@ public class ChangeKeyRsaOp {
             HwTimber.d("Key format compatible, leaving as is");
         }
 
-        return OpenPgpCardUtils.createRSAPrivKeyTemplate(rsaPrivateCrtKey, keyType, requestedKeyFormat);
+        return OpenPgpCardUtils.createRsaPrivKeyTemplate(rsaPrivateCrtKey, keyType, requestedKeyFormat);
     }
 
     private void setKeyAttributes(KeyType keyType, KeyFormat keyFormat) throws IOException {

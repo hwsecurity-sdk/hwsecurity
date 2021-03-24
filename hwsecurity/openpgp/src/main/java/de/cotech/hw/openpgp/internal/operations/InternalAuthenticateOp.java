@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -32,7 +32,6 @@ import androidx.annotation.RestrictTo.Scope;
 import de.cotech.hw.secrets.ByteSecret;
 import de.cotech.hw.openpgp.internal.OpenPgpAppletConnection;
 import de.cotech.hw.openpgp.OpenPgpCapabilities;
-import de.cotech.hw.SecurityKeyException;
 import de.cotech.hw.internal.iso7816.CommandApdu;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.openpgp.internal.openpgp.KeyFormat;

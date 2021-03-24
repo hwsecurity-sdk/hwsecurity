@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -88,6 +88,7 @@ public class OpenPgpCommandApduFactory {
     static final int DO_GET_DATA_URL = 0x5F50;
     static final int DO_GET_DATA_CARDHOLDER_RELATED_DATA = 0x0065;
     static final int DO_GET_DATA_APPLICATION_RELATED_DATA = 0x006E;
+    static final int DO_GET_DATA_KDF = 0x00f9;
 
     static final int INS_PUT_DATA = 0xDA;
 
@@ -233,6 +234,11 @@ public class OpenPgpCommandApduFactory {
     @NonNull
     public CommandApdu createGetDataApplicationRelatedData() {
         return createGetDataCommand(DO_GET_DATA_APPLICATION_RELATED_DATA).withDescriber(DESCRIBER);
+    }
+
+    @NonNull
+    public CommandApdu createGetDataKdf() {
+        return createGetDataCommand(DO_GET_DATA_KDF).withDescriber(DESCRIBER);
     }
 
     // ISO/IEC 7816-4

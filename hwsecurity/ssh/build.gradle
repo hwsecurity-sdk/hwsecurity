@@ -9,7 +9,7 @@ dependencies {
 
     compileOnly 'androidx.annotation:annotation:1.1.0'
 
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13'
     testImplementation 'org.mockito:mockito-core:2.18.0'
 }
 
@@ -87,20 +87,18 @@ afterEvaluate {
 }
 
 dokkaHugo {
-    configure {
-        outputDirectory.set(file("$projectDir/../../hwsecurity.dev/content/reference"))
+    outputDirectory.set(file("$projectDir/../../hwsecurity.dev/content/reference"))
 
-        dokkaSourceSets {
-            register("java") {
-                moduleDisplayName.set("hwsecurity-ssh")
+    moduleName.set("hwsecurity-ssh")
 
-                sourceRoots.setFrom(file("src/main/java"))
+    dokkaSourceSets {
+        register("java") {
+            sourceRoots.setFrom(file("src/main/java"))
 
-                jdkVersion.set(8) // Used for linking to JDK documentation
-                noStdlibLink.set(false) // Disable linking to online kotlin-stdlib documentation
-                noJdkLink.set(true) // Disable linking to online JDK documentation
-                noAndroidSdkLink.set(false) // Disable linking to online Android documentation
-            }
+            jdkVersion.set(8) // Used for linking to JDK documentation
+            noStdlibLink.set(false) // Disable linking to online kotlin-stdlib documentation
+            noJdkLink.set(true) // Disable linking to online JDK documentation
+            noAndroidSdkLink.set(false) // Disable linking to online Android documentation
         }
     }
 }

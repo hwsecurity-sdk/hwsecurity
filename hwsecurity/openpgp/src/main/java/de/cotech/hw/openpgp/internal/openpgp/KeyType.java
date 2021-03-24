@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -31,41 +31,35 @@ import androidx.annotation.RestrictTo.Scope;
 
 @RestrictTo(Scope.LIBRARY_GROUP)
 public enum KeyType {
-    SIGN(0, 0xB6, 0xCE, 0xC7, 0xC1),
-    ENCRYPT(1, 0xB8, 0xCF, 0xC8, 0xC2),
-    AUTH(2, 0xA4, 0xD0, 0xC9, 0xC3);
+    SIGN(0xB6, 0xCE, 0xC7, 0xC1),
+    ENCRYPT(0xB8, 0xCF, 0xC8, 0xC2),
+    AUTH(0xA4, 0xD0, 0xC9, 0xC3);
 
-    private final int mIdx;
-    private final int mSlot;
-    private final int mTimestampObjectId;
-    private final int mFingerprintObjectId;
-    private final int mAlgoAttributeSlot;
+    private final int slot;
+    private final int timestampObjectId;
+    private final int fingerprintObjectId;
+    private final int algoAttributeSlot;
 
-    KeyType(int idx, int slot, int timestampObjectId, int fingerprintObjectId, int algoAttributeSlot) {
-        this.mIdx = idx;
-        this.mSlot = slot;
-        this.mTimestampObjectId = timestampObjectId;
-        this.mFingerprintObjectId = fingerprintObjectId;
-        this.mAlgoAttributeSlot = algoAttributeSlot;
-    }
-
-    public int getIdx() {
-        return mIdx;
+    KeyType(int slot, int timestampObjectId, int fingerprintObjectId, int algoAttributeSlot) {
+        this.slot = slot;
+        this.timestampObjectId = timestampObjectId;
+        this.fingerprintObjectId = fingerprintObjectId;
+        this.algoAttributeSlot = algoAttributeSlot;
     }
 
     public int getSlot() {
-        return mSlot;
+        return slot;
     }
 
     public int getTimestampObjectId() {
-        return mTimestampObjectId;
+        return timestampObjectId;
     }
 
     public int getFingerprintObjectId() {
-        return mFingerprintObjectId;
+        return fingerprintObjectId;
     }
 
     public int getAlgoAttributeSlot() {
-        return mAlgoAttributeSlot;
+        return algoAttributeSlot;
     }
 }

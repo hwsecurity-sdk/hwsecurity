@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -31,31 +31,14 @@ import androidx.annotation.RestrictTo.Scope;
 @RestrictTo(Scope.LIBRARY_GROUP)
 public abstract class KeyFormat {
 
-    public enum KeyFormatType {
-        RSAKeyFormatType,
-        ECKeyFormatType,
-        EdDSAKeyFormatType
-    }
-
-    private final KeyFormatType mKeyFormatType;
-
-    KeyFormat(final KeyFormatType keyFormatType) {
-        mKeyFormatType = keyFormatType;
-    }
-
-    public final KeyFormatType keyFormatType() {
-        return mKeyFormatType;
-    }
-
     public static KeyFormat fromBytes(byte[] bytes) {
         switch (bytes[0]) {
             case PublicKeyAlgorithmTags.RSA_GENERAL:
-                return RSAKeyFormat.fromBytes(bytes);
+                return RsaKeyFormat.getInstanceFromBytes(bytes);
             case PublicKeyAlgorithmTags.ECDH:
             case PublicKeyAlgorithmTags.ECDSA:
-                return ECKeyFormat.getInstanceFromBytes(bytes);
             case PublicKeyAlgorithmTags.EDDSA:
-                return new EdDSAKeyFormat();
+                return EcKeyFormat.getInstanceFromBytes(bytes);
             default:
                 throw new IllegalArgumentException("Unsupported Algorithm ID " + bytes[0]);
         }

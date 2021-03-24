@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -41,19 +41,19 @@ import androidx.lifecycle.Lifecycle.Event;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.OnLifecycleEvent;
+
 import de.cotech.hw.SecurityKeyManager;
 
 
 /**
  * A helper class to monitor whether NFC hardware is available and enabled.
- *
  * <p>
+ *
  * Note that this class does not communicate with the NFC device on its own - its only purpose is to tell when NFC
  * functionality is available, and has been enabled or disabled!
+ * <p>
  *
- * <p>
  * Example:
- * <p>
  * <pre>
  * public class NfcActionActivity extends AppCompatActivity {
  *     private NfcStatusObserver nfcStatusObserver;
@@ -88,7 +88,6 @@ import de.cotech.hw.SecurityKeyManager;
  *     }
  * }
  * </pre>
- *
  */
 public class NfcStatusObserver implements LifecycleObserver {
     private final Context context;

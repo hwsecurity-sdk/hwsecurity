@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -28,6 +28,7 @@ package de.cotech.hw.openpgp.internal.operations;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.util.Date;
@@ -38,12 +39,12 @@ import androidx.annotation.RestrictTo.Scope;
 import de.cotech.hw.internal.iso7816.ResponseApdu;
 import de.cotech.hw.openpgp.internal.OpenPgpAppletConnection;
 import de.cotech.hw.openpgp.OpenPgpCapabilities;
-import de.cotech.hw.openpgp.OpenPgpCardUtils;
+import de.cotech.hw.openpgp.internal.OpenPgpCardUtils;
 import de.cotech.hw.internal.iso7816.CommandApdu;
-import de.cotech.hw.openpgp.internal.openpgp.ECKeyFormat;
+import de.cotech.hw.openpgp.internal.openpgp.EcKeyFormat;
 import de.cotech.hw.openpgp.internal.openpgp.KeyFormat;
 import de.cotech.hw.openpgp.internal.openpgp.KeyType;
-import de.cotech.hw.openpgp.internal.openpgp.PgpFingerprintCalculator;
+import de.cotech.hw.openpgp.internal.openpgp.Rfc4880FingerprintCalculator;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x9.ECNamedCurveTable;
@@ -67,7 +68,7 @@ public class ChangeKeyEccOp {
             throws IOException {
         PrivateKey privateKey = keyPair.getPrivate();
         if (!(privateKey instanceof ECPrivateKey)) {
-            throw new IllegalArgumentException("KeyPair given to uploadRsaKey must be ECC KeyPair!");
+            throw new IllegalArgumentException("KeyPair given to changeKey must be ECC KeyPair!");
         }
         ECPrivateKey ecPrivateKey = (ECPrivateKey) privateKey;
         ECPublicKey ecPublicKey = (ECPublicKey) keyPair.getPublic();
@@ -76,48 +77,39 @@ public class ChangeKeyEccOp {
             throw new IllegalArgumentException("Curve name must be valid ECC named curve!");
         }
 
-        uploadEccKey(keyType, curveOid, ecPrivateKey, ecPublicKey);
-        return setKeyMetadata(keyType, curveOid, creationTime, ecPublicKey);
+        byte[] keyBytes = prepareKeyBytes(keyType, curveOid, ecPrivateKey, ecPublicKey);
+        CommandApdu apdu = connection.getCommandFactory().createPutKeyCommand(keyBytes);
+        connection.communicateOrThrow(apdu);
+
+        return setKeyMetadata(keyType, ecPublicKey, curveOid, creationTime);
     }
 
-    private byte[] setKeyMetadata(KeyType keyType, ASN1ObjectIdentifier curveOid, Date timestamp,
-                                  ECPublicKey ecPublicKey) throws IOException {
-        byte[] fingerprint = PgpFingerprintCalculator.calculateEccFingerprint(ecPublicKey, curveOid, timestamp);
+    private byte[] setKeyMetadata(KeyType keyType, PublicKey publicKey,
+                                  ASN1ObjectIdentifier curveOid, Date timestamp) throws IOException {
+        EcKeyFormat requestedKeyFormat = EcKeyFormat.getInstanceForKeyGeneration(keyType, curveOid);
+        byte[] fingerprint = Rfc4880FingerprintCalculator.calculateEccFingerprint(publicKey, requestedKeyFormat, timestamp);
         connection.setKeyMetadata(keyType, timestamp, fingerprint);
 
         return fingerprint;
-    }
-
-    private void uploadEccKey(KeyType keyType, ASN1ObjectIdentifier curveOid, ECPrivateKey ecPrivateKey,
-                              ECPublicKey ecPublicKey) throws IOException {
-        byte[] keyBytes = prepareKeyBytes(keyType, curveOid, ecPrivateKey, ecPublicKey);
-
-        CommandApdu apdu = connection.getCommandFactory().createPutKeyCommand(keyBytes);
-        connection.communicateOrThrow(apdu);
     }
 
     private byte[] prepareKeyBytes(KeyType keyType, ASN1ObjectIdentifier curveOid,
                                    ECPrivateKey ecPrivateKey, ECPublicKey ecPublicKey) throws IOException {
         OpenPgpCapabilities openPgpCapabilities = connection.getOpenPgpCapabilities();
         KeyFormat currentFormat = openPgpCapabilities.getFormatForKeyType(keyType);
-        ECKeyFormat requestedKeyFormat;
-        if (keyType == KeyType.ENCRYPT) {
-            requestedKeyFormat = ECKeyFormat.getInstanceECDHwithOid(curveOid);
-        } else {
-            requestedKeyFormat = ECKeyFormat.getInstanceECDSAwithOid(curveOid);
-        }
+        EcKeyFormat requestedKeyFormat = EcKeyFormat.getInstanceForKeyGeneration(keyType, curveOid);
 
         boolean requiresFormatChange = !requestedKeyFormat.equals(currentFormat);
         if (requiresFormatChange && openPgpCapabilities.isAttributesChangable()) {
             HwTimber.d("Setting key format");
             setKeyAttributes(keyType, requestedKeyFormat);
         } else if (requiresFormatChange) {
-            throw new IOException("Different RSA format required, but applet doesn't support format change!");
+            throw new IOException("Different ECC format required, but applet doesn't support format change!");
         } else {
             HwTimber.d("Key format compatible, leaving as is");
         }
 
-        return OpenPgpCardUtils.createECPrivKeyTemplate(ecPrivateKey, ecPublicKey, keyType, requestedKeyFormat);
+        return OpenPgpCardUtils.createEcPrivKeyTemplate(ecPrivateKey, ecPublicKey, keyType, requestedKeyFormat);
     }
 
     private void setKeyAttributes(KeyType keyType, KeyFormat keyFormat) throws IOException {
@@ -135,15 +127,10 @@ public class ChangeKeyEccOp {
         connection.communicateOrThrow(command);
     }
 
-    public ECPublicKey generateKey(KeyType keyType, ASN1ObjectIdentifier curveOid, Date creationTime) throws IOException {
+    public PublicKey generateKey(KeyType keyType, ASN1ObjectIdentifier curveOid, Date creationTime) throws IOException {
         OpenPgpCapabilities openPgpCapabilities = connection.getOpenPgpCapabilities();
         KeyFormat currentFormat = openPgpCapabilities.getFormatForKeyType(keyType);
-        ECKeyFormat requestedKeyFormat;
-        if (keyType == KeyType.ENCRYPT) {
-            requestedKeyFormat = ECKeyFormat.getInstanceECDHwithOid(curveOid);
-        } else {
-            requestedKeyFormat = ECKeyFormat.getInstanceECDSAwithOid(curveOid);
-        }
+        EcKeyFormat requestedKeyFormat = EcKeyFormat.getInstanceForKeyGeneration(keyType, curveOid);
 
         boolean requiresFormatChange = !requestedKeyFormat.equals(currentFormat);
         if (requiresFormatChange && openPgpCapabilities.isAttributesChangable()) {
@@ -159,9 +146,9 @@ public class ChangeKeyEccOp {
         ResponseApdu response = connection.communicateOrThrow(command);
 
         byte[] publicKeyBytes = response.getData();
-        ECPublicKey publicKey = (ECPublicKey) requestedKeyFormat.getKeyFormatParser().parseKey(publicKeyBytes);
+        PublicKey publicKey = requestedKeyFormat.getKeyFormatParser().parseKey(publicKeyBytes);
 
-        byte[] fingerprint = setKeyMetadata(keyType, curveOid, creationTime, publicKey);
+        byte[] fingerprint = setKeyMetadata(keyType, publicKey, curveOid, creationTime);
 
         return publicKey;
     }

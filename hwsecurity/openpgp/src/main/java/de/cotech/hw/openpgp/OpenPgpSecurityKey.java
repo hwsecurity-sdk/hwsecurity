@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -32,8 +32,6 @@ import androidx.annotation.RestrictTo.Scope;
 import androidx.annotation.WorkerThread;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.sec.SECObjectIdentifiers;
-import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 
 import java.io.IOException;
 import java.security.KeyPair;
@@ -52,9 +50,12 @@ import de.cotech.hw.internal.transport.Transport;
 import de.cotech.hw.internal.transport.usb.UsbSecurityKeyTypes;
 import de.cotech.hw.openpgp.exceptions.OpenPgpPublicKeyUnavailableException;
 import de.cotech.hw.openpgp.internal.OpenPgpAppletConnection;
+import de.cotech.hw.openpgp.internal.openpgp.EcKeyFormat;
+import de.cotech.hw.openpgp.internal.openpgp.EcObjectIdentifiers;
 import de.cotech.hw.openpgp.internal.openpgp.KeyFormat;
 import de.cotech.hw.openpgp.internal.openpgp.KeyType;
 import de.cotech.hw.openpgp.internal.openpgp.OpenPgpAid;
+import de.cotech.hw.openpgp.internal.openpgp.RsaKeyFormat;
 import de.cotech.hw.openpgp.internal.operations.ChangeKeyEccOp;
 import de.cotech.hw.openpgp.internal.operations.ChangeKeyRsaOp;
 import de.cotech.hw.openpgp.internal.operations.ModifyPinOp;
@@ -66,7 +67,6 @@ import de.cotech.hw.provider.SecurityKeyPrivateKey.SecurityKeyEcdsaPrivateKey;
 import de.cotech.hw.provider.SecurityKeyPrivateKey.SecurityKeyRsaPrivateKey;
 import de.cotech.hw.secrets.ByteSecret;
 import de.cotech.hw.secrets.PinProvider;
-import de.cotech.hw.util.HwTimber;
 
 
 @SuppressWarnings({"WeakerAccess", "unused"}) // public API
@@ -78,7 +78,8 @@ public class OpenPgpSecurityKey extends SecurityKey {
         RSA_2048_ONLY_ENCRYPTION_UPLOAD,
         NIST_P256_GENERATE_ON_HARDWARE,
         NIST_P384_GENERATE_ON_HARDWARE,
-        NIST_P521_GENERATE_ON_HARDWARE
+        NIST_P521_GENERATE_ON_HARDWARE,
+        CURVE25519_GENERATE_ON_HARDWARE
     }
 
     public final OpenPgpAppletConnection openPgpAppletConnection;
@@ -217,73 +218,77 @@ public class OpenPgpSecurityKey extends SecurityKey {
             wipeAndVerify();
         }
 
-        try {
-            Date creationTime = new Date();
-            ChangeKeyRsaOp changeKeyRsaOp = ChangeKeyRsaOp.create(openPgpAppletConnection);
+        Date creationTime = new Date();
+        ChangeKeyRsaOp changeKeyRsaOp = ChangeKeyRsaOp.create(openPgpAppletConnection);
 
-            switch (algorithmConfig) {
-                case RSA_2048_UPLOAD: {
-                    RsaEncryptionUtil rsaEncryptUtil = new RsaEncryptionUtil();
-                    KeyPair encryptKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
-                    KeyPair signKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
-                    KeyPair authKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
-                    byte[] encryptFingerprint = changeKeyRsaOp.changeKey(KeyType.ENCRYPT, encryptKeyPair, creationTime);
-                    byte[] signFingerprint = changeKeyRsaOp.changeKey(KeyType.SIGN, signKeyPair, creationTime);
-                    byte[] authFingerprint = changeKeyRsaOp.changeKey(KeyType.AUTH, authKeyPair, creationTime);
-                    updatePinAndPukUsingDefaultPuk(newPin, newPuk);
+        switch (algorithmConfig) {
+            case RSA_2048_UPLOAD: {
+                RsaEncryptionUtil rsaEncryptUtil = new RsaEncryptionUtil();
+                KeyPair encryptKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
+                KeyPair signKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
+                KeyPair authKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
+                byte[] encryptFingerprint = changeKeyRsaOp.changeKey(KeyType.ENCRYPT, encryptKeyPair, creationTime);
+                byte[] signFingerprint = changeKeyRsaOp.changeKey(KeyType.SIGN, signKeyPair, creationTime);
+                byte[] authFingerprint = changeKeyRsaOp.changeKey(KeyType.AUTH, authKeyPair, creationTime);
+                updatePinAndPukUsingDefaultPuk(newPin, newPuk);
 
-                    openPgpAppletConnection.refreshConnectionCapabilities();
+                openPgpAppletConnection.refreshConnectionCapabilities();
 
-                    return new PairedSecurityKey(getOpenPgpInstanceAid(),
-                            encryptFingerprint, encryptKeyPair.getPublic(),
-                            signFingerprint, signKeyPair.getPublic(),
-                            authFingerprint, authKeyPair.getPublic()
-                    );
-                }
-                case RSA_2048_ONLY_ENCRYPTION_UPLOAD: {
-                    RsaEncryptionUtil rsaEncryptUtil = new RsaEncryptionUtil();
-                    KeyPair encryptKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
-                    byte[] encryptFingerprint = changeKeyRsaOp.changeKey(KeyType.ENCRYPT, encryptKeyPair, creationTime);
-
-                    updatePinAndPukUsingDefaultPuk(newPin, newPuk);
-
-                    openPgpAppletConnection.refreshConnectionCapabilities();
-
-                    return new PairedSecurityKey(getOpenPgpInstanceAid(),
-                            encryptFingerprint, encryptKeyPair.getPublic(),
-                            null, null,
-                            null, null
-                    );
-                }
-                case NIST_P256_GENERATE_ON_HARDWARE: {
-                    ASN1ObjectIdentifier curveOid = X9ObjectIdentifiers.prime256v1;
-                    return generateEccKeys(newPin, newPuk, curveOid, creationTime);
-                }
-                case NIST_P384_GENERATE_ON_HARDWARE: {
-                    ASN1ObjectIdentifier curveOid = SECObjectIdentifiers.secp384r1;
-                    return generateEccKeys(newPin, newPuk, curveOid, creationTime);
-                }
-                case NIST_P521_GENERATE_ON_HARDWARE: {
-                    ASN1ObjectIdentifier curveOid = SECObjectIdentifiers.secp521r1;
-                    return generateEccKeys(newPin, newPuk, curveOid, creationTime);
-                }
-                default: {
-                    throw new IOException("Unsupported AlgorithmConfig!");
-                }
+                return new PairedSecurityKey(getOpenPgpInstanceAid(),
+                        encryptFingerprint, encryptKeyPair.getPublic(),
+                        signFingerprint, signKeyPair.getPublic(),
+                        authFingerprint, authKeyPair.getPublic()
+                );
             }
-        } catch (Exception e) {
-            HwTimber.e(e);
-            return null;
+            case RSA_2048_ONLY_ENCRYPTION_UPLOAD: {
+                RsaEncryptionUtil rsaEncryptUtil = new RsaEncryptionUtil();
+                KeyPair encryptKeyPair = rsaEncryptUtil.generateRsa2048KeyPair();
+                byte[] encryptFingerprint = changeKeyRsaOp.changeKey(KeyType.ENCRYPT, encryptKeyPair, creationTime);
+
+                updatePinAndPukUsingDefaultPuk(newPin, newPuk);
+
+                openPgpAppletConnection.refreshConnectionCapabilities();
+
+                return new PairedSecurityKey(getOpenPgpInstanceAid(),
+                        encryptFingerprint, encryptKeyPair.getPublic(),
+                        null, null,
+                        null, null
+                );
+            }
+            case NIST_P256_GENERATE_ON_HARDWARE: {
+                return generateEccKeys(newPin, newPuk, EcObjectIdentifiers.NIST_P_256, creationTime);
+            }
+            case NIST_P384_GENERATE_ON_HARDWARE: {
+                return generateEccKeys(newPin, newPuk, EcObjectIdentifiers.NIST_P_384, creationTime);
+            }
+            case NIST_P521_GENERATE_ON_HARDWARE: {
+                return generateEccKeys(newPin, newPuk, EcObjectIdentifiers.NIST_P_521, creationTime);
+            }
+            case CURVE25519_GENERATE_ON_HARDWARE: {
+                return generateEccKeys(newPin, newPuk,
+                        EcObjectIdentifiers.X25519, EcObjectIdentifiers.ED25519, EcObjectIdentifiers.ED25519,
+                        creationTime);
+            }
+            default: {
+                throw new IOException("Unsupported AlgorithmConfig!");
+            }
         }
     }
 
     private PairedSecurityKey generateEccKeys(ByteSecret newPin, ByteSecret newPuk,
-                                              ASN1ObjectIdentifier curveOid, Date creationTime) throws IOException {
+                                              ASN1ObjectIdentifier curveOid,
+                                              Date creationTime) throws IOException {
+        return generateEccKeys(newPin, newPuk, curveOid, curveOid, curveOid, creationTime);
+    }
+
+    private PairedSecurityKey generateEccKeys(ByteSecret newPin, ByteSecret newPuk,
+                                              ASN1ObjectIdentifier encryptOid, ASN1ObjectIdentifier signOid, ASN1ObjectIdentifier authOid,
+                                              Date creationTime) throws IOException {
 
         ChangeKeyEccOp changeKeyEccOp = ChangeKeyEccOp.create(openPgpAppletConnection);
-        ECPublicKey encryptPublicKey = changeKeyEccOp.generateKey(KeyType.ENCRYPT, curveOid, creationTime);
-        ECPublicKey signPublicKey = changeKeyEccOp.generateKey(KeyType.SIGN, curveOid, creationTime);
-        ECPublicKey authPublicKey = changeKeyEccOp.generateKey(KeyType.AUTH, curveOid, creationTime);
+        PublicKey encryptPublicKey = changeKeyEccOp.generateKey(KeyType.ENCRYPT, encryptOid, creationTime);
+        PublicKey signPublicKey = changeKeyEccOp.generateKey(KeyType.SIGN, signOid, creationTime);
+        PublicKey authPublicKey = changeKeyEccOp.generateKey(KeyType.AUTH, authOid, creationTime);
 
         updatePinAndPukUsingDefaultPuk(newPin, newPuk);
 
@@ -367,7 +372,6 @@ public class OpenPgpSecurityKey extends SecurityKey {
         return Arrays.equals(openPgpAppletConnection.getOpenPgpCapabilities().getFingerprintEncrypt(), pairedSecurityKey.getEncryptFingerprint());
     }
 
-    @RestrictTo(Scope.LIBRARY_GROUP)
     @AnyThread
     public PrivateKey getJcaPrivateKeyForAuthentication(PinProvider pinProvider) {
         if (!CotechSecurityKeyProvider.isInstalled()) {
@@ -375,17 +379,16 @@ public class OpenPgpSecurityKey extends SecurityKey {
         }
 
         SecurityKeyAuthenticator securityKeyAuthenticator = createSecurityKeyAuthenticator(pinProvider);
-        switch (openPgpAppletConnection.getOpenPgpCapabilities().getAuthKeyFormat().keyFormatType()) {
-            case RSAKeyFormatType:
-                return new SecurityKeyRsaPrivateKey(securityKeyAuthenticator);
-            case ECKeyFormatType:
-                return new SecurityKeyEcdsaPrivateKey(securityKeyAuthenticator);
-            default:
-                throw new IllegalStateException("Authentication key format not supported for this operation!");
+        KeyFormat keyFormat = openPgpAppletConnection.getOpenPgpCapabilities().getAuthKeyFormat();
+        if (keyFormat instanceof RsaKeyFormat) {
+            return new SecurityKeyRsaPrivateKey(securityKeyAuthenticator);
+        } else if (keyFormat instanceof EcKeyFormat) {
+            return new SecurityKeyEcdsaPrivateKey(securityKeyAuthenticator);
+        } else {
+            throw new IllegalStateException("Unsupported KeyFormat.");
         }
     }
 
-    @RestrictTo(Scope.LIBRARY_GROUP)
     public SecurityKeyAuthenticator createSecurityKeyAuthenticator(PinProvider pinProvider) {
         return new OpenPgpSecurityKeyAuthenticator(this, pinProvider);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -34,9 +34,13 @@ import de.cotech.hw.fido2.internal.utils.DerUtils;
 
 @AutoValue
 public abstract class U2fRegisterResponse {
+    @SuppressWarnings("mutable")
     abstract byte[] publicKey();
+    @SuppressWarnings("mutable")
     abstract byte[] keyHandle();
+    @SuppressWarnings("mutable")
     abstract byte[] attestationCertificate();
+    @SuppressWarnings("mutable")
     abstract byte[] signature();
 
     public static U2fRegisterResponse fromBytes(byte[] data) throws IOException  {

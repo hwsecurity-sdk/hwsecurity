@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -258,9 +258,11 @@ public class WebViewFidoBridge {
         opsBuilder.setTimeoutSeconds(timeoutSeconds);
         opsBuilder.setTitle(context.getString(R.string.hwsecurity_fido_title_default_register_app_id, getDisplayAppId(appId)));
 
-        FidoDialogFragment fidoDialogFragment = FidoDialogFragment.newInstance(registerRequest, opsBuilder.build());
-        fidoDialogFragment.setFidoRegisterCallback(fidoRegisterCallback);
-        fidoDialogFragment.show(fragmentManager);
+        webView.getHandler().post(() -> {
+            FidoDialogFragment fidoDialogFragment = FidoDialogFragment.newInstance(registerRequest, opsBuilder.build());
+            fidoDialogFragment.setFidoRegisterCallback(fidoRegisterCallback);
+            fidoDialogFragment.show(fragmentManager);
+        });
     }
 
     private OnFidoRegisterCallback fidoRegisterCallback = new OnFidoRegisterCallback() {
@@ -321,9 +323,11 @@ public class WebViewFidoBridge {
         opsBuilder.setTimeoutSeconds(timeoutSeconds);
         opsBuilder.setTitle(context.getString(R.string.hwsecurity_fido_title_default_authenticate_app_id, getDisplayAppId(appId)));
 
-        FidoDialogFragment fidoDialogFragment = FidoDialogFragment.newInstance(authenticateRequest, opsBuilder.build());
-        fidoDialogFragment.setFidoAuthenticateCallback(fidoAuthenticateCallback);
-        fidoDialogFragment.show(fragmentManager);
+        webView.getHandler().post(() -> {
+            FidoDialogFragment fidoDialogFragment = FidoDialogFragment.newInstance(authenticateRequest, opsBuilder.build());
+            fidoDialogFragment.setFidoAuthenticateCallback(fidoAuthenticateCallback);
+            fidoDialogFragment.show(fragmentManager);
+        });
     }
 
     private OnFidoAuthenticateCallback fidoAuthenticateCallback = new OnFidoAuthenticateCallback() {

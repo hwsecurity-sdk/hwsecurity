@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -26,8 +26,11 @@ package de.cotech.hw.openpgp;
 
 
 import androidx.annotation.WorkerThread;
+
 import de.cotech.hw.SecurityKeyAuthenticator;
 import de.cotech.hw.openpgp.internal.OpenPgpAppletConnection;
+import de.cotech.hw.openpgp.internal.openpgp.EcKeyFormat;
+import de.cotech.hw.openpgp.internal.openpgp.KeyFormat;
 import de.cotech.hw.openpgp.internal.openpgp.KeyType;
 import de.cotech.hw.openpgp.internal.operations.InternalAuthenticateOp;
 import de.cotech.hw.secrets.ByteSecret;
@@ -53,12 +56,19 @@ public class OpenPgpSecurityKeyAuthenticator implements SecurityKeyAuthenticator
 
     public byte[] authenticatePresignedDigest(byte[] digest, String hashAlgo) throws IOException {
         ByteSecret pairedPin = pinProvider.getPin(openPgpSecurityKey.getOpenPgpInstanceAid());
-        InternalAuthenticateOp psoDecryptOp = InternalAuthenticateOp.create(openPgpSecurityKey.openPgpAppletConnection);
-        return psoDecryptOp.calculateAuthenticationSignature(pairedPin, digest, hashAlgo);
+        InternalAuthenticateOp psoAuthenticateOp = InternalAuthenticateOp.create(openPgpSecurityKey.openPgpAppletConnection);
+        return psoAuthenticateOp.calculateAuthenticationSignature(pairedPin, digest, hashAlgo);
     }
 
     public byte[] authenticateWithDigest(byte[] challenge, String hashAlgo) throws IOException, NoSuchAlgorithmException {
-        byte[] digest = MessageDigest.getInstance(hashAlgo).digest(challenge);
+        byte[] digest;
+        KeyFormat keyFormat = openPgpSecurityKey.openPgpAppletConnection.getOpenPgpCapabilities().getAuthKeyFormat();
+        if (keyFormat instanceof EcKeyFormat && ((EcKeyFormat) keyFormat).isEdDsa()) {
+            // Do not pre-hash the challenge for authentication with EdDSA (padding should be SHA-512)
+            digest = challenge;
+        } else {
+            digest = MessageDigest.getInstance(hashAlgo).digest(challenge);
+        }
         return authenticatePresignedDigest(digest, hashAlgo);
     }
 

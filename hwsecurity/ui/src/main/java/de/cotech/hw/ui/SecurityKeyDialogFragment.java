@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -79,10 +79,12 @@ import de.cotech.hw.ui.internal.WipeConfirmView;
 import de.cotech.hw.util.HwTimber;
 
 /**
+ * This abstract class is used by OpenPgpSecurityKeyDialogFragment and
+ * PivSecurityKeyDialogFragment.
+ * <p>
+ *
  * This dialog shows helpful animations and handles all the PIN/PUK input for you.
  * It still allows you full control over the operations you can execute on the Security Key.
- * <p>
- * Use the SecurityKeyDialogFactory to instantiate this.
  */
 public abstract class SecurityKeyDialogFragment<T extends SecurityKey> extends BottomSheetDialogFragment
         implements SecurityKeyCallback<T>, PinInput.PinInputCallback, SecurityKeyDialogInterface,

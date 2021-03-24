@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -35,6 +35,7 @@ import com.google.auto.value.AutoValue;
 public abstract class U2fAuthenticateResponse {
     abstract byte presence();
     abstract int counter();
+    @SuppressWarnings("mutable")
     abstract byte[] signature();
 
     public static U2fAuthenticateResponse fromBytes(byte[] data) throws IOException  {

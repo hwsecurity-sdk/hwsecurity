@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -32,8 +32,11 @@ import com.google.auto.value.AutoValue;
 public abstract class AttestedCredentialData {
     private static final byte[] LENGTH_AAGUID = new byte[16];
 
+    @SuppressWarnings("mutable")
     public abstract byte[] aaguid();
+    @SuppressWarnings("mutable")
     public abstract byte[] credentialId();
+    @SuppressWarnings("mutable")
     public abstract byte[] credentialPublicKey();
 
     public static AttestedCredentialData create(byte[] aaguid, byte[] credentialId, byte[] credentialPublicKey) {

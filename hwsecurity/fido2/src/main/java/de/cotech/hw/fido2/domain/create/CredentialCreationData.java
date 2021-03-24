@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -31,6 +31,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class CredentialCreationData {
     public abstract AttestationObject attestationObjectResult();
+    @SuppressWarnings("mutable")
     public abstract byte[] clientDataJSONResult();
     public abstract AttestationConveyancePreference attestationConveyancePreferenceOption();
 

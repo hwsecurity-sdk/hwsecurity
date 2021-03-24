@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -32,6 +32,7 @@ import de.cotech.hw.fido2.internal.ctap2.Ctap2ResponseFactory;
 
 @AutoValue
 public abstract class RawCtap2Command extends Ctap2Command<RawCtap2Response> {
+    @SuppressWarnings("mutable")
     public abstract byte[] data();
 
     public Ctap2ResponseFactory<RawCtap2Response> getResponseFactory() {

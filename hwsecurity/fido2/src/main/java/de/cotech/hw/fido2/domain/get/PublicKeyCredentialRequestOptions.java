@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -37,6 +37,7 @@ import de.cotech.hw.fido2.domain.UserVerificationRequirement;
 
 @AutoValue
 public abstract class PublicKeyCredentialRequestOptions implements Parcelable {
+    @SuppressWarnings("mutable")
     public abstract byte[] challenge();
     @Nullable
     public abstract Long timeout();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -37,10 +37,11 @@ import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 
 import de.cotech.hw.internal.iso7816.Iso7816TLV;
+import de.cotech.hw.util.HwTimber;
 
 
 @RestrictTo(Scope.LIBRARY_GROUP)
-class RSAKeyFormatParser implements KeyFormatParser {
+class RsaKeyFormatParser implements KeyFormatParser {
 
     private static final int DO_RSA_MODULUS_TAG = 0x81;
     private static final int DO_RSA_EXPONENT_TAG = 0x82;
@@ -59,7 +60,10 @@ class RSAKeyFormatParser implements KeyFormatParser {
             BigInteger rsaModulus = new BigInteger(1, rsaModulusMpiTlv.mV);
             BigInteger rsaPublicExponent = new BigInteger(1, rsaPublicExponentMpiTlv.mV);
             RSAPublicKeySpec rsaPublicKeySpec = new RSAPublicKeySpec(rsaModulus, rsaPublicExponent);
-            return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(rsaPublicKeySpec);
+            RSAPublicKey publicKey = (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(rsaPublicKeySpec);
+
+            HwTimber.d("key parsed as RSAPublicKey");
+            return publicKey;
         } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
             throw new IOException(e);
         }

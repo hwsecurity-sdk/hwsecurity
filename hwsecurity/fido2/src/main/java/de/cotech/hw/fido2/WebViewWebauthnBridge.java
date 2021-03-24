@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -37,12 +37,14 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build.VERSION_CODES;
 import android.os.Handler;
+import android.os.Looper;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 
 import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 
@@ -269,10 +271,12 @@ public class WebViewWebauthnBridge {
         optionsBuilder.setTimeoutMs(options.timeout());
         optionsBuilder.setTitle(context.getString(R.string.hwsecurity_fido_title_default_authenticate_app_id, getDisplayOrigin(currentOrigin)));
 
-        WebauthnDialogFragment webauthnDialogFragment = WebauthnDialogFragment.newInstance(
-                credentialGetCommand, optionsBuilder.build());
-        webauthnDialogFragment.setOnGetAssertionCallback(onGetCredentialCallback);
-        webauthnDialogFragment.show(fragmentManager);
+        webView.getHandler().post(() -> {
+            WebauthnDialogFragment webauthnDialogFragment = WebauthnDialogFragment.newInstance(
+                    credentialGetCommand, optionsBuilder.build());
+            webauthnDialogFragment.setOnGetAssertionCallback(onGetCredentialCallback);
+            webauthnDialogFragment.show(fragmentManager);
+        });
     }
 
     private void javascriptPublicKeyCredentialStore(String optionsJsonString) {
@@ -316,10 +320,12 @@ public class WebViewWebauthnBridge {
         optionsBuilder.setTimeoutMs(options.timeout());
         optionsBuilder.setTitle(context.getString(R.string.hwsecurity_fido_title_default_register_app_id, getDisplayOrigin(currentOrigin)));
 
-        WebauthnDialogFragment webauthnDialogFragment = WebauthnDialogFragment.newInstance(
-                credentialCreateCommand, optionsBuilder.build());
-        webauthnDialogFragment.setOnMakeCredentialCallback(onMakeCredentialCallback);
-        webauthnDialogFragment.show(fragmentManager);
+        webView.getHandler().post(() -> {
+            WebauthnDialogFragment webauthnDialogFragment = WebauthnDialogFragment.newInstance(
+                    credentialCreateCommand, optionsBuilder.build());
+            webauthnDialogFragment.setOnMakeCredentialCallback(onMakeCredentialCallback);
+            webauthnDialogFragment.show(fragmentManager);
+        });
     }
 
     private void javascriptPublicKeyCredentialPreventSilentAccess() {

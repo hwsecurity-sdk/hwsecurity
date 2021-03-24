@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -41,12 +41,14 @@ import de.cotech.hw.util.Hex;
 @AutoValue
 public abstract class OpenPgpAid {
 
+	@SuppressWarnings("mutable")
 	public abstract byte[] getAid();
 
 	public abstract Version getOpenPgpSpecVersion();
 
 	public abstract int getManufacturer();
 
+	@SuppressWarnings("mutable")
 	public abstract byte[] getSerialNumber();
 
 	// https://git.gnupg.org/cgi-bin/gitweb.cgi?p=gnupg-verein.git;a=blob_plain;f=office/misc/OpenPGP-Card-Vendors

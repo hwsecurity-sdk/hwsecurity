@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -35,8 +35,10 @@ public abstract class AttestationObject extends Ctap2Response {
     // fmt 	String 	Required 	The attestation statement format identifier.
     public abstract String fmt();
     // authData 	Byte Array 	Required 	The authenticator data object.
+    @SuppressWarnings("mutable")
     public abstract byte[] authData();
     // attStmt 	Byte Array, the structure of which depends on the attestation statement format identifier 	Required 	The attestation statement, whose format is identified by the "fmt" object member. The client treats it as an opaque object.     abstract List<String> versions();
+    @SuppressWarnings("mutable")
     public abstract byte[] attStmt();
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -61,8 +61,10 @@ import de.cotech.hw.openpgp.exceptions.OpenPgpLockedException;
 import de.cotech.hw.openpgp.exceptions.OpenPgpPinTooShortException;
 import de.cotech.hw.openpgp.exceptions.OpenPgpWrongPinException;
 import de.cotech.hw.openpgp.exceptions.SecurityKeyTerminatedException;
+import de.cotech.hw.openpgp.internal.openpgp.KdfCalculator;
 import de.cotech.hw.openpgp.internal.openpgp.KeyType;
-import de.cotech.hw.openpgp.internal.securemessaging.SCP11bSecureMessaging;
+import de.cotech.hw.openpgp.internal.openpgp.KdfParameters;
+import de.cotech.hw.openpgp.internal.securemessaging.Scp11bSecureMessaging;
 import de.cotech.hw.openpgp.internal.securemessaging.SecureMessaging;
 import de.cotech.hw.openpgp.internal.securemessaging.SecureMessagingException;
 import de.cotech.hw.secrets.ByteSecret;
@@ -72,7 +74,12 @@ import de.cotech.hw.util.HwTimber;
 /**
  * This class provides a communication interface to OpenPGP applications on ISO SmartCard compliant
  * devices.
- * For the full specs, see http://g10code.com/docs/openpgp-card-2.0.pdf
+ * For the full specs, see [0]
+ *
+ * References:
+ * [0] `Functional Specification of the OpenPGP application on ISO Smart Card Operating Systems`
+ *      version 3.4.1
+ *      https://gnupg.org/ftp/specs/OpenPGP-smart-card-application-3.4.1.pdf
  */
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class OpenPgpAppletConnection {
@@ -90,6 +97,7 @@ public class OpenPgpAppletConnection {
     private SecurityKeyType securityKeyType;
     private CardCapabilities cardCapabilities;
     private OpenPgpCapabilities openPgpCapabilities;
+    private KdfParameters kdfParameters;
 
     private SecureMessaging secureMessaging;
 
@@ -215,21 +223,6 @@ public class OpenPgpAppletConnection {
         if (securityKeyType != null) {
             return;
         }
-
-//        CommandApdu selectFidesmoApdu = commandFactory.createSelectFileCommand(AID_PREFIX_FIDESMO);
-//        if (communicate(selectFidesmoApdu).isSuccess()) {
-//            securityKeyType = SecurityKeyType.FIDESMO;
-//            return;
-//        }
-
-        /* We could determine if this is a yubikey here. The info isn't used at the moment, so we save the roundtrip
-        // AID from https://github.com/Yubico/ykneo-oath/blob/master/build.xml#L16
-        CommandApdu selectYubicoApdu = commandFactory.createSelectFileCommand("A000000527200101");
-        if (communicate(selectYubicoApdu).isSuccess()) {
-            securityKeyType = SecurityKeyType.YUBIKEY_UNKNOWN;
-            return;
-        }
-        */
 
         securityKeyType = SecurityKeyType.UNKNOWN;
     }
@@ -386,7 +379,7 @@ public class OpenPgpAppletConnection {
         try {
             long elapsedRealtimeStart = SystemClock.elapsedRealtime();
 
-            secureMessaging = SCP11bSecureMessaging.establish(this, commandFactory, smKeyStore);
+            secureMessaging = Scp11bSecureMessaging.establish(this, commandFactory, smKeyStore);
             long elapsedTime = SystemClock.elapsedRealtime() - elapsedRealtimeStart;
             HwTimber.d("Established secure messaging in %d ms", elapsedTime);
         } catch (SecureMessagingException e) {
@@ -430,14 +423,58 @@ public class OpenPgpAppletConnection {
 
     // region pin management
 
+    private byte[] calculateKdfIfNecessary(byte[] pin, KdfParameters.PasswordType type) throws IOException {
+        if (!openPgpCapabilities.isHasKdf()) {
+            HwTimber.d("KDF not supported, using normal PIN");
+            return pin;
+        }
+
+        KdfParameters kdfParameters = retrieveKdfDo();
+        if (kdfParameters == null || !kdfParameters.isHasUsesKdf()) {
+            HwTimber.d("KDF supported, but not used, using normal PIN");
+            return pin;
+        } else {
+            HwTimber.d("KDF supported and retrieved: %s", kdfParameters);
+            return KdfCalculator.calculateKdf(kdfParameters.forType(type), pin);
+        }
+    }
+
+    private KdfParameters retrieveKdfDo() throws IOException {
+        if (kdfParameters != null) {
+            return kdfParameters;
+        }
+
+        // query hardware for KDF-DO
+        // see page 18 of [0]
+        CommandApdu getKdfDoCommand = commandFactory.createGetDataKdf();
+        ResponseApdu kdfDoResponse = communicateOrThrow(getKdfDoCommand);
+        byte[] kdfDo = kdfDoResponse.getData();
+
+        // empty KDF-DO means plain UTF-8 password is being used
+        // see page 19 of [0]
+        if (kdfDo.length == 0) {
+            return null;
+        }
+
+        kdfParameters = KdfParameters.fromKdfDo(kdfDo);
+
+        return kdfParameters;
+    }
+
     public void verifyPinForSignature(ByteSecret pinSecret) throws IOException {
         if (isPw1ValidatedForSignature) {
             return;
         }
 
         byte[] pin = pinSecret.unsafeGetByteCopy();
-        CommandApdu verifyPw1ForSignatureCommand = commandFactory.createVerifyPw1ForSignatureCommand(pin);
+        byte[] transformedPin = calculateKdfIfNecessary(pin, KdfParameters.PasswordType.PW1);
+
+        CommandApdu verifyPw1ForSignatureCommand = commandFactory.createVerifyPw1ForSignatureCommand(transformedPin);
+
+        // delete secrets from memory
         Arrays.fill(pin, (byte) 0);
+        Arrays.fill(transformedPin, (byte) 0);
+
         ResponseApdu response = communicateOrThrow(verifyPw1ForSignatureCommand);
 
         isPw1ValidatedForSignature = true;
@@ -449,8 +486,13 @@ public class OpenPgpAppletConnection {
         }
 
         byte[] pin = pinSecret.unsafeGetByteCopy();
-        CommandApdu verifyPw1ForOtherCommand = commandFactory.createVerifyPw1ForOtherCommand(pin);
+        byte[] transformedPin = calculateKdfIfNecessary(pin, KdfParameters.PasswordType.PW1);
+
+        CommandApdu verifyPw1ForOtherCommand = commandFactory.createVerifyPw1ForOtherCommand(transformedPin);
+
+        // delete secrets from memory
         Arrays.fill(pin, (byte) 0);
+        Arrays.fill(transformedPin, (byte) 0);
 
         communicateOrThrow(verifyPw1ForOtherCommand);
 
@@ -463,7 +505,14 @@ public class OpenPgpAppletConnection {
         }
 
         byte[] puk = pukSecret.unsafeGetByteCopy();
-        CommandApdu verifyPw3Command = commandFactory.createVerifyPw3Command(puk);
+        byte[] transformedPuk = calculateKdfIfNecessary(puk, KdfParameters.PasswordType.PW3);
+
+        CommandApdu verifyPw3Command = commandFactory.createVerifyPw3Command(transformedPuk);
+
+        // delete secrets from memory
+        Arrays.fill(puk, (byte) 0);
+        Arrays.fill(transformedPuk, (byte) 0);
+
         communicateOrThrow(verifyPw3Command);
 
         isPw3Validated = true;
@@ -532,7 +581,6 @@ public class OpenPgpAppletConnection {
         try {
             return (new String(name, 4, name[3])).replace('<', ' ');
         } catch (IndexOutOfBoundsException e) {
-            // try-catch for https://github.com/FluffyKaon/OpenPGP-Card
             // Note: This should not happen, but happens with
             // https://github.com/FluffyKaon/OpenPGP-Card, thus return an empty string for now!
 

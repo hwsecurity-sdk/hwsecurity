@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -104,7 +104,7 @@ public class SecurityKeyFormFactor implements LifecycleObserver {
         sdkButton.setVisibility(showSdkButton ? View.VISIBLE : View.GONE);
         sdkButton.setOnClickListener(v -> {
             String packageName = context.getPackageName();
-            String url = "https://hwsecurity.dev/?pk_campaign=sdk&pk_source=" + packageName;
+            String url = "https://hwsecurity.dev/?utm_campaign=sdk&utm_source=" + packageName;
             Intent i = new Intent(Intent.ACTION_VIEW);
             i.setData(Uri.parse(url));
             context.startActivity(i);

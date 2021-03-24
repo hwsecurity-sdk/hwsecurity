@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -32,9 +32,12 @@ import de.cotech.hw.fido2.domain.AuthenticatorResponse;
 
 @AutoValue
 public abstract class AuthenticatorAssertionResponse extends AuthenticatorResponse {
+    @SuppressWarnings("mutable")
     public abstract byte[] authenticatorData();
+    @SuppressWarnings("mutable")
     public abstract byte[] signature();
     @Nullable
+    @SuppressWarnings("mutable")
     public abstract byte[] userHandle();
 
     public static AuthenticatorAssertionResponse create(byte[] clientDataJson, byte[] authenticatorData, byte[] signature, @Nullable byte[] userHandle) {

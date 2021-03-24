@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -25,26 +25,23 @@
 package de.cotech.hw.openpgp.internal.openpgp;
 
 
-import androidx.annotation.RestrictTo;
-import androidx.annotation.RestrictTo.Scope;
+import java.security.KeyFactory;
+import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 
-// 4.3.3.6 Algorithm Attributes
-@RestrictTo(Scope.LIBRARY_GROUP)
-public class EdDSAKeyFormat extends KeyFormat {
-
-    public EdDSAKeyFormat() {
-        super(KeyFormatType.EdDSAKeyFormatType);
+public class JcaTestUtils {
+    public static ECPublicKey parseEcPublicKey(byte[] ecdsaPublic) throws Exception {
+        KeyFactory generator = KeyFactory.getInstance("EC");
+        EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(ecdsaPublic);
+        return (ECPublicKey) generator.generatePublic(publicKeySpec);
     }
 
-    @Override
-    public byte[] toBytes(KeyType slot) {
-        return new byte[] { PublicKeyAlgorithmTags.EDDSA };
+    public static RSAPublicKey parseRsaPublicKey(byte[] rsaPublic) throws Exception {
+        KeyFactory generator = KeyFactory.getInstance("RSA");
+        EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(rsaPublic);
+        return (RSAPublicKey) generator.generatePublic(publicKeySpec);
     }
-
-    @Override
-    public KeyFormatParser getKeyFormatParser() {
-        throw new UnsupportedOperationException();
-    }
-
 }

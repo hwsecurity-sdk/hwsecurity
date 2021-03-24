@@ -1,0 +1,110 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+apply plugin: 'org.jetbrains.dokka'
+
+dependencies {
+    api project(':hwsecurity:core')
+
+    implementation 'com.hierynomus:sshj:0.31.0'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.65'
+    implementation "net.i2p.crypto:eddsa:0.3.0" // exposed transitive dependency in SSHJ
+
+    // enable logging for debug build with /assets/logback.xml configuration
+    debugImplementation 'org.slf4j:slf4j-api:1.7.30'
+    debugImplementation 'com.github.tony19:logback-android:2.0.0'
+
+    compileOnly 'androidx.annotation:annotation:1.1.0'
+
+    testImplementation 'junit:junit:4.13'
+    testImplementation 'org.mockito:mockito-core:2.18.0'
+}
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion 14
+        versionName rootProject.ext.hwSdkVersionName
+        consumerProguardFiles 'hwsecurity-sshj.pro'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    // Do not abort build if lint finds errors
+    lintOptions {
+        abortOnError false
+    }
+}
+
+// https://developer.android.com/studio/build/maven-publish-plugin
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+
+                groupId = 'de.cotech'
+                artifactId = 'hwsecurity-sshj'
+                version = android.defaultConfig.versionName
+
+                pom {
+                    url = 'https://hwsecurity.dev'
+                    licenses {
+                        license {
+                            name = 'Commercial'
+                            url = 'https://hwsecurity.dev/sales/'
+                            distribution = 'repo'
+                        }
+                        license {
+                            name = 'GNU General Public License, version 3'
+                            url = 'https://www.gnu.org/licenses/gpl-3.0.txt'
+                        }
+                    }
+                    organization {
+                        name = 'Confidential Technologies GmbH'
+                        url = 'https://www.cotech.de'
+                    }
+                }
+            }
+        }
+        /*
+         * To upload release, create file gradle.properties in ~/.gradle/ with this content:
+         *
+         * cotechMavenName=xxx
+         * cotechMavenPassword=xxx
+         */
+        if (project.hasProperty('cotechMavenName') && project.hasProperty('cotechMavenPassword')) {
+            println "Found cotechMavenName, cotechMavenPassword in gradle.properties!"
+
+            repositories {
+                maven {
+                    credentials {
+                        username cotechMavenName
+                        password cotechMavenPassword
+                    }
+                    url = "https://maven.cotech.de"
+                }
+            }
+        }
+    }
+}
+
+dokkaHugo {
+    outputDirectory.set(file("$projectDir/../../hwsecurity.dev/content/reference"))
+
+    moduleName.set("hwsecurity-sshj")
+
+    dokkaSourceSets {
+        register("java") {
+            sourceRoots.setFrom(file("src/main/java"))
+
+            jdkVersion.set(8) // Used for linking to JDK documentation
+            noStdlibLink.set(false) // Disable linking to online kotlin-stdlib documentation
+            noJdkLink.set(true) // Disable linking to online JDK documentation
+            noAndroidSdkLink.set(false) // Disable linking to online Android documentation
+        }
+    }
+}

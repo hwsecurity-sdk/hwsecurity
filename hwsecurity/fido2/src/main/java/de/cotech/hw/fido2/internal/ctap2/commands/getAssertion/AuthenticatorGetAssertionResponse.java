@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -35,10 +35,13 @@ import de.cotech.hw.fido2.internal.ctap2.Ctap2Response;
 public abstract class AuthenticatorGetAssertionResponse extends Ctap2Response {
     // credential 	0x01 	definite length map (CBOR major type 5).
     @Nullable
+    @SuppressWarnings("mutable")
     public abstract byte[] credential();
     // authData 	0x02 	byte string (CBOR major type 2).
+    @SuppressWarnings("mutable")
     public abstract byte[] authData();
     // signature 	0x03 	byte string (CBOR major type 2).
+    @SuppressWarnings("mutable")
     public abstract byte[] signature();
     // publicKeyCredentialUserEntity 	0x04 	definite length map (CBOR major type 5).
     @Nullable
@@ -47,6 +50,7 @@ public abstract class AuthenticatorGetAssertionResponse extends Ctap2Response {
     @Nullable
     public abstract Integer numberOfCredentials();
 
+    @SuppressWarnings("mutable")
     public abstract byte[] clientDataJSON();
 
 

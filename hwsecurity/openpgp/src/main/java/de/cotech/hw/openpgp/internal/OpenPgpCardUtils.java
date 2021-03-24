@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -22,7 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package de.cotech.hw.openpgp;
+package de.cotech.hw.openpgp.internal;
 
 
 import java.io.ByteArrayOutputStream;
@@ -35,10 +35,10 @@ import java.security.interfaces.RSAPrivateCrtKey;
 import androidx.annotation.RestrictTo;
 import androidx.annotation.RestrictTo.Scope;
 
-import de.cotech.hw.openpgp.internal.openpgp.ECKeyFormat;
+import de.cotech.hw.openpgp.internal.openpgp.EcKeyFormat;
 import de.cotech.hw.openpgp.internal.openpgp.KeyType;
-import de.cotech.hw.openpgp.internal.openpgp.RSAKeyFormat;
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import de.cotech.hw.openpgp.internal.openpgp.RsaKeyFormat;
+
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 
@@ -46,46 +46,65 @@ import org.bouncycastle.util.encoders.Hex;
 @RestrictTo(Scope.LIBRARY_GROUP)
 public class OpenPgpCardUtils {
 
-    public static byte[] createRSAPrivKeyTemplate(RSAPrivateCrtKey secretKey, KeyType slot,
-            RSAKeyFormat format) throws IOException {
+    private static byte[] generateLengthByteArray(int length) throws IOException {
+        if (length < 128) {
+            return new byte[]{(byte) length};
+        } else if (length < 256) {
+            return new byte[]{(byte) 0x81, (byte) length};
+        } else if (length < 65536) {
+            return new byte[]{(byte) 0x82, (byte) (length >> 8), (byte) (length & 0xFF)};
+        } else {
+            throw new IOException("Unsupported key length");
+        }
+    }
+
+    public static byte[] createRsaPrivKeyTemplate(RSAPrivateCrtKey secretKey, KeyType slot,
+                                                  RsaKeyFormat format) throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream(),
                 template = new ByteArrayOutputStream(),
                 data = new ByteArrayOutputStream(),
                 res = new ByteArrayOutputStream();
 
-        int expLengthBytes = (format.getExponentLength() + 7) / 8;
+        int expLengthBytes = (format.exponentLength() + 7) / 8;
         // Public exponent
         template.write(new byte[]{(byte) 0x91, (byte) expLengthBytes});
         writeBits(data, secretKey.getPublicExponent(), expLengthBytes);
 
-        final int modLengthBytes = format.getModulusLength() / 8;
+        final int modLengthBytes = format.modulusLength() / 8;
+        final byte[] lengthByteArray = generateLengthByteArray(modLengthBytes / 2);
 
         // Prime P, length modLengthBytes / 2
-        template.write(Hex.decode("928180"));
+        template.write(Hex.decode("92"));
+        template.write(lengthByteArray);
         writeBits(data, secretKey.getPrimeP(), modLengthBytes / 2);
 
         // Prime Q, length modLengthBytes / 2
-        template.write(Hex.decode("938180"));
+        template.write(Hex.decode("93"));
+        template.write(lengthByteArray);
         writeBits(data, secretKey.getPrimeQ(), modLengthBytes / 2);
 
 
-        if (format.getAlgorithmFormat().isIncludeCrt()) {
+        if (format.rsaImportFormat().isIncludeCrt()) {
             // Coefficient (1/q mod p), length modLengthBytes / 2
-            template.write(Hex.decode("948180"));
+            template.write(Hex.decode("94"));
+            template.write(lengthByteArray);
             writeBits(data, secretKey.getCrtCoefficient(), modLengthBytes / 2);
 
             // Prime exponent P (d mod (p - 1)), length modLengthBytes / 2
-            template.write(Hex.decode("958180"));
+            template.write(Hex.decode("95"));
+            template.write(lengthByteArray);
             writeBits(data, secretKey.getPrimeExponentP(), modLengthBytes / 2);
 
             // Prime exponent Q (d mod (1 - 1)), length modLengthBytes / 2
-            template.write(Hex.decode("968180"));
+            template.write(Hex.decode("96"));
+            template.write(lengthByteArray);
             writeBits(data, secretKey.getPrimeExponentQ(), modLengthBytes / 2);
         }
 
-        if (format.getAlgorithmFormat().isIncludeModulus()) {
+        if (format.rsaImportFormat().isIncludeModulus()) {
             // Modulus, length modLengthBytes, last item in private key template
-            template.write(Hex.decode("97820100"));
+            template.write(Hex.decode("97"));
+            template.write(generateLengthByteArray(modLengthBytes));
             writeBits(data, secretKey.getModulus(), modLengthBytes);
         }
 
@@ -114,8 +133,8 @@ public class OpenPgpCardUtils {
         return res.toByteArray();
     }
 
-    public static byte[] createECPrivKeyTemplate(ECPrivateKey secretKey, ECPublicKey publicKey, KeyType slot,
-            ECKeyFormat format) throws IOException {
+    public static byte[] createEcPrivKeyTemplate(ECPrivateKey secretKey, ECPublicKey publicKey, KeyType slot,
+                                                 EcKeyFormat format) throws IOException {
         ByteArrayOutputStream stream = new ByteArrayOutputStream(),
                 template = new ByteArrayOutputStream(),
                 data = new ByteArrayOutputStream(),
@@ -127,7 +146,7 @@ public class OpenPgpCardUtils {
         template.write(Hex.decode("92"));
         template.write(encodeLength(data.size()));
 
-        if (format.ecAlgorithmFormat().isWithPubkey()) {
+        if (format.withPubkey()) {
             data.write(Hex.decode("04"));
             writeBits(data, publicKey.getW().getAffineX(), csize);
             writeBits(data, publicKey.getW().getAffineY(), csize);

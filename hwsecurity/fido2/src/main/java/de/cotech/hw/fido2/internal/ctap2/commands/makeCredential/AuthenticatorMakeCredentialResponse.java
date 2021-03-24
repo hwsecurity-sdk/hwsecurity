@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Confidential Technologies GmbH
+ * Copyright (C) 2018-2021 Confidential Technologies GmbH
  *
  * You can purchase a commercial license at https://hwsecurity.dev.
  * Buying such a license is mandatory as soon as you develop commercial
@@ -34,10 +34,13 @@ public abstract class AuthenticatorMakeCredentialResponse extends Ctap2Response 
     // fmt 	0x01 	text string (CBOR major type 3).
     public abstract String fmt();
     // authData 	0x02 	byte string (CBOR major type 2).
+    @SuppressWarnings("mutable")
     public abstract byte[] authData();
     // attStmt 	0x03 	definite length map (CBOR major type 5).
+    @SuppressWarnings("mutable")
     public abstract byte[] attStmt();
 
+    @SuppressWarnings("mutable")
     public abstract byte[] clientDataJSON();
 
 
