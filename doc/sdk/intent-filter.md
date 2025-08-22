@@ -28,11 +28,6 @@ This is strictly optional, NFC dispatch will work with no limitations while the 
 
 Keep in mind that if more than one app is registered to the USB device classes or NFC Intents, Android will show an Activity chooser to the user.
 
-<div class="row">
-<div class="col-sm-6">
-{{< figure library="1" numbered="true" src="docs/usb-intent-filter.png" title="USB: The Activity chooser is shown when more than one activity has registered to the USB device classes." >}}
-</div>
-<div class="col-sm-6">
-{{< figure library="1" numbered="true" src="docs/nfc-intent-filter.png" title="NFC: The Activity chooser is shown when more than one activity can handle the NFC Intent." >}}
-</div>
-</div>
+![USB: The Activity chooser is shown when more than one activity has registered to the USB device classes.](usb-intent-filter.png)
+
+![NFC: The Activity chooser is shown when more than one activity can handle the NFC Intent.](nfc-intent-filter.png)

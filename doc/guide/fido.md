@@ -1,28 +1,10 @@
-+++
-title = "FIDO U2F"
-
-draft = false  # Is this a draft? true/false
-toc = true  # Show table of contents? true/false
-type = "guide"  # Do not modify.
-weight = 3
-
-# Add menu entry to sidebar.
-linktitle = "FIDO U2F"
-[menu.docs]
-  parent = "hw-security"
-  weight = 3
-+++
-
 # FIDO U2F
 
-<div class="row">
-<div class="col-sm-6">
-{{< figure library="1" numbered="true" src="docs/fido-register.png" title="Registering a new FIDO U2F Security Key using the Hardware Security SDK" >}}
-</div>
-<div class="col-sm-6">
-{{< figure library="1" numbered="true" src="docs/fido-authenticate.png" title="FIDO U2F Authentication using the Hardware Security SDK" >}}
-</div>
-</div>
+
+![Registering a new FIDO U2F Security Key using the Hardware Security SDK](fido-register.png)
+
+![FIDO U2F Authentication using the Hardware Security SDK](fido-authenticate.png)
+
 
 In this guide, you'll learn how to integrate the Hardware Security SDK in your app to extend your login mechanism with two-factor authentication.
 This is done by first registering a FIDO U2F Security Key in your user's profile.

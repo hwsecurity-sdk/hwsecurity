@@ -2,14 +2,10 @@
 
 # FIDO2/WebAuthn - WebView Bridge
 
-<div class="row">
-<div class="col-sm-6">
-{{< figure library="1" numbered="true" src="docs/fido-webview-register.png" title="Registering a new Security Key using the WebView Bridge" >}}
-</div>
-<div class="col-sm-6">
-{{< figure library="1" numbered="true" src="docs/fido-webview-authenticate.png" title="Authentication using the WebView Bridge" >}}
-</div>
-</div>
+![Registering a new Security Key using the WebView Bridge](fido-webview-register.png)
+
+![Authentication using the WebView Bridge](fido-webview-authenticate.png)
+
 
 If you are using a WebView for your login flow and have already integrated FIDO2/WebAuthn support in your webservice by using the [W3C WebAuthn specification](https://www.w3.org/TR/webauthn/), you can use our WebView-WebAuthn Bridge for passwordless login and two-factor authentication.
 In this guide, you'll learn how to add the Bridge to the WebView you use for your login process.

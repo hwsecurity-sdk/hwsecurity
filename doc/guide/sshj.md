@@ -1,19 +1,3 @@
-+++
-title = "SSH Authentication with SSHJ"
-
-draft = false  # Is this a draft? true/false
-toc = true  # Show table of contents? true/false
-type = "guide"  # Do not modify.
-weight = 4
-
-aliases = ["ssh"]
-
-# Add menu entry to sidebar.
-linktitle = "SSH Authentication with SSHJ"
-[menu.docs]
-  parent = "hw-security"
-  weight = 4
-+++
 
 # SSH Authentication with SSHJ
 

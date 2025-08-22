@@ -1,18 +1,3 @@
-+++
-title = "FIDO2 / WebAuthn"
-
-draft = false  # Is this a draft? true/false
-toc = true  # Show table of contents? true/false
-type = "guide"  # Do not modify.
-weight = 2
-
-# Add menu entry to sidebar.
-linktitle = "FIDO2 / WebAuthn"
-[menu.docs]
-  parent = "hw-security"
-  weight = 2
-+++
-
 # FIDO2 / WebAuthn
 
 FIDO2 support has been implemented in our Hardware Security SDK starting with version 4.0.0.

@@ -1,13 +1,10 @@
 # SSH Authentication with Jsch
 
-<div class="row">
-<div class="col-sm-6">
-{{< figure library="1" numbered="true" src="docs/ssh-keypad.png" title="Keypad provided by the Hardware Security SDK to access the smartcard over NFC." >}}
-</div>
-<div class="col-sm-6">
-{{< figure library="1" numbered="true" src="docs/ssh-authenticate.png" title="Animation showing how the smartcard should be held against the smartphone for SSH authentication." >}}
-</div>
-</div>
+
+![Keypad provided by the Hardware Security SDK to access the smartcard over NFC.](ssh-keypad.png)
+
+![Animation showing how the smartcard should be held against the smartphone for SSH authentication.](ssh-authenticate.png)
+
 
 In this guide, you'll learn how to integrate the Hardware Security SDK in your app to implement SSH authentication with security keys and smartcards.
 The Hardware Security SDK will automatically…
