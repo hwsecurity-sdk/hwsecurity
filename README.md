@@ -28,49 +28,45 @@ Use cases include:
 * [Encrypted Database](doc/guide/database.md)
 
 
-## Open Source
-
-This repository contains all parts of the Hardware Security SDK that have been released as open source.
-
-This includes the following artifacts of the SDK (cf. [overview of all artifacts](https://hwsecurity.dev/docs/sdk/#sdk-artifacts)):
-
-| Build Artifact                     | Min SDK | Rec. SDK |
-|------------------------------------|---------|----------|
-| de.cotech:hwsecurity               | 14      |          |
-| de.cotech:hwsecurity-intent-nfc    | 14      |          |
-| de.cotech:hwsecurity-intent-usb    | 14      |          |
-| de.cotech:hwsecurity-fido          | 14      | 19       |
-| de.cotech:hwsecurity-fido2         | 14      | 19       |
-| de.cotech:hwsecurity-openpgp       | 14      |          |
-| de.cotech:hwsecurity-piv           | 14      |          |
-| de.cotech:hwsecurity-ui            | 14      | 19       |
-| de.cotech:hwsecurity-ssh           | 14      |          |
-| de.cotech:hwsecurity-sshj          | 14      |          |
-
-## Notice
-
-This open source release does not reflect the newest version of the SDK.
-Some parts are currently not released as GPLv3.
-
-## Maven Repositories
-
-This is the repository for open source projects using the SDK under GPLv3:
-* https://jitpack.io/#cotechde/hwsecurity/
-
 > [!CAUTION]
 > If you are using the Jitpack repo, use ``com.github.cotechde:hwsecurity`` instead of ``de.cotech:hwsecurity``!
 
 
-## Contributing
+## Open Source
 
-Hardware Security SDK is an open source project and we are very happy to accept community contributions.
+This repository contains all parts of the Hardware Security SDK that have been released as open source.
 
-We will ask you to sign our [CLA](https://cla-assistant.io/cotechde/hwsecurity) before your pull request can be merged.
+This includes the following artifacts of the SDK:
 
-## Commercial License
 
-If you need a commercial license, contact us via email: support@hwsecurity.dev
+| Build Artifact                                          | Min SDK | Rec. SDK |
+|---------------------------------------------------------|---------|----------|
+| com.github.cotechde:hwsecurity:hwsecurity               | 14      |          |
+| com.github.cotechde:hwsecurity:hwsecurity-intent-nfc    | 14      |          |
+| com.github.cotechde:hwsecurity:hwsecurity-intent-usb    | 14      |          |
+| com.github.cotechde:hwsecurity:hwsecurity-fido          | 14      | 19       |
+| com.github.cotechde:hwsecurity:hwsecurity-fido2         | 14      | 19       |
+| com.github.cotechde:hwsecurity:hwsecurity-openpgp       | 14      |          |
+| com.github.cotechde:hwsecurity:hwsecurity-piv           | 14      |          |
+| com.github.cotechde:hwsecurity:hwsecurity-ui            | 14      | 19       |
+| com.github.cotechde:hwsecurity:hwsecurity-ssh           | 14      |          |
+| com.github.cotechde:hwsecurity:hwsecurity-sshj          | 14      |          |
 
-Buying such a license is mandatory as soon as you develop commercial activities involving this program without disclosing the source code of your own applications.
+## Maven
+
+This is the repository for open source projects:
+* https://jitpack.io/#cotechde/hwsecurity/
+
+## License: GPLv3+
 
 You can use our SDK under the terms of the GNU General Public license version 3 or later.
+
+## Other license?
+
+If you need a different license, write us: support@hwsecurity.dev
+
+We may be willing to release it as Apache v2 under certain conditions.
+
+## Missing parts?
+
+Some parts of the SDK haven't been released as open source. If you are missing something, please let us know: support@hwsecurity.dev
