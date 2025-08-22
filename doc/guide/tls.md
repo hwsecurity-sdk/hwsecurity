@@ -1,45 +1,15 @@
-+++
-title = "PIV for TLS Client Certificates"
-
-draft = false  # Is this a draft? true/false
-toc = true  # Show table of contents? true/false
-type = "guide"  # Do not modify.
-weight = 5
-
-# Add menu entry to sidebar.
-linktitle = "PIV for TLS Client Certificates"
-[menu.docs]
-  parent = "hw-security"
-  weight = 5
-+++
+# PIV for TLS Client Certificates
 
 In this guide, you'll learn how to use PIV cards and security keys for TLS client certificate authentication.
 
-<div class="row">
-  <div class="col-sm-12 text-center">
-  Fork sample code on Github:
-  <a href="https://github.com/cotechde/hwsecurity-samples/tree/main/tls-sample"><img class="mx-auto d-block" src="/img/github-badge-small.png" alt="Get Sample on Github" height="63" style="margin:0;"></a>
-  </div>
-</div>
+Fork sample code on Github: https://github.com/cotechde/hwsecurity-samples/tree/main/tls-sample
 
 ## Add the SDK to Your Project
 
-To get a username and password for our Maven repository, please [contact us for a license]({{< ref "/sales/index.md" >}}).
 
 Add this to your ``build.gradle``:
 
 ```gradle
-repositories {
-    google()
-    jcenter()
-    maven {
-        credentials {
-            username 'xxx'
-            password 'xxx'
-        }
-        url "https://maven.cotech.de"
-    }
-}
 
 dependencies {
     // PIV cards
@@ -59,8 +29,6 @@ This ensures Security Keys are reliably dispatched by your app while in the fore
 
 We start by creating a new class which extends ``android.app.Application`` as follows:
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 public class MyCustomApplication extends Application {
     @Override
@@ -75,23 +43,6 @@ public class MyCustomApplication extends Application {
     }
 }
 ```
-{{% /code-tab %}}
-{{% code-tab "Kotlin" %}}
-```kotlin
-class MyCustomApplication : Application() {
-    override fun onCreate() {
-        super.onCreate()
-
-        val securityKeyManager = SecurityKeyManager.getInstance()
-        val config = SecurityKeyManagerConfig.Builder()
-            .setEnableDebugLogging(BuildConfig.DEBUG)
-            .build()
-        securityKeyManager.init(this, config)
-    }
-}
-```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 Then, register your ``MyCustomApplication`` in your ``AndroidManifest.xml``:
 
@@ -108,8 +59,6 @@ Then, register your ``MyCustomApplication`` in your ``AndroidManifest.xml``:
 In this guide, we use the ``PivSecurityKeyDialogFragment`` to show a neat kepad for PIN input.
 It also handles security key errors, for example when a wrong PIN is entered.
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 private void showSecurityKeyDialog() {
     SecurityKeyDialogOptions options = SecurityKeyDialogOptions.builder()
@@ -123,15 +72,11 @@ private void showSecurityKeyDialog() {
     securityKeyDialogFragment.show(getSupportFragmentManager());
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 Implement ``SecurityKeyDialogCallback<PivSecurityKey>`` in your Activity and override ``onSecurityKeyDialogDiscovered`` to receive callbacks from the ``securityKeyDialogFragment`` when a security key is discovered over NFC (or Security Keys over USB).
 
 Using your favorite HTTP client, such as OkHttp, you can create a request using the ``SSLContext`` created by ``SecurityKeyTlsClientCertificateAuthenticator``.
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 @Override
 public void onSecurityKeyDialogDiscovered(@NonNull SecurityKeyDialogInterface dialogInterface,
@@ -161,8 +106,6 @@ public void onSecurityKeyDialogDiscovered(@NonNull SecurityKeyDialogInterface di
     }
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 ## Prevent Re-Creation of Activity with USB Security Keys
 
@@ -180,4 +123,4 @@ To prevent this, add ``keyboard|keyboardHidden`` to the activity's ``configChang
 
 ## Congratulations!
 
-That's all! If you have any questions, don't hesitate to contact us: <ul class="connect-links fa-ul"><li><i class="fa-li fas fa-comments"></i><a href="mailto:support@hwsecurity.dev?subject=Developer Question&amp;body=I have a question regarding...">Ask us by email</a></li></ul>
+That's all!

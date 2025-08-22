@@ -1,17 +1,5 @@
-+++
-title = "SDK Overview"
 
-draft = false  # Is this a draft? true/false
-toc = true  # Show table of contents? true/false
-type = "guide"  # Do not modify.
-weight = 1
-
-# Add menu entry to sidebar.
-linktitle = "SDK Overview"
-[menu.docs]
-  parent = "hw-security-docs"
-  weight = 1
-+++
+# SDK Overview
 
 With Cotech SDKs, your app can take advantage of the latest security solutions for authentication and end-to-end encryption.
 SDK updates are distributed via our Maven repository.
@@ -19,22 +7,9 @@ This makes it easy for you to integrate the newest versions that we have to offe
 
 ## Add the SDK to Your Project
 
-To get a username and password for our Maven repository, please [contact us for a license]({{< ref "/sales/index.md" >}}).
-
 Add this to your ``build.gradle``:
 
 ```gradle
-repositories {
-    google()
-    jcenter()
-    maven {
-        credentials {
-            username "xxx"
-            password "xxx"
-        }
-        url "https://maven.cotech.de"
-    }
-}
 
 dependencies {
     // Base artifact

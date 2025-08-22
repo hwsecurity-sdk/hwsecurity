@@ -1,18 +1,5 @@
-+++
-title = "Changelog"
 
-draft = false  # Is this a draft? true/false
-toc = true  # Show table of contents? true/false
-type = "guide"  # Do not modify.
-weight=70
-
-# Add menu entry to sidebar.
-linktitle = "Changelog"
-[menu.docs]
-  parent = "hw-security-docs"
-  weight = 70
-
-+++
+# Changelog
 
 Only important changes are noted here. Most versions incorporate a lot of other bugfixes.
 The artifacts use strict [Semantic Versioning](https://semver.org/).

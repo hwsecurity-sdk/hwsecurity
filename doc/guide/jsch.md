@@ -1,19 +1,4 @@
-+++
-title = "SSH Authentication with Jsch"
-
-draft = false  # Is this a draft? true/false
-toc = true  # Show table of contents? true/false
-type = "guide"  # Do not modify.
-weight = 4
-
-aliases = ["ssh"]
-
-# Add menu entry to sidebar.
-linktitle = "SSH Authentication with Jsch"
-[menu.docs]
-  parent = "hw-security"
-  weight = 4
-+++
+# SSH Authentication with Jsch
 
 <div class="row">
 <div class="col-sm-6">
@@ -31,37 +16,14 @@ The Hardware Security SDK will automatically…
   (If an OpenSSH certificate has been stored on the security key, this will be used instead.)
   2. cryptographically sign the SSH challenge using the security key.
 
-<div class="row">
-  <div class="col-sm-6 text-center">
-  Fork sample code on Github:
-  <a href="https://github.com/cotechde/hwsecurity-samples/tree/main/pgp-piv-ssh-sample"><img class="mx-auto d-block" src="/img/github-badge-small.png" alt="Get Sample on Github" height="63" style="margin:0;"></a>
-  </div>
-  
-  <div class="col-sm-6 text-center">
-  Try on Google Play:
-  <a href="https://play.google.com/store/apps/details?id=de.cotech.hw.ssh.sample"><img class="mx-auto d-block" src="/img/google-play-badge-small.png" alt="Get it on Google Play" height="63" style="margin:0;"></a>
-  </div>
-</div>
+Fork sample code on Github: https://github.com/cotechde/hwsecurity-samples/tree/main/pgp-piv-ssh-sample
 
 
 ## Add the SDK to Your Project
 
-To get a username and password for our Maven repository, please [contact us for a license]({{< ref "/sales/index.md" >}}).
-
 Add this to your ``build.gradle``:
 
 ```gradle
-repositories {
-    google()
-    jcenter()
-    maven {
-        credentials {
-            username 'xxx'
-            password 'xxx'
-        }
-        url "https://maven.cotech.de"
-    }
-}
 
 dependencies {
     // For use with OpenPGP Cards
@@ -86,8 +48,6 @@ This ensures Security Keys are reliably dispatched by your app while in the fore
 
 We start by creating a new class which extends ``android.app.Application`` as follows:
 
-{{% code-tabs %}}
-{{% code-tab "Kotlin" %}}
 ```kotlin
 class MyCustomApplication : Application() {
     override fun onCreate() {
@@ -101,24 +61,6 @@ class MyCustomApplication : Application() {
     }
 }
 ```
-{{% /code-tab %}}
-{{% code-tab "Java" %}}
-```java
-public class MyCustomApplication extends Application {
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        SecurityKeyManager securityKeyManager = SecurityKeyManager.getInstance();
-        SecurityKeyManagerConfig config = new SecurityKeyManagerConfig.Builder()
-            .setEnableDebugLogging(BuildConfig.DEBUG)
-            .build();
-        securityKeyManager.init(this, config);
-    }
-}
-```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 Then, register your ``MyCustomApplication`` in your ``AndroidManifest.xml``:
 
@@ -134,8 +76,6 @@ Then, register your ``MyCustomApplication`` in your ``AndroidManifest.xml``:
 In this guide, we use the ``OpenPgpSecurityKeyDialogFragment`` to show a neat kepad for PIN input.
 It also handles security key errors, for example when a wrong PIN is entered.
 
-{{% code-tabs %}}
-{{% code-tab "Kotlin" %}}
 ```kotlin
 private fun showSecurityKeyDialog() {
     val options = SecurityKeyDialogOptions.builder()
@@ -151,13 +91,9 @@ private fun showSecurityKeyDialog() {
     securityKeyDialogFragment.show(supportFragmentManager)
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 Implement ``SecurityKeyDialogCallback<OpenPgpSecurityKey>`` (or, if you are using PIV cards: ``SecurityKeyDialogCallback<PivSecurityKey>``) in your Activity and override ``onSecurityKeyDialogDiscovered`` to receive callbacks from the ``securityKeyDialogFragment`` when a security key is discovered over NFC (or Security Keys over USB):
 
-{{% code-tabs %}}
-{{% code-tab "Kotlin" %}}
 ```kotlin
 @UiThread
 override fun onSecurityKeyDialogDiscovered(
@@ -171,13 +107,10 @@ override fun onSecurityKeyDialogDiscovered(
     connectToSsh(loginName, loginHost, dialogInterface, securityKey, pinProvider!!)
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
-{{% alert warning %}}
-IOExceptions thrown inside onSecurityKeyDialogDiscovered are catched by the securityKeyDialogFragment and a proper error UI is shown to the user.
-Alternatively, SecurityKeyDialogInterface.postError() can be used.
-{{% /alert %}}
+> [!WARNING]
+> IOExceptions thrown inside onSecurityKeyDialogDiscovered are catched by the securityKeyDialogFragment and a proper error UI is shown to the user.
+> Alternatively, SecurityKeyDialogInterface.postError() can be used.
 
 ## Threading and Exception Handling
 
@@ -185,8 +118,6 @@ The actual SSH connection is deferred to a new thread so that network operations
 To properly handle Exceptions, ``deferred.await()`` is used.
 ``IOExceptions`` are posted to the ``securityKeyDialogFragment`` using the ``SecurityKeyDialogInterface.postError()`` for user feedback.
 
-{{% code-tabs %}}
-{{% code-tab "Kotlin" %}}
 ```kotlin
 private fun connectToSsh(
     loginName: String,
@@ -221,8 +152,6 @@ private fun connectToSsh(
     }
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
     
 ## SSH Identity
 
@@ -232,8 +161,6 @@ Special care needs to be taken due to Jsch's exception handling.
 Since Jsch swallows other exceptions happening during the authentication, we need to wrap ``IOExceptions`` happening during ``securityKeySshAuthenticator.authenticateSshChallenge()`` into a ``JschException``.
 These are catched during the SSH connection and unwrapped to properly delegate them to the ``securityKeyDialogFragment``, as shown previously.
 
-{{% code-tabs %}}
-{{% code-tab "Kotlin" %}}
 ```kotlin
 class SecurityKeyJschIdentity(
     private val loginName: String,
@@ -257,16 +184,12 @@ class SecurityKeyJschIdentity(
     override fun decrypt() = true
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 ## Jsch SSH Connection
 
 The actual SSH connection can be done according to the Jsch documentation.
 After successfull authentication, ``securityKeyDialogFragment`` must be dismissed manually.
 
-{{% code-tabs %}}
-{{% code-tab "Kotlin" %}}
 ```kotlin
 @WorkerThread
 private fun jschConnection(
@@ -296,8 +219,6 @@ private fun jschConnection(
     Log.d("SSH", baos.toString())
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 ## Prevent Re-Creation of Activity with USB Security Keys
 
@@ -385,4 +306,4 @@ Connection to ssh.hwsecurity.dev closed.
 
 ## Congratulations!
 
-That's all! If you have any questions, don't hesitate to contact us: <ul class="connect-links fa-ul"><li><i class="fa-li fas fa-comments"></i><a href="mailto:support@hwsecurity.dev?subject=Developer Question&amp;body=I have a question regarding...">Ask us by email</a></li></ul>
+That's all!

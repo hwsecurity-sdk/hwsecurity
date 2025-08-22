@@ -1,19 +1,5 @@
-+++
-title = "Encrypted Database"
 
-draft = false  # Is this a draft? true/false
-toc = true  # Show table of contents? true/false
-type = "guide"  # Do not modify.
-weight = 7
-
-# Add menu entry to sidebar.
-linktitle = "Encrypted Database with Room"
-[menu.docs]
-  parent = "hw-security"
-  weight = 7
-+++
-
-
+# Encrypted Database
 
 
 In this guide, you'll learn how to implement an encrypted Android database that is only decrypted with a specific Security Key.
@@ -34,16 +20,10 @@ The main workflows are:
     3. The secret is used to decrypt the database in-memory
 
 
-<div class="row">
-  <div class="col-sm-12 text-center">
-  Fork sample code on Github:
-  <a href="https://github.com/cotechde/hwsecurity-samples/tree/main/database-sample"><img class="mx-auto d-block" src="/img/github-badge-small.png" alt="Get Sample on Github" height="63" style="margin:0;"></a>
-  </div>
-</div>
+
+Fork sample code on Github: https://github.com/cotechde/hwsecurity-samples/tree/main/database-sample
 
 ## Add the SDK to Your Project
-
-To get a username and password for our Maven repository, please [contact us for a license]({{< ref "/sales/index.md" >}}).
 
 Add this to your ``build.gradle``:
 
@@ -51,13 +31,6 @@ Add this to your ``build.gradle``:
 repositories {
     google()
     jcenter()
-    maven {
-        credentials {
-            username 'xxx'
-            password 'xxx'
-        }
-        url "https://maven.cotech.de"
-    }
     // CWAC-SafeRoom Maven repository
     maven { url "https://s3.amazonaws.com/repo.commonsware.com" }
 }
@@ -85,8 +58,7 @@ This ensures Security Keys are reliably dispatched by your app while in the fore
 
 We start by creating a new class which extends ``android.app.Application`` as follows:
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
+
 ```java
 public class MyCustomApplication extends Application {
     @Override
@@ -116,8 +88,7 @@ class MyCustomApplication : Application() {
     }
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
+
 
 Then, register your ``MyCustomApplication`` in your ``AndroidManifest.xml``:
 
@@ -132,8 +103,6 @@ Then, register your ``MyCustomApplication`` in your ``AndroidManifest.xml``:
 
 Following the [basic Training Guide for Room](https://developer.android.com/training/data-storage/room), we create one simple entity and one DAO:
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 @Entity
 public class User {
@@ -153,11 +122,8 @@ public class User {
     }
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
+
 ```java
 @Dao
 public interface UserDao {
@@ -178,16 +144,13 @@ public interface UserDao {
     void delete(User user);
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 ## Database Instance
 
 The ``RoomDatabase`` allows decryption with a ``ByteSecret``.
 It is implemented as a Singelton to ensure that only one database is decrypted and held in-memory.
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
+
 ```java
 @Database(entities = {User.class}, version = 1)
 public abstract class EncryptedDatabase extends RoomDatabase {
@@ -235,8 +198,6 @@ public abstract class EncryptedDatabase extends RoomDatabase {
 
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 
 ## Base Activity
@@ -244,8 +205,6 @@ public abstract class EncryptedDatabase extends RoomDatabase {
 The ``BaseActivity`` ensures that the user first pairs a Security Key with the app and decrypts the database before usage.
 All normal Activities in your app should extend this ``BaseActivity`` for this (see [``MainActivity``](#database-operations-with-room)).
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 class BaseActivity extends AppCompatActivity {
 
@@ -282,8 +241,6 @@ class BaseActivity extends AppCompatActivity {
 }
 
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 
 ## SetupActivity
@@ -297,8 +254,6 @@ It executes the following steps:
 4. The secret is encrypted to the cryptographic key (Public-Key Cryptography) on the Security Key
 5. The encrypted secret is stored inside the app
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 public class SetupActivity extends AppCompatActivity implements SecurityKeyCallback<OpenPgpSecurityKey> {
     private PinProvider pinProvider;
@@ -416,8 +371,6 @@ public class SetupActivity extends AppCompatActivity implements SecurityKeyCallb
     }
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 ## DecryptActivity
 
@@ -428,8 +381,6 @@ It executes the following steps:
 2. The Security Key is used to decrypt the encrypted secret (Public-Key Cryptography)
 3. The secret is used to decrypt the database in-memory
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 public class DecryptActivity extends AppCompatActivity implements SecurityKeyCallback<OpenPgpSecurityKey> {
     private PinProvider pinProvider;
@@ -523,8 +474,6 @@ public class DecryptActivity extends AppCompatActivity implements SecurityKeyCal
     }
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 
 ## Database Operations with Room 
@@ -532,8 +481,6 @@ public class DecryptActivity extends AppCompatActivity implements SecurityKeyCal
 All your Activities should extend the ``BaseActivity`` to ensure previous Security Key setup and database decryption.
 Database operations can be done as specified by the [Room Persistence Library](https://developer.android.com/training/data-storage/room).
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 public class MainActivity extends BaseActivity {
 
@@ -565,8 +512,6 @@ public class MainActivity extends BaseActivity {
 }
 
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 ## Prevent Re-Creation of Activity with USB Security Keys
 
@@ -594,4 +539,4 @@ Some details are left to the developer, which are not covered here, such as:
 
 ## Congratulations!
 
-That's all! If you have any questions, don't hesitate to contact us: <ul class="connect-links fa-ul"><li><i class="fa-li fas fa-comments"></i><a href="mailto:support@hwsecurity.dev?subject=Developer Question&amp;body=I have a question regarding...">Ask us by email</a></li></ul>
+That's all!

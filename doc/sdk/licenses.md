@@ -1,14 +1,4 @@
-+++
-title = "License"
-
-draft = false  # Is this a draft? true/false
-toc = false  # Show table of contents? true/false
-type = "guide"  # Do not modify.
-
-# Add menu entry to sidebar.
-linktitle = "Included Licenses"
-hidden = true
-+++
+# License
 
 Include the following text in your app to comply with the licenses of the dependencies of the Hardware Security SDK.
 

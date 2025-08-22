@@ -1,18 +1,5 @@
-+++
-title = "Start App on Hardware Discovery"
 
-draft = false  # Is this a draft? true/false
-toc = true  # Show table of contents? true/false
-type = "guide"  # Do not modify.
-weight = 20
-
-# Add menu entry to sidebar.
-linktitle = "Start on Hardware Discovery"
-[menu.docs]
-  parent = "hw-security-docs"
-  weight = 20
-
-+++
+# Start App on Hardware Discovery
 
 By default, the Hardware Security SDK does not register Intent filters for USB device classes and NFC Intents.
 Thus, it only handles USB and NFC when your app is in the foreground.

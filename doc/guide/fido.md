@@ -13,6 +13,8 @@ linktitle = "FIDO U2F"
   weight = 3
 +++
 
+# FIDO U2F
+
 <div class="row">
 <div class="col-sm-6">
 {{< figure library="1" numbered="true" src="docs/fido-register.png" title="Registering a new FIDO U2F Security Key using the Hardware Security SDK" >}}
@@ -26,36 +28,14 @@ In this guide, you'll learn how to integrate the Hardware Security SDK in your a
 This is done by first registering a FIDO U2F Security Key in your user's profile.
 Later, a login using username/password is extended using a second-factor authentication with FIDO U2F Security Keys.
 
-<div class="row">
-  <div class="col-sm-6 text-center">
-  Fork sample code on Github:
-  <a href="https://github.com/cotechde/hwsecurity-samples/tree/main/fido-sample"><img class="mx-auto d-block" src="/img/github-badge-small.png" alt="Get Sample on Github" height="63" style="margin:0;"></a>
-  </div>
-  
-  <div class="col-sm-6 text-center">
-  Try on Google Play:
-  <a href="https://play.google.com/store/apps/details?id=de.cotech.hw.fido.example"><img class="mx-auto d-block" src="/img/google-play-badge-small.png" alt="Get it on Google Play" height="63" style="margin:0;"></a>
-  </div>
-</div>
+Fork sample code on Github: https://github.com/cotechde/hwsecurity-samples/tree/main/fido-sample
+
 
 ## Add the SDK to Your Project
-
-To get a username and password for our Maven repository, please [contact us for a license]({{< ref "/sales/index.md" >}}).
 
 Add this to your ``build.gradle``:
 
 ```gradle
-repositories {
-    google()
-    jcenter()
-    maven {
-        credentials {
-            username 'xxx'
-            password 'xxx'
-        }
-        url "https://maven.cotech.de"
-    }
-}
 
 dependencies {
     // FIDO implementation
@@ -76,8 +56,6 @@ This ensures Security Keys are reliably dispatched by your app while in the fore
 
 We start by creating a new class which extends ``android.app.Application`` as follows:
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 public class MyCustomApplication extends Application {
     @Override
@@ -92,23 +70,6 @@ public class MyCustomApplication extends Application {
     }
 }
 ```
-{{% /code-tab %}}
-{{% code-tab "Kotlin" %}}
-```kotlin
-class MyCustomApplication : Application() {
-    override fun onCreate() {
-        super.onCreate()
-
-        val securityKeyManager = SecurityKeyManager.getInstance()
-        val config = SecurityKeyManagerConfig.Builder()
-            .setEnableDebugLogging(BuildConfig.DEBUG)
-            .build()
-        securityKeyManager.init(this, config)
-    }
-}
-```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 Then, register your ``MyCustomApplication`` in your ``AndroidManifest.xml``:
 
@@ -124,8 +85,6 @@ Then, register your ``MyCustomApplication`` in your ``AndroidManifest.xml``:
 
 Show our ``FidoDialogFragment`` to register a Security Key:
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 private void showFidoRegisterDialog() {
     // Make a registration request to the server. In a real application, this would perform
@@ -143,13 +102,9 @@ private void showFidoRegisterDialog() {
     fidoDialogFragment.show(getSupportFragmentManager());
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 Implement ``OnFidoRegisterCallback`` in your Activity and override ``onFidoRegisterResponse`` to receive callbacks from the ``FidoDialogFragment``:
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 @Override
 public void onFidoRegisterResponse(@NonNull FidoRegisterResponse registerResponse) {
@@ -158,15 +113,11 @@ public void onFidoRegisterResponse(@NonNull FidoRegisterResponse registerRespons
     // login mechanism for this user.
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 ## FIDO Authentication
 
 Authentication is now done by creating a ``FidoAuthenticateRequest``:
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 private void showFidoAuthenticateDialog() {
     // Make an authentication request to the server. In a real application, this would perform
@@ -185,13 +136,9 @@ private void showFidoAuthenticateDialog() {
     fidoDialogFragment.show(getSupportFragmentManager());
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 Implement ``OnFidoAuthenticateCallback`` in your Activity and override ``onFidoAuthenticateResponse``:
 
-{{% code-tabs %}}
-{{% code-tab "Java" %}}
 ```java
 @Override
 public void onFidoAuthenticateResponse(@NonNull FidoAuthenticateResponse authenticateResponse) {
@@ -200,8 +147,6 @@ public void onFidoAuthenticateResponse(@NonNull FidoAuthenticateResponse authent
     // so we have successfully logged in.
 }
 ```
-{{% /code-tab %}}
-{{% /code-tabs %}}
 
 ## Prevent Re-Creation of Activity with USB Security Keys
 
@@ -219,4 +164,4 @@ To prevent this, add ``keyboard|keyboardHidden`` to the activity's ``configChang
 
 ## Congratulations!
 
-That's all! If you have any questions, don't hesitate to contact us: <ul class="connect-links fa-ul"><li><i class="fa-li fas fa-comments"></i><a href="mailto:support@hwsecurity.dev?subject=Developer Question&amp;body=I have a question regarding...">Ask us by email</a></li></ul>
+That's all!
