@@ -10,7 +10,23 @@ Use cases include:
 
 ## Documentation
 
-Code examples and documentation can be found on our developer page at [hwsecurity.dev/docs](https://hwsecurity.dev/docs/).
+### SDK
+* [SDK Overview](doc/sdk/sdk.md)
+* [SDK Configuration](doc/sdk/config.md)
+* [Supported Hardware](doc/sdk/supported-hardware.md)
+* [Start App on Hardware Discovery](doc/sdk/intent-filter.md)
+* [Changelog](doc/sdk/changelog.md)
+
+### Guides
+* [FIDO2/WebAuthn - WebView Bridge](doc/guide/fido-webview.md)
+* [FIDO2 / WebAuthn](doc/guide/fido2.md)
+* [FIDO U2F](doc/guide/fido.md)
+* [SSH Authentication with Jsch](doc/guide/jsch.md)
+* [SSH Authentication with SSHJ](doc/guide/sshj.md)
+* [PIV for TLS Client Certificates](doc/guide/tls.md)
+* [Encrypting Secrets](doc/guide/encryption.md)
+* [Encrypted Database](doc/guide/database.md)
+
 
 ## Open Source
 
