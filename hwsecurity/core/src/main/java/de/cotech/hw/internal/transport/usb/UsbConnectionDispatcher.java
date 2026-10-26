@@ -123,7 +123,7 @@ public class UsbConnectionDispatcher {
 
     @UiThread
     public void onActive() {
-        context.registerReceiver(usbBroadcastReceiver, intentFilter);
+        context.registerReceiver(usbBroadcastReceiver, intentFilter, Context.RECEIVER_NOT_EXPORTED);
     }
 
     @UiThread

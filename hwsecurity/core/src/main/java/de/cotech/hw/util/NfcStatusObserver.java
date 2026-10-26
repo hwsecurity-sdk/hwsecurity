@@ -159,7 +159,7 @@ public class NfcStatusObserver implements LifecycleObserver {
             };
         }
         IntentFilter filter = new IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
-        context.registerReceiver(nfcStateBroadcastReceiver, filter);
+        context.registerReceiver(nfcStateBroadcastReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
     }
 
     @TargetApi(VERSION_CODES.JELLY_BEAN_MR2)
