@@ -77,18 +77,19 @@ Some parts of the SDK haven't been released as open source. If you are missing s
 
 Must happen on Windows (Xamarin does not work with Linux)
 
-## Release new Xamarin version
+## Xamarin requirements
 
 * Install Visual Studio : https://docs.microsoft.com/de-de/xamarin/android/get-started/installation/windows
 * Download nuget.exe and put it in $PATH: https://www.nuget.org/downloads
-* Install sleet: ``dotnet tool install -g sleet``
+
+## Xamarin build
 
 1. Build Java SDK from this repo
 2. Copy aar files to xamarin folders (core, fido, fido2, ui)
-  * hwsecurity/core/build/outputs/aar/core-release.aar to xamarin/Hwsecurity/Jars/
-  * hwsecurity/fido/build/outputs/aar/core-release.aar to xamarin/HwsecurityFido/Jars/
-  * hwsecurity/fido2/build/outputs/aar/core-release.aar to xamarin/HwsecurityFido2/Jars/
-  * hwsecurity/ui/build/outputs/aar/core-release.aar to xamarin/HwsecurityUi/Jars/
+   - hwsecurity/core/build/outputs/aar/core-release.aar to xamarin/Hwsecurity/Jars/
+   - hwsecurity/fido/build/outputs/aar/core-release.aar to xamarin/HwsecurityFido/Jars/
+   - hwsecurity/fido2/build/outputs/aar/core-release.aar to xamarin/HwsecurityFido2/Jars/
+   - hwsecurity/ui/build/outputs/aar/core-release.aar to xamarin/HwsecurityUi/Jars/
 3. Delete all obj and bin folders and then rebuild Visual Studio project with "release" target in Visual Studio
 4. Run on device to see if it crashes
 5. Optional: Update AndroidX dependencies in nuspec files
