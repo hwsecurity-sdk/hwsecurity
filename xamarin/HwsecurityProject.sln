@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30002.166
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HwsecurityWebViewSampleApp", "HwsecurityWebViewSampleApp\HwsecurityWebViewSampleApp.csproj", "{38E59A32-F0D6-4E1D-8351-627964125EFE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hwsecurity", "Hwsecurity\Hwsecurity.csproj", "{34DFBBBD-3857-4C91-86B0-DCF1F159B236}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HwsecurityFido", "HwsecurityFido\HwsecurityFido.csproj", "{849C1709-61EC-4B7C-ADB9-D8EEE27B8353}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HwsecurityFido2", "HwsecurityFido2\HwsecurityFido2.csproj", "{B4A5AEB5-DD86-4BF3-84E7-6A976062F029}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HwsecurityUi", "HwsecurityUi\HwsecurityUi.csproj", "{487FE8F4-5FD6-48E4-ABD3-60222D5D9BA4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{38E59A32-F0D6-4E1D-8351-627964125EFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38E59A32-F0D6-4E1D-8351-627964125EFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38E59A32-F0D6-4E1D-8351-627964125EFE}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{38E59A32-F0D6-4E1D-8351-627964125EFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38E59A32-F0D6-4E1D-8351-627964125EFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38E59A32-F0D6-4E1D-8351-627964125EFE}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{34DFBBBD-3857-4C91-86B0-DCF1F159B236}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34DFBBBD-3857-4C91-86B0-DCF1F159B236}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34DFBBBD-3857-4C91-86B0-DCF1F159B236}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34DFBBBD-3857-4C91-86B0-DCF1F159B236}.Release|Any CPU.Build.0 = Release|Any CPU
+		{849C1709-61EC-4B7C-ADB9-D8EEE27B8353}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{849C1709-61EC-4B7C-ADB9-D8EEE27B8353}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{849C1709-61EC-4B7C-ADB9-D8EEE27B8353}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{849C1709-61EC-4B7C-ADB9-D8EEE27B8353}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4A5AEB5-DD86-4BF3-84E7-6A976062F029}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4A5AEB5-DD86-4BF3-84E7-6A976062F029}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4A5AEB5-DD86-4BF3-84E7-6A976062F029}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4A5AEB5-DD86-4BF3-84E7-6A976062F029}.Release|Any CPU.Build.0 = Release|Any CPU
+		{487FE8F4-5FD6-48E4-ABD3-60222D5D9BA4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{487FE8F4-5FD6-48E4-ABD3-60222D5D9BA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{487FE8F4-5FD6-48E4-ABD3-60222D5D9BA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{487FE8F4-5FD6-48E4-ABD3-60222D5D9BA4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {38E4BB24-FCDF-4D62-B188-D4345086312E}
+	EndGlobalSection
+EndGlobal

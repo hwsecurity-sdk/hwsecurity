@@ -1,0 +1,7 @@
+﻿<metadata>
+	<remove-node path="/api/package[@name='de.cotech.hw.fido2']/class[@name='Fido2SecurityKeyConnectionMode']"/>
+	<remove-node path="/api/package[@name='de.cotech.hw.fido2']/class[@name='PublicKeyCredentialCreate']/method[@name='withClientPin' and count(parameter)=2 and parameter[1][@type='java.lang.String'] and parameter[2][@type='boolean']]"/>
+	<remove-node path="/api/package[@name='de.cotech.hw.fido2']/class[@name='PublicKeyCredentialGet']/method[@name='withClientPin' and count(parameter)=2 and parameter[1][@type='java.lang.String'] and parameter[2][@type='boolean']]"/>
+
+	<remove-node path="/api/package[starts-with(@name, 'de.cotech.hw.fido2.internal')]" />
+</metadata>

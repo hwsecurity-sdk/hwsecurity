@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>Xamarin.Hwsecurity.Android.Fido2</id>
+	<title>Xamarin.Hwsecurity.Android.Fido2</title>
+    <version>1.0.0</version>
+    <authors>COTECH</authors>
+    <owners>COTECH</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectUrl>https://hwsecurity.dev</projectUrl>
+    <icon>images\icon.png</icon>
+    <description>Hardware Security SDK</description>
+    <releaseNotes>Release notes at https://hwsecurity.dev/docs/changelog/.</releaseNotes>
+    <copyright>Copyright 2020 Confidential Technologies GmbH</copyright>
+	<dependencies>
+		<dependency id="Xamarin.AndroidX.AppCompat" version="1.1.0" />
+		<dependency id="Xamarin.Hwsecurity.Android" version="$Version$" />
+		<dependency id="Xamarin.Hwsecurity.Android.Ui" version="$Version$" />
+	</dependencies>
+  </metadata>
+  <files>
+    <file src="..\icon.png" target="images\" />
+  </files>
+</package>

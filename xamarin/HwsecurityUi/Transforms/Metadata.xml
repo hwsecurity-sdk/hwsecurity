@@ -1,0 +1,3 @@
+﻿<metadata>
+	<remove-node path="/api/package[starts-with(@name, 'de.cotech.hw.ui.internal')]" />
+</metadata>
