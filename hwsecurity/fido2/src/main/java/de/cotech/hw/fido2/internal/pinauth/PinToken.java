@@ -27,13 +27,40 @@ package de.cotech.hw.fido2.internal.pinauth;
 
 import com.google.auto.value.AutoValue;
 
+import java.io.IOException;
+
 
 @AutoValue
 public abstract class PinToken {
+
+    public abstract PinProtocol pinProtocol();
+
     @SuppressWarnings("mutable")
     public abstract byte[] pinToken();
 
-    public static PinToken create(byte[] pinToken) {
-        return new AutoValue_PinToken(pinToken);
+    @SuppressWarnings("mutable")
+    public abstract byte[] platformKeyAgreementKey();
+
+    @SuppressWarnings("mutable")
+    abstract byte[] sharedSecret();
+
+    public byte[] authenticate(byte[] data) {
+        return pinProtocol().authenticate(this, data);
+    }
+
+    public byte[] calculatePinAuth(byte[] data) {
+        return pinProtocol().calculatePinAuth(this, data);
+    }
+
+    public byte[] encrypt(byte[] data) {
+        return pinProtocol().encrypt(this, data);
+    }
+
+    public byte[] decrypt(byte[] data) throws IOException {
+        return pinProtocol().decrypt(this, data);
+    }
+
+    public static PinToken create(PinProtocol pinProtocol, byte[] pinToken, byte[] platformKeyAgreementKey, byte[] sharedSecret) {
+        return new AutoValue_PinToken(pinProtocol, pinToken, platformKeyAgreementKey, sharedSecret);
     }
 }
